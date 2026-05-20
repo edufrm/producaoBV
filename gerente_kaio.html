@@ -511,7 +511,9 @@ function saveS(){
 }
 
 const g  = k => S[k] !== undefined ? S[k] : '';
-var sv = function(k,v){ S[k]=v; saveS(); }; // reatribuída quando Firebase conectar
+// sv é definida abaixo no bloco Firebase com sincronização
+// versão local (sem Firebase) como fallback
+var sv = function(k,v){ S[k]=v; saveS(); };
 const el = id => document.getElementById(id);
 
 // ══════════════════════════════════════════════════
@@ -1602,45 +1604,68 @@ const GERENTE_PATH = `agencia/boa_viagem/${MONTH_KEY}/gerentes/${GERENTE_ID}`;
 const META_PATH    = `agencia/boa_viagem/${MONTH_KEY}/metas/${GERENTE_ID}`;
 const ALL_PATH     = `agencia/boa_viagem/${MONTH_KEY}/gerentes`;
 
+// Sobrescreve sv para sincronizar com Firebase após cada salvamento
+sv = function(k,v){
+  S[k]=v; saveS(); fbSync();
+};
+
 let fbSyncTimer = null;
 function fbSync(){
   if(!db) return;
   clearTimeout(fbSyncTimer);
   fbSyncTimer = setTimeout(()=>{
-    const payload = { ...S, _nome:GERENTE_NOME, _ultima_atualizacao:new Date().toISOString(), _mes:MONTH_KEY };
-    db.ref(GERENTE_PATH).set(payload).catch(e=>console.warn('sync error:',e));
+    const payload = {
+      ...S,
+      _nome: GERENTE_NOME,
+      _ultima_atualizacao: new Date().toISOString(),
+      _mes: MONTH_KEY
+    };
+    db.ref(GERENTE_PATH).set(payload)
+      .then(()=> console.log('Sync OK'))
+      .catch(e=> console.warn('Sync error:', e));
   }, 800);
 }
 
-    sv = function(k,v){ S[k]=v; saveS(); fbSync(); };
-
 function _initFirebase(){
   try {
+    if(!firebase) return;
     firebase.initializeApp(firebaseConfig);
     db = firebase.database();
+    console.log('Firebase conectado ✅');
 
+    // Ouvir metas do GG
     db.ref(META_PATH).on('value', snap => {
-      const metas = snap.val(); if(!metas) return;
+      const metas = snap.val();
+      if(!metas) return;
       let changed = false;
       Object.keys(metas).forEach(prefix => {
         const metaKey = prefix+'_meta';
         if(S[metaKey] !== String(metas[prefix])){ S[metaKey]=String(metas[prefix]); changed=true; }
       });
-      if(changed){ saveS(); bTAC(); bGiro(); bAtivos(); SIMPLES_CFG.forEach(sim=>bSimple(sim)); recompute(); }
+      if(changed){
+        saveS();
+        bTAC(); bGiro(); bAtivos();
+        SIMPLES_CFG.forEach(sim=>bSimple(sim));
+        recompute();
+      }
     });
 
+    // Ouvir todos os gerentes para ranking
     db.ref(ALL_PATH).on('value', snap => {
       const val = snap.val();
       if(val) MGR_IDS.forEach(gid=>{ if(val[gid] && gid!==GERENTE_ID) RANK_DATA[gid]=val[gid]; });
       updateStreak(); renderDash(); checkMedals(); checkPodium();
     });
 
+    // Enviar dados imediatamente
     fbSync();
+
   } catch(e){ console.warn('Firebase não disponível:', e); }
 }
 
-// Executa quando Firebase SDK carregar (ou imediatamente se já carregou)
+// Registra callback — será chamado quando SDK carregar
 window._appInit = _initFirebase;
+// Se SDK já carregou antes deste script rodar, chama direto
 if(window._fbReady) _initFirebase();
 
 const MEDALS_CFG = [
