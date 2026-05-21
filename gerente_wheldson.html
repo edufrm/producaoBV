@@ -536,7 +536,7 @@ async function callAnthropicAPI(system, messages, maxTokens=1000){
       'anthropic-dangerous-direct-browser-access': 'true'
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-5-20251022',
+      model: 'claude-sonnet-4-5',
       max_tokens: maxTokens,
       system: system,
       messages: messages
