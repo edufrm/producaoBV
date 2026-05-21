@@ -4,39 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Produção — Gerente</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 :root {
-  --bg: #f5f3ef;
-  --surface: #ffffff;
-  --surface2: #f0ede8;
-  --border: #e2ddd6;
-  --accent: #1a3a2a;
-  --accent2: #2d5c42;
-  --gold: #c9a84c;
-  --gold-light: #f0e6c8;
-  --text: #1a1a18;
-  --text2: #6b6560;
-  --text3: #a8a29c;
-  --green: #1e6b3e;
-  --green-bg: #eaf4ee;
-  --orange: #c46b00;
-  --orange-bg: #fff4e6;
-  --red: #c0392b;
-  --red-bg: #fdf0ee;
-  --blue: #1a4a7a;
-  --blue-bg: #eaf0f8;
-  --purple: #5b2d8e;
-  --purple-bg: #f3eefa;
-  --radius: 12px;
-  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
+  --bg: #f5f3ef; --surface: #ffffff; --surface2: #f0ede8; --border: #e2ddd6;
+  --accent: #1a3a2a; --accent2: #2d5c42; --gold: #c9a84c; --gold-light: #f0e6c8;
+  --text: #1a1a18; --text2: #6b6560; --text3: #a8a29c;
+  --green: #1e6b3e; --green-bg: #eaf4ee;
+  --orange: #c46b00; --orange-bg: #fff4e6;
+  --red: #c0392b; --red-bg: #fdf0ee;
+  --blue: #1a4a7a; --blue-bg: #eaf0f8;
+  --purple: #5b2d8e; --purple-bg: #f3eefa;
+  --radius: 12px; --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 100px; }
 
-/* ── HEADER ── */
+/* HEADER */
 .header { background: var(--accent); padding: 14px 16px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,0.18); }
 .header-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
 .brand-name { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 800; color: #fff; letter-spacing: -0.3px; line-height: 1.1; }
@@ -47,60 +35,27 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: v
 .status-pill.pending { background: rgba(196,107,0,0.25); color: #ffc97a; border: 1px solid rgba(196,107,0,0.3); }
 .status-pill.done { background: rgba(30,107,62,0.3); color: #7de0a4; border: 1px solid rgba(30,107,62,0.35); }
 
+/* TABS */
 .tabs-wrapper { position: relative; }
-.tabs-wrapper::before,
-.tabs-wrapper::after {
-  content: '';
-  position: absolute;
-  top: 0; bottom: 0;
-  width: 32px;
-  pointer-events: none;
-  z-index: 2;
-  transition: opacity 0.2s;
-}
-.tabs-wrapper::before {
-  left: 0;
-  background: linear-gradient(to right, var(--accent) 0%, transparent 100%);
-  opacity: 0;
-}
-.tabs-wrapper::after {
-  right: 0;
-  background: linear-gradient(to left, var(--accent) 30%, transparent 100%);
-  opacity: 1;
-}
+.tabs-wrapper::before, .tabs-wrapper::after { content: ''; position: absolute; top: 0; bottom: 0; width: 32px; pointer-events: none; z-index: 2; transition: opacity 0.2s; }
+.tabs-wrapper::before { left: 0; background: linear-gradient(to right, var(--accent) 0%, transparent 100%); opacity: 0; }
+.tabs-wrapper::after { right: 0; background: linear-gradient(to left, var(--accent) 30%, transparent 100%); opacity: 1; }
 .tabs-wrapper.scroll-start::before { opacity: 0; }
-.tabs-wrapper.scroll-end::after   { opacity: 0; }
-.tabs-wrapper.scroll-mid::before  { opacity: 1; }
-
-/* Chevron hint */
-.tabs-scroll-hint {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: rgba(255,255,255,0.5);
-  font-size: 13px;
-  pointer-events: none;
-  z-index: 3;
-  animation: nudge 1.6s ease-in-out infinite;
-  transition: opacity 0.2s;
-}
+.tabs-wrapper.scroll-end::after { opacity: 0; }
+.tabs-wrapper.scroll-mid::before { opacity: 1; }
+.tabs-scroll-hint { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.5); font-size: 13px; pointer-events: none; z-index: 3; animation: nudge 1.6s ease-in-out infinite; transition: opacity 0.2s; }
 .tabs-wrapper.scroll-end .tabs-scroll-hint { opacity: 0; }
-@keyframes nudge {
-  0%,100% { transform: translateY(-50%) translateX(0); }
-  50%      { transform: translateY(-50%) translateX(3px); }
-}
-
-.tabs { display: flex; overflow-x: auto; scrollbar-width: none; gap: 0; }
+@keyframes nudge { 0%,100% { transform: translateY(-50%) translateX(0); } 50% { transform: translateY(-50%) translateX(3px); } }
+.tabs { display: flex; overflow-x: auto; scrollbar-width: none; }
 .tabs::-webkit-scrollbar { display: none; }
 .tab { flex-shrink: 0; padding: 9px 13px; font-family: 'IBM Plex Sans', sans-serif; font-size: 11px; font-weight: 500; cursor: pointer; border: none; background: transparent; color: rgba(255,255,255,0.45); border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
 .tab.active { color: #fff; border-bottom-color: var(--gold); font-weight: 700; }
 
-/* ── SECTIONS ── */
+/* SECTIONS */
 .section { display: none; padding: 14px 14px 0; }
 .section.active { display: block; }
 
-/* ── CARDS ── */
+/* CARDS */
 .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; box-shadow: var(--shadow); overflow: hidden; }
 .card-header { padding: 10px 14px; background: var(--accent); display: flex; justify-content: space-between; align-items: center; }
 .card-header.light { background: var(--surface2); border-bottom: 1px solid var(--border); }
@@ -111,7 +66,7 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: v
 .card-subtitle { font-size: 10px; color: rgba(255,255,255,0.45); }
 .card-count { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700; background: rgba(255,255,255,0.15); color: #fff; padding: 2px 8px; border-radius: 10px; }
 
-/* ── ROWS ── */
+/* ROWS */
 .row { display: flex; align-items: center; justify-content: space-between; padding: 9px 14px; border-bottom: 1px solid var(--border); gap: 6px; }
 .row:last-child { border-bottom: none; }
 .row.tr { background: var(--green-bg); }
@@ -124,7 +79,7 @@ body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: v
 .cl.g { color: var(--green); }
 .cl.o { color: var(--orange); }
 
-/* ── INPUTS ── */
+/* INPUTS */
 input[type="text"], input[type="date"], select, textarea {
   font-family: 'IBM Plex Sans', sans-serif; font-size: 12px;
   background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
@@ -147,7 +102,7 @@ input.inv { visibility: hidden; }
 textarea { resize: none; min-height: 60px; font-size: 12px; }
 select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b6560'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; padding-right: 24px; }
 
-/* ── CHEMP GRID ── */
+/* CHEMP GRID */
 .chemp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
 .cc { background: var(--surface); padding: 12px 14px; }
 .cc-lbl { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; font-weight: 500; margin-bottom: 6px; }
@@ -156,20 +111,14 @@ select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 .cc input.cmp { color: var(--green); }
 .cc input.cmp-r { color: var(--red); }
 
-/* ── LEGEND ── */
+/* LEGEND */
 .legend { display: flex; gap: 12px; padding: 6px 14px; background: var(--bg); border-bottom: 1px solid var(--border); flex-wrap: wrap; }
 .legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text3); }
 .dot { width: 7px; height: 7px; border-radius: 50%; }
 .dot.g { background: var(--green); }
 .dot.o { background: var(--orange); }
 
-/* ── MANAGER BLOCK ── */
-.manager-block { border-bottom: 1px solid var(--border); }
-.manager-block:last-child { border-bottom: none; }
-.manager-head { padding: 8px 14px; background: var(--surface2); border-bottom: 1px solid var(--border); }
-.manager-head-name { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: var(--accent); }
-
-/* ── FORM FIELDS ── */
+/* FORM FIELDS */
 .form-section { padding: 12px 14px; border-bottom: 1px solid var(--border); }
 .form-section:last-child { border-bottom: none; }
 .form-row { margin-bottom: 10px; }
@@ -177,57 +126,55 @@ select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 .form-label { font-size: 11px; font-weight: 600; color: var(--text2); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.8px; }
 .form-label.required::after { content: ' *'; color: var(--red); }
 .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
 
-/* ── CLIENTE CARD ── */
+/* CLIENTE CARD */
 .cliente-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin: 10px 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow: hidden; }
-.cliente-card-header { padding: 8px 12px; background: var(--surface2); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.cliente-card-header { padding: 8px 12px; background: var(--surface2); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; }
 .cliente-card-title { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; color: var(--accent); }
 .cliente-card-body { padding: 10px 12px; }
-.btn-remove { background: var(--red-bg); color: var(--red); border: 1px solid rgba(192,57,43,0.2); border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 600; cursor: pointer; }
+.cliente-card-body.locked { background: var(--surface2); pointer-events: none; opacity: 0.85; }
 
-/* ── TYPE TOGGLE ── */
+/* BOTÕES DE AÇÃO DO CARD */
+.card-actions { display: flex; gap: 5px; flex-wrap: wrap; }
+.btn-remove { background: var(--red-bg); color: var(--red); border: 1px solid rgba(192,57,43,0.2); border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 600; cursor: pointer; }
+.btn-edit { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(26,74,122,0.2); border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 600; cursor: pointer; }
+.btn-confirm { background: var(--green-bg); color: var(--green); border: 1px solid rgba(30,107,62,0.2); border-radius: 6px; padding: 3px 8px; font-size: 11px; font-weight: 600; cursor: pointer; }
+
+/* TYPE TOGGLE */
 .type-toggle { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .type-btn { flex: 1; padding: 7px 10px; font-size: 12px; font-weight: 600; border: none; background: var(--bg); color: var(--text2); cursor: pointer; transition: all 0.15s; text-align: center; }
 .type-btn.active.pipe { background: var(--blue); color: #fff; }
 .type-btn.active.prod { background: var(--green); color: #fff; }
 
-/* ── SIM/NÃO TOGGLE ── */
+/* SIM/NÃO TOGGLE */
 .yn-toggle { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; width: fit-content; }
 .yn-btn { padding: 6px 16px; font-size: 12px; font-weight: 600; border: none; background: var(--bg); color: var(--text2); cursor: pointer; transition: all 0.15s; }
 .yn-btn.active.yes { background: var(--green); color: #fff; }
 .yn-btn.active.no { background: var(--red); color: #fff; }
 
-/* ── ADD BUTTON ── */
+/* CONTAS TOGGLE */
+.conta-toggle { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.conta-btn { flex: 1; padding: 7px 6px; font-size: 11px; font-weight: 600; border: none; background: var(--bg); color: var(--text2); cursor: pointer; transition: all 0.15s; text-align: center; }
+.conta-btn.active.amarela { background: var(--orange); color: #fff; }
+.conta-btn.active.verde { background: var(--green); color: #fff; }
+.conta-btn.active.outros { background: var(--blue); color: #fff; }
+
+/* ADD BUTTON */
 .btn-add { width: calc(100% - 28px); margin: 10px 14px; padding: 11px; background: transparent; border: 2px dashed var(--border); border-radius: 10px; color: var(--text3); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
 .btn-add:active { background: var(--bg); border-color: var(--accent2); color: var(--accent2); }
 
-/* ── PIPE BADGE ── */
+/* PIPE BADGE */
 .pipe-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
 .pipe-badge.pipe { background: var(--blue-bg); color: var(--blue); }
 .pipe-badge.prod { background: var(--green-bg); color: var(--green); }
 .pipe-badge.venc { background: var(--red-bg); color: var(--red); }
 
-/* ── STATUS BADGE ── */
-.status-badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 10px; background: var(--surface2); color: var(--text2); display: inline-block; }
-
-/* ── OBS SECTION ── */
+/* OBS */
 .obs-toggle { width: 100%; padding: 8px 14px; background: transparent; border: none; border-top: 1px solid var(--border); color: var(--text3); font-size: 11px; font-weight: 500; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 6px; }
 .obs-body { padding: 0 14px 12px; display: none; }
 .obs-body.open { display: block; }
 
-/* ── WA INCLUDE TOGGLE ── */
-.wa-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; background: rgba(37,211,102,0.06); border-top: 1px solid rgba(37,211,102,0.15); }
-.wa-label { font-size: 11px; color: var(--text2); display: flex; align-items: center; gap: 6px; }
-.wa-label svg { color: #25D366; }
-.toggle-switch { position: relative; width: 36px; height: 20px; }
-.toggle-switch input { opacity: 0; width: 0; height: 0; }
-.toggle-slider { position: absolute; inset: 0; background: var(--border); border-radius: 10px; cursor: pointer; transition: 0.2s; }
-.toggle-slider::before { content:''; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-.toggle-switch input:checked + .toggle-slider { background: #25D366; }
-.toggle-switch input:checked + .toggle-slider::before { transform: translateX(16px); }
-
-/* ── META BAR ── */
+/* META BAR */
 .meta-section { padding: 12px 14px; border-bottom: 1px solid var(--border); }
 .meta-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .meta-lbl { font-size: 11px; color: var(--text2); font-weight: 500; }
@@ -238,56 +185,45 @@ select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 .progress-fill.warn { background: linear-gradient(90deg, var(--orange), #f0a030); }
 .progress-fill.over { background: linear-gradient(90deg, var(--gold), #e8c060); }
 
-/* ── BOTTOM BAR ── */
-.bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 10px 14px; display: flex; gap: 8px; z-index: 200; box-shadow: 0 -4px 20px rgba(0,0,0,0.08); }
-.btn { font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; border: none; border-radius: 8px; padding: 12px 14px; transition: all 0.12s; white-space: nowrap; }
-.btn:active { transform: scale(0.97); opacity: 0.88; }
-.btn-p { background: var(--accent); color: #fff; flex: 1; }
-.btn-s { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
-.btn-d { background: var(--red-bg); color: var(--red); border: 1px solid rgba(192,57,43,0.25); }
-.btn-hist { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(26,74,122,0.2); }
+/* RITMO */
+.ritmo-block { padding: 8px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+.ritmo-badge { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 10px; flex-shrink: 0; }
+.ritmo-badge.acima { background: var(--green-bg); color: var(--green); }
+.ritmo-badge.no { background: rgba(201,168,76,0.15); color: var(--gold); }
+.ritmo-badge.abaixo { background: var(--orange-bg); color: var(--orange); }
+.ritmo-badge.baixo { background: var(--red-bg); color: var(--red); }
+.ritmo-text { font-size: 10px; color: var(--text2); flex: 1; line-height: 1.4; }
+.meta-diaria { font-size: 10px; color: var(--text3); padding: 4px 14px 8px; }
+.meta-diaria span { color: var(--accent); font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
+.inactivity-alert { background: linear-gradient(135deg, #fff4e6, #ffeacc); border: 2px solid var(--orange); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 12px rgba(196,107,0,0.15); }
+.inactivity-icon { font-size: 32px; flex-shrink: 0; }
+.inactivity-text { flex: 1; font-size: 12px; line-height: 1.4; color: #6b3a00; }
+.inactivity-text strong { display: block; font-size: 13px; color: var(--orange); margin-bottom: 4px; font-family: 'Syne', sans-serif; font-weight: 700; }
+.clear-confirm-modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 500; align-items: center; justify-content: center; padding: 20px; }
+.clear-confirm-modal.open { display: flex; }
+.clear-confirm-box { background: var(--surface); border-radius: var(--radius); padding: 20px; max-width: 360px; width: 100%; box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+.clear-confirm-title { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: var(--red); margin-bottom: 8px; }
+.clear-confirm-msg { font-size: 12px; color: var(--text2); margin-bottom: 16px; line-height: 1.5; }
+.clear-confirm-btns { display: flex; gap: 8px; }
+.clear-confirm-btns button { flex: 1; padding: 10px; border-radius: 8px; font-family: 'IBM Plex Sans', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; border: none; }
+.clear-btn-yes { background: var(--red); color: #fff; }
+.clear-btn-no { background: var(--surface2); color: var(--text); border: 1px solid var(--border) !important; }
+.section-clear-btn { margin: 12px 14px 0; padding: 8px 12px; background: var(--red-bg); color: var(--red); border: 1px solid rgba(192,57,43,0.2); border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; width: calc(100% - 28px); }
+.section-clear-btn:hover { background: var(--red); color: #fff; }
+.btn-ajuste { display:block; margin: 8px 14px 0; padding: 8px 12px; background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(26,74,122,0.2); border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; width: calc(100% - 28px); text-align:center; }
+.btn-ajuste:hover { background: var(--blue); color: #fff; }
 
-/* ── MODAL ── */
-.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 500; align-items: flex-end; backdrop-filter: blur(2px); }
-.modal-overlay.open { display: flex; }
-.modal { background: var(--surface); border-radius: 20px 20px 0 0; width: 100%; max-height: 90vh; overflow-y: auto; padding: 0 0 24px; animation: up 0.22s cubic-bezier(0.32,0.72,0,1); }
-@keyframes up { from { transform: translateY(100%); } to { transform: translateY(0); } }
-.mhandle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 14px auto 0; }
-.mheader { padding: 14px 16px 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-.mtitle { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--accent); }
-.mbody { padding: 14px 16px 0; }
-.wabox { font-family: 'IBM Plex Mono', monospace; font-size: 11px; line-height: 1.8; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 14px; white-space: pre-wrap; word-break: break-word; max-height: 48vh; overflow-y: auto; }
-.cpbtn { margin-top: 12px; width: 100%; padding: 14px; background: #25D366; color: #fff; border: none; border-radius: 10px; font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-.clbtn { margin-top: 8px; width: 100%; padding: 12px; background: transparent; color: var(--text2); border: 1px solid var(--border); border-radius: 10px; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; cursor: pointer; }
+/* HISTÓRICO DIÁRIO */
+.daily-hist { padding: 0 14px 10px; }
+.daily-hist-title { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin: 8px 0 6px; }
+.daily-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.daily-table th { font-size: 9px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text3); font-weight: 600; padding: 4px 6px; text-align: left; border-bottom: 1px solid var(--border); }
+.daily-table td { padding: 5px 6px; border-bottom: 1px solid var(--border); color: var(--text2); font-family: 'IBM Plex Mono', monospace; }
+.daily-table td:first-child { font-family: 'IBM Plex Sans', sans-serif; color: var(--text3); }
+.daily-table tr.hoje td { background: rgba(30,107,62,0.06); font-weight: 600; color: var(--accent); }
+.daily-table tr.hoje td:first-child { color: var(--green); font-family: 'IBM Plex Sans', sans-serif; }
 
-/* ── HISTORY MODAL ── */
-.hist-month { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
-.hist-month-header { padding: 10px 14px; background: var(--surface2); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-.hist-month-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--accent); }
-.hist-month-body { padding: 12px 14px; display: none; font-size: 12px; color: var(--text2); line-height: 1.8; white-space: pre-wrap; font-family: 'IBM Plex Mono', monospace; }
-.hist-month-body.open { display: block; }
-
-/* ── TOAST ── */
-.toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(8px); background: var(--accent); color: #fff; padding: 9px 20px; border-radius: 24px; font-size: 12px; font-weight: 600; opacity: 0; pointer-events: none; transition: all 0.2s; z-index: 999; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,0.18); }
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-/* ── PIPE ALERT ── */
-.pipe-alert { background: var(--red-bg); border: 1px solid rgba(192,57,43,0.2); border-radius: 8px; padding: 8px 12px; margin: 8px 14px; font-size: 11px; color: var(--red); font-weight: 600; display: flex; align-items: center; gap: 6px; }
-.pipe-alert.warn { background: var(--orange-bg); border-color: rgba(196,107,0,0.2); color: var(--orange); }
-
-/* ── EMPTY STATE ── */
-.empty-state { padding: 24px 14px; text-align: center; color: var(--text3); font-size: 12px; }
-.empty-state-icon { font-size: 28px; margin-bottom: 8px; }
-/* ── GAMIFICAÇÃO ── */
-.dash-hero { background: linear-gradient(135deg, var(--accent) 0%, #2d5c42 100%); padding: 20px 16px; text-align: center; margin-bottom: 12px; border-radius: var(--radius); position: relative; overflow: hidden; }
-.dash-hero::before { content: ''; position: absolute; inset: 0; background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"); }
-.dash-pos { font-family: 'Syne', sans-serif; font-size: 52px; font-weight: 800; color: #fff; line-height: 1; position: relative; }
-.dash-pos-label { font-size: 11px; color: rgba(255,255,255,0.6); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
-.dash-pos-suffix { font-size: 22px; font-weight: 600; vertical-align: super; }
-.dash-medal { font-size: 32px; margin-bottom: 4px; display: block; }
-.dash-msg { font-size: 13px; color: rgba(255,255,255,0.85); margin-top: 8px; font-weight: 500; line-height: 1.4; position: relative; }
-.dash-gap { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 8px 14px; margin-top: 10px; font-size: 12px; color: var(--gold-light); font-weight: 600; position: relative; }
-
+/* RANKING ANÔNIMO */
 .rank-anon { display: flex; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--border); gap: 10px; }
 .rank-anon:last-child { border-bottom: none; }
 .rank-anon.me { background: linear-gradient(90deg, rgba(30,107,62,0.08), transparent); }
@@ -298,83 +234,139 @@ select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 .rank-anon-pos.pme { color: var(--green); }
 .rank-anon-label { font-size: 12px; font-weight: 600; flex: 1; }
 .rank-anon-label.me-label { color: var(--green); }
-.rank-anon-bar-wrap { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
-.rank-anon-bar { height: 100%; background: linear-gradient(90deg, var(--green), #4caf7d); border-radius: 3px; transition: width 0.6s ease; }
-.rank-anon-bar.me-bar { background: linear-gradient(90deg, var(--gold), #e8c060); }
-.rank-anon-val { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700; color: var(--text2); min-width: 55px; text-align: right; }
+.rank-anon-bar-wrap { flex: 2; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.rank-anon-bar { height: 100%; background: linear-gradient(90deg, var(--accent2), var(--green)); border-radius: 3px; transition: width 0.5s ease; }
+.rank-anon-bar.me-bar { background: linear-gradient(90deg, var(--green), #4caf7d); }
+.rank-anon-val { font-family: 'IBM Plex Mono', monospace; font-size: 11px; font-weight: 700; color: var(--text2); min-width: 60px; text-align: right; }
 .rank-anon-val.me-val { color: var(--green); }
 
-.streak-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; box-shadow: var(--shadow); }
-.streak-header { padding: 10px 14px; background: linear-gradient(90deg, #c46b00, #e8903a); display: flex; justify-content: space-between; align-items: center; }
-.streak-title { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1.8px; text-transform: uppercase; color: #fff; }
-.streak-count { font-family: 'IBM Plex Mono', monospace; font-size: 22px; font-weight: 800; color: #fff; }
-.streak-body { padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
-.streak-flame { font-size: 32px; }
-.streak-text { font-size: 12px; color: var(--text2); line-height: 1.5; flex: 1; }
-.streak-days { display: flex; gap: 4px; padding: 0 14px 12px; flex-wrap: wrap; }
-.streak-day { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
-.streak-day.ok { background: var(--orange-bg); color: var(--orange); }
-.streak-day.miss { background: var(--surface2); color: var(--text3); }
-.streak-day.today-ok { background: var(--orange); color: #fff; }
+/* CONTAS GRID */
+.contas-total-row { display: flex; justify-content: space-between; padding: 8px 14px; background: var(--green-bg); border-bottom: 1px solid var(--border); }
+.contas-total-lbl { font-size: 11px; font-weight: 700; color: var(--green); }
+.contas-total-val { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 700; color: var(--green); }
 
-.medals-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; box-shadow: var(--shadow); }
-.medals-header { padding: 10px 14px; background: linear-gradient(90deg, #5b2d8e, #8e44ad); display: flex; justify-content: space-between; align-items: center; }
-.medals-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--border); }
-.medal-cell { background: var(--surface); padding: 12px; text-align: center; }
-.medal-cell.locked { opacity: 0.35; filter: grayscale(1); }
-.medal-icon { font-size: 26px; margin-bottom: 4px; }
-.medal-name { font-size: 10px; font-weight: 700; color: var(--accent); }
-.medal-desc { font-size: 9px; color: var(--text3); margin-top: 2px; line-height: 1.3; }
+/* BOTTOM BAR */
+.bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 10px 14px; display: flex; gap: 8px; z-index: 200; box-shadow: 0 -4px 20px rgba(0,0,0,0.08); }
+.btn { font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; border: none; border-radius: 8px; padding: 12px 14px; transition: all 0.12s; white-space: nowrap; }
+.btn:active { transform: scale(0.97); opacity: 0.88; }
+.btn-p { background: var(--accent); color: #fff; flex: 1; }
+.btn-s { background: var(--surface2); color: var(--text2); border: 1px solid var(--border); }
+.btn-d { background: var(--red-bg); color: var(--red); border: 1px solid rgba(192,57,43,0.25); }
+.btn-hist { background: var(--blue-bg); color: var(--blue); border: 1px solid rgba(26,74,122,0.2); }
 
-.podium-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 600; align-items: center; justify-content: center; flex-direction: column; }
+/* MODAL */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 500; align-items: flex-end; backdrop-filter: blur(2px); }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--surface); border-radius: 20px 20px 0 0; width: 100%; max-height: 90vh; overflow-y: auto; padding: 0 0 24px; animation: up 0.22s cubic-bezier(0.32,0.72,0,1); }
+@keyframes up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.mhandle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 14px auto 0; }
+.mheader { padding: 14px 16px 12px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.mtitle { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--accent); }
+.mbody { padding: 14px 16px 0; }
+.hist-month { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+.hist-month-header { padding: 10px 14px; background: var(--surface2); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+.hist-month-title { font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; color: var(--accent); }
+.hist-month-body { padding: 12px 14px; display: none; font-size: 12px; color: var(--text2); line-height: 1.8; white-space: pre-wrap; font-family: 'IBM Plex Mono', monospace; }
+.hist-month-body.open { display: block; }
+.clbtn { margin-top: 8px; width: 100%; padding: 12px; background: transparent; color: var(--text2); border: 1px solid var(--border); border-radius: 10px; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; cursor: pointer; }
+
+/* TOAST */
+.toast { position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%) translateY(8px); background: var(--accent); color: #fff; padding: 9px 20px; border-radius: 24px; font-size: 12px; font-weight: 600; opacity: 0; pointer-events: none; transition: all 0.2s; z-index: 999; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,0.18); }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* PIPE ALERT */
+.pipe-alert { background: var(--red-bg); border: 1px solid rgba(192,57,43,0.2); border-radius: 8px; padding: 8px 12px; margin: 8px 14px; font-size: 11px; color: var(--red); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.pipe-alert.warn { background: var(--orange-bg); border-color: rgba(196,107,0,0.2); color: var(--orange); }
+
+/* INACTIVIDADE ALERT */
+.inactivity-alert { margin: 10px 14px; background: var(--red-bg); border: 1px solid rgba(192,57,43,0.25); border-radius: 10px; padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px; }
+.inactivity-alert-icon { font-size: 20px; flex-shrink: 0; }
+.inactivity-alert-text { font-size: 12px; color: var(--red); font-weight: 600; line-height: 1.5; }
+
+/* EMPTY STATE */
+.empty-state { padding: 24px 14px; text-align: center; color: var(--text3); font-size: 12px; }
+.empty-state-icon { font-size: 28px; margin-bottom: 8px; }
+
+/* GAMIFICAÇÃO */
+.dash-hero { background: linear-gradient(135deg, var(--accent) 0%, #2d5c42 100%); padding: 20px 16px; text-align: center; margin-bottom: 12px; border-radius: var(--radius); position: relative; overflow: hidden; }
+.dash-pos { font-family: 'Syne', sans-serif; font-size: 52px; font-weight: 800; color: #fff; line-height: 1; position: relative; }
+.dash-pos-label { font-size: 11px; color: rgba(255,255,255,0.6); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+.dash-pos-suffix { font-size: 22px; font-weight: 600; vertical-align: super; }
+.dash-medal { font-size: 32px; margin-bottom: 4px; display: block; }
+.dash-msg { font-size: 13px; color: rgba(255,255,255,0.85); margin-top: 8px; font-weight: 500; line-height: 1.4; position: relative; }
+.dash-gap { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 8px 14px; margin-top: 10px; font-size: 12px; color: var(--gold-light); font-weight: 600; position: relative; }
+
+/* STREAK */
+.streak-card { background: linear-gradient(135deg, #2d1a00, #5a3800); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
+.streak-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.streak-title { font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 1px; }
+.streak-count { font-family: 'IBM Plex Mono', monospace; font-size: 18px; font-weight: 800; color: var(--gold); }
+.streak-body { font-size: 12px; color: rgba(255,255,255,0.75); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+.streak-days { display: flex; gap: 4px; flex-wrap: wrap; }
+.streak-day { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+.streak-day.ok { background: var(--green); color: #fff; }
+.streak-day.today-ok { background: var(--gold); color: #1a3a2a; }
+.streak-day.miss { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.4); }
+
+/* MEDALHAS */
+.medals-card { background: var(--accent); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
+.medals-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.medals-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.medal-cell { background: rgba(255,255,255,0.08); border-radius: 8px; padding: 10px 8px; text-align: center; }
+.medal-cell.locked { opacity: 0.35; filter: grayscale(0.6); }
+.medal-icon { font-size: 22px; margin-bottom: 4px; }
+.medal-name { font-size: 10px; font-weight: 700; color: #fff; margin-bottom: 2px; }
+.medal-desc { font-size: 9px; color: rgba(255,255,255,0.5); line-height: 1.3; }
+
+/* PÓDIO */
+.podium-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 800; align-items: center; justify-content: center; flex-direction: column; gap: 20px; }
 .podium-overlay.open { display: flex; }
-.podium-wrap { text-align: center; padding: 24px; }
-.podium-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 20px; }
-.podium { display: flex; align-items: flex-end; justify-content: center; gap: 8px; margin-bottom: 20px; }
-.podium-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.podium-name { font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.8); }
-.podium-val { font-size: 10px; color: rgba(255,255,255,0.5); }
-.podium-block { border-radius: 8px 8px 0 0; display: flex; align-items: center; justify-content: center; font-size: 24px; width: 72px; }
-.podium-block.p1 { height: 100px; background: linear-gradient(180deg, #FFD700, #c9a84c); }
-.podium-block.p2 { height: 72px; background: linear-gradient(180deg, #C0C0C0, #999); }
-.podium-block.p3 { height: 52px; background: linear-gradient(180deg, #CD7F32, #a0622a); }
-.confetti-wrap { position: fixed; inset: 0; pointer-events: none; z-index: 601; }
-@keyframes confettiFall { 0%{transform:translateY(-10px) rotate(0deg);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+.podium-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: var(--gold); text-align: center; }
+.podium-cols { display: flex; align-items: flex-end; gap: 10px; justify-content: center; }
+.podium-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.podium-name { font-size: 11px; color: rgba(255,255,255,0.7); font-weight: 600; }
+.podium-val { font-size: 12px; color: #fff; font-weight: 700; font-family: 'IBM Plex Mono', monospace; }
+.podium-block { width: 60px; display: flex; align-items: center; justify-content: center; font-size: 28px; border-radius: 8px 8px 0 0; }
+.podium-block.p1 { height: 80px; background: linear-gradient(180deg, #FFD700, #FFA500); }
+.podium-block.p2 { height: 60px; background: linear-gradient(180deg, #C0C0C0, #a0a0a0); }
+.podium-block.p3 { height: 44px; background: linear-gradient(180deg, #CD7F32, #a06020); }
+.podium-close { padding: 12px 32px; background: var(--gold); color: #1a3a2a; border: none; border-radius: 10px; font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; }
+#confettiWrap { position: fixed; inset: 0; pointer-events: none; z-index: 799; overflow: hidden; }
+@keyframes confettiFall { to { transform: translateY(100vh) rotate(360deg); opacity: 0; } }
 
-/* Animação de subida de posição */
-.rank-up-toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%) scale(0.8); background: linear-gradient(135deg, var(--green), #4caf7d); color: #fff; padding: 12px 24px; border-radius: 24px; font-size: 14px; font-weight: 700; opacity: 0; pointer-events: none; z-index: 998; white-space: nowrap; box-shadow: 0 8px 24px rgba(30,107,62,0.4); transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); }
-.rank-up-toast.show { opacity: 1; transform: translateX(-50%) scale(1); }
+/* TOOLTIPS */
+[title] { position: relative; }
+.tippy { position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: rgba(26,26,24,0.92); color: #fff; font-size: 10px; padding: 4px 8px; border-radius: 6px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 9999; font-family: 'IBM Plex Sans', sans-serif; font-weight: 500; }
+
+/* SEGURO LISTA */
+.seguro-item { padding: 10px 14px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.seguro-item:last-child { border-bottom: none; }
+.seguro-tipo { font-size: 11px; font-weight: 600; color: var(--accent); flex: 1; }
+.seguro-val { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 700; color: var(--green); }
+.seguro-data { font-size: 10px; color: var(--text3); }
+.btn-remove-sm { background: var(--red-bg); color: var(--red); border: 1px solid rgba(192,57,43,0.2); border-radius: 5px; padding: 2px 6px; font-size: 10px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
 </style>
-<script>
-// Carrega Firebase dinamicamente — se falhar, app funciona offline
-window._fbReady = false;
-function _loadScript(src, cb){
-  var s = document.createElement('script');
-  s.src = src;
-  s.onload = cb;
-  s.onerror = function(){ console.warn('Firebase SDK não carregou (offline/local)'); cb(); };
-  document.head.appendChild(s);
-}
-_loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js', function(){
-  _loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js', function(){
-    window._fbReady = true;
-    if(window._appInit) window._appInit();
-  });
-});
-</script>
 </head>
 <body>
 
-<!-- HEADER -->
+<div id="confettiWrap"></div>
+
+<!-- PÓDIO -->
+<div class="podium-overlay" id="podiumOverlay">
+  <div class="podium-title">🏆 Pódio do Mês!</div>
+  <div class="podium-cols" id="podiumCols"></div>
+  <button class="podium-close" onclick="document.getElementById('podiumOverlay').classList.remove('open')">Fechar</button>
+</div>
+
 <div class="header">
   <div class="header-top">
     <div>
-      <div class="brand-name" id="gerenteName">Carregando…</div>
-      <div class="brand-sub">Banco Safra · Ag. Boa Viagem</div>
+      <div class="brand-name" id="gerenteName">—</div>
+      <div class="brand-sub">Banco Safra · Ag. 14400</div>
     </div>
     <div class="header-right">
       <div class="date-pill" id="dateBadge"></div>
-      <button class="status-pill pending" id="statusPill" onclick="toggleStatus()">⏳ Pendente</button>
+      <button class="status-pill pending" id="statusPill" onclick="toggleStatus()" title="Clique para marcar o dia como concluído">⏳ Pendente</button>
     </div>
   </div>
   <div class="tabs-wrapper scroll-start" id="tabsWrapper">
@@ -384,42 +376,17 @@ _loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',
 </div>
 
 <div class="toast" id="toast"></div>
-<div class="rank-up-toast" id="rankUpToast"></div>
+<div class="toast" id="rankUpToast" style="bottom:140px"></div>
 <div id="app"></div>
 
-<!-- PÓDIO DO MÊS -->
-<div class="podium-overlay" id="podiumOverlay">
-  <div class="confetti-wrap" id="confettiWrap"></div>
-  <div class="podium-wrap">
-    <div class="podium-title">🏆 Pódio do Mês!</div>
-    <div class="podium" id="podiumCols"></div>
-    <button class="clbtn" style="color:#fff;border-color:rgba(255,255,255,0.3);margin-top:8px" onclick="el('podiumOverlay').classList.remove('open')">Fechar</button>
-  </div>
-</div>
-
-<!-- BOTTOM BAR -->
-<div class="bottom-bar">
-  <button class="btn btn-d btn-s" onclick="confirmReset()" title="Reset mês">↺</button>
-  <button class="btn btn-hist" onclick="openHist()">📁</button>
-  <button class="btn btn-s" onclick="newDay()">Fechar dia</button>
-  <button class="btn btn-p" onclick="openWA()">📋 WhatsApp</button>
-</div>
-
-<!-- MODAL WHATSAPP -->
-<div class="modal-overlay" id="modal">
-  <div class="modal">
-    <div class="mhandle"></div>
-    <div class="mheader">
-      <span class="mtitle">Mensagem WhatsApp</span>
-      <span style="font-size:11px;color:var(--text3)" id="modal-date"></span>
-    </div>
-    <div class="mbody">
-      <div class="wabox" id="waText"></div>
-      <button class="cpbtn" onclick="copyWA()">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        Copiar para WhatsApp
-      </button>
-      <button class="clbtn" onclick="closeModal('modal')">Fechar</button>
+<!-- MODAL CONFIRMAR LIMPEZA -->
+<div class="clear-confirm-modal" id="modalClear">
+  <div class="clear-confirm-box">
+    <div class="clear-confirm-title">⚠️ Limpar registros?</div>
+    <div class="clear-confirm-msg" id="modalClearMsg">Esta ação vai apagar os dados deste módulo no mês atual. <strong>Não poderá ser desfeita.</strong></div>
+    <div class="clear-confirm-btns">
+      <button class="clear-btn-no" onclick="closeClearModal()">Cancelar</button>
+      <button class="clear-btn-yes" id="modalClearYes">Sim, limpar</button>
     </div>
   </div>
 </div>
@@ -429,61 +396,152 @@ _loadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js',
   <div class="modal">
     <div class="mhandle"></div>
     <div class="mheader">
-      <span class="mtitle">📁 Histórico</span>
+      <span class="mtitle">📅 Histórico Mensal</span>
+      <span style="font-size:11px;color:var(--text3)">meses anteriores</span>
     </div>
-    <div class="mbody" id="histBody">
-      <div class="empty-state"><div class="empty-state-icon">📂</div>Nenhum histórico ainda.</div>
-    </div>
-    <div style="padding:0 16px;margin-top:12px;">
+    <div class="mbody" id="histBody"></div>
+    <div style="padding:0 16px">
       <button class="clbtn" onclick="closeModal('modalHist')">Fechar</button>
     </div>
   </div>
 </div>
 
+<!-- MODAL AJUSTE RETROATIVO -->
+<div class="modal-overlay" id="modalAjuste">
+  <div class="modal">
+    <div class="mhandle"></div>
+    <div class="mheader">
+      <span class="mtitle">✏️ Lançar Ajuste</span>
+      <span id="ajuste_modulo_label" style="font-size:11px;color:var(--text3)">—</span>
+    </div>
+    <div class="mbody" style="padding:16px">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:12px;background:var(--surface2);padding:10px;border-radius:8px;line-height:1.5">
+        ℹ️ Se a data for <strong>hoje</strong>, substitui o valor atual.<br>
+        Se for <strong>data passada</strong>, você escolhe adicionar ou substituir.
+      </div>
+      <div class="form-row">
+        <div class="form-label required">Data da produção</div>
+        <input type="date" id="ajuste_data" title="Data correta da produção">
+      </div>
+      <div class="form-row" style="margin-top:10px">
+        <div class="form-label required">Valor</div>
+        <input type="text" id="ajuste_valor" placeholder="0" class="mono"
+          oninput="this.value=fmtVal(this.value)" title="Valor do ajuste">
+      </div>
+    </div>
+    <div style="padding:0 16px 16px">
+      <button class="clbtn" style="background:var(--accent);color:#fff;border:none"
+        onclick="confirmarAjuste()" title="Confirmar ajuste">✅ Confirmar Ajuste</button>
+      <button class="clbtn" style="margin-top:8px" onclick="closeModal('modalAjuste')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="bottom-bar">
+  <button class="btn btn-hist" onclick="openHist()" title="Ver histórico de meses anteriores">📂 Histórico</button>
+</div>
+
 <script>
 // ══════════════════════════════════════════════════
-// CONFIG — altere GERENTE_ID e GERENTE_NOME para cada gerente
+// IDENTIDADE DO GERENTE — alterar por arquivo
 // ══════════════════════════════════════════════════
-const GERENTE_ID   = 'sergio';          // identificador único (sem acentos/espaços)
-const GERENTE_NOME = 'Sérgio';          // nome exibido
+const GERENTE_ID   = 'sergio';
+const GERENTE_NOME = 'Sérgio';
+const SK           = 'safra_prod_' + GERENTE_ID;
 
-// ══════════════════════════════════════════════════
-// CONSTANTES
-// ══════════════════════════════════════════════════
-const SK = `safra_ger_${GERENTE_ID}_v1`;
-const today = new Date();
+const today    = new Date();
 const MONTH_KEY = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
-const AT_PROD = ['BS','ARV','Desconto','Outros'];
 
-const TABS_CFG = [
-  {id:'dash',     l:'🏆 Dashboard'},
-  {id:'tac',      l:'TAC'},
-  {id:'chemp',    l:'CHEMP'},
-  {id:'giro',     l:'Giro'},
-  {id:'ativos',   l:'Ativos'},
-  {id:'contas',   l:'Contas'},
-  {id:'consorcio',l:'Consórcio'},
-  {id:'collarkin',l:'Collarkin'},
-  {id:'captacao', l:'Captação'},
-  {id:'seguro',   l:'Seguro'},
-  {id:'viab',     l:'Viabiliz.'},
-  {id:'safrapay', l:'Safrapay'},
-  {id:'credito',  l:'Crédito'},
+// ── Configurações ──
+const AT_PROD    = ['BS','ARV','Desconto','Outros'];
+const TABS_CFG   = [
+  {id:'dash',      l:'📊 Dashboard'},
+  {id:'tac',       l:'TAC'},
+  {id:'chemp',     l:'CHEMP'},
+  {id:'giro',      l:'Giro de Carteira'},
+  {id:'ativos',    l:'Ativos'},
+  {id:'contas',    l:'Contas'},
+  {id:'consorcio', l:'Consórcio'},
+  {id:'collarkin', l:'Collarkin'},
+  {id:'captacao',  l:'Captação'},
+  {id:'seguro',    l:'Seguro'},
+  {id:'viab',      l:'Viabiliz.'},
+  {id:'safrapay',  l:'Safrapay'},
+  {id:'credito',   l:'Crédito BS'},
 ];
-
 const SIMPLES_CFG = [
-  {id:'contas',   title:'ABERTURA DE CONTA', prefix:'contas'},
-  {id:'consorcio',title:'CONSÓRCIO',          prefix:'consorcio'},
-  {id:'collarkin',title:'COLLARKIN',           prefix:'collarkin'},
-  {id:'captacao', title:'CAPTAÇÃO',            prefix:'captacao'},
-  {id:'seguro',   title:'SEGURO',              prefix:'seguro'},
+  {id:'consorcio', title:'CONSÓRCIO',  prefix:'consorcio'},
+  {id:'collarkin', title:'COLLARKIN',  prefix:'collarkin'},
+  {id:'captacao',  title:'CAPTAÇÃO',   prefix:'captacao'},
 ];
 
-// WA include defaults
-const WA_DEFAULTS = {
-  tac:1, chemp:1, giro:1, ativos:1, contas:1,
-  consorcio:1, collarkin:1, captacao:1, seguro:1, viab:1, safrapay:1, credito:1
-};
+// ══════════════════════════════════════════════════
+// FERIADOS RECIFE + BANCÁRIOS
+// ══════════════════════════════════════════════════
+function buildHolidays(year){
+  // Páscoa (algoritmo de Butcher)
+  function easter(y){
+    const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4;
+    const f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30;
+    const i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7;
+    const m=Math.floor((a+11*h+22*l)/451);
+    const month=Math.floor((h+l-7*m+114)/31),day=(h+l-7*m+114)%31+1;
+    return new Date(y,month-1,day);
+  }
+  const ea = easter(year);
+  const addDays = (d,n)=>{ const r=new Date(d); r.setDate(r.getDate()+n); return r; };
+  const key = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+  const holidays = new Set([
+    `${year}-01-01`, // Ano Novo
+    `${year}-01-06`, // Dia de Reis (Recife)
+    key(addDays(ea,-48)), // Carnaval segunda
+    key(addDays(ea,-47)), // Carnaval terça
+    key(addDays(ea,-2)),  // Sexta-Feira Santa
+    key(ea),              // Páscoa
+    key(addDays(ea,60)),  // Corpus Christi (bancários)
+    `${year}-03-12`, // Recife (fundação)
+    `${year}-04-21`, // Tiradentes
+    `${year}-05-01`, // Trabalho
+    `${year}-06-24`, // São João (Recife/bancários)
+    `${year}-09-07`, // Independência
+    `${year}-10-12`, // Nsa Sra Aparecida
+    `${year}-11-02`, // Finados
+    `${year}-11-15`, // Proclamação República
+    `${year}-11-20`, // Zumbi
+    `${year}-12-25`, // Natal
+  ]);
+  return holidays;
+}
+
+const HOLIDAYS = buildHolidays(today.getFullYear());
+
+function isBusinessDay(date){
+  const d = date instanceof Date ? date : new Date(date+'T00:00:00');
+  const dow = d.getDay();
+  if(dow === 0 || dow === 6) return false;
+  const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return !HOLIDAYS.has(key);
+}
+
+function businessDaysInMonth(year, month){
+  const days = [];
+  const last = new Date(year, month+1, 0).getDate();
+  for(let d=1; d<=last; d++){
+    const dt = new Date(year, month, d);
+    if(isBusinessDay(dt)) days.push(d);
+  }
+  return days;
+}
+
+function businessDaysUntilToday(){
+  const allDays = businessDaysInMonth(today.getFullYear(), today.getMonth());
+  return allDays.filter(d => d <= today.getDate()).length;
+}
+
+function totalBusinessDaysMonth(){
+  return businessDaysInMonth(today.getFullYear(), today.getMonth()).length;
+}
 
 // ══════════════════════════════════════════════════
 // STATE
@@ -494,25 +552,18 @@ function loadS(){
   try {
     const raw = JSON.parse(localStorage.getItem(SK)||'{}');
     S = raw[MONTH_KEY] || {};
-    // init wa defaults
-    Object.keys(WA_DEFAULTS).forEach(k=>{
-      if(S['wa_'+k]===undefined) S['wa_'+k]=WA_DEFAULTS[k];
-    });
   } catch(e){ S={}; }
 }
 
 function saveS(){
   try {
     const raw = JSON.parse(localStorage.getItem(SK)||'{}');
-    // keep history, replace current month
     raw[MONTH_KEY] = S;
     localStorage.setItem(SK, JSON.stringify(raw));
   } catch(e){}
 }
 
 const g  = k => S[k] !== undefined ? S[k] : '';
-// sv é definida abaixo no bloco Firebase com sincronização
-// versão local (sem Firebase) como fallback
 var sv = function(k,v){ S[k]=v; saveS(); };
 const el = id => document.getElementById(id);
 
@@ -525,81 +576,155 @@ function slug(x){
     .replace(/[óôõ]/g,'o').replace(/[úü]/g,'u').replace(/ç/g,'c')
     .replace(/[^a-z0-9]/g,'_');
 }
-
 function pn(k){
   const v = String(g(k)||'0').replace(/[^\d.,\-]/g,'');
-  const clean = v.replace(/\./g,'').replace(',','.');
-  return parseFloat(clean)||0;
+  return parseFloat(v.replace(/\./g,'').replace(',','.'))||0;
 }
-
-function fmt(n){
-  if(!n) return '';
-  return n.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:2});
+function pnRaw(v){
+  if(!v) return 0;
+  return parseFloat(String(v).replace(/[^\d.,\-]/g,'').replace(/\./g,'').replace(',','.'))||0;
 }
-
-function fmtVal(v){
-  const digits = v.replace(/\D/g,'');
-  if(!digits) return '';
-  return parseInt(digits,10).toLocaleString('pt-BR');
-}
-
-function getMes(base){
-  return pn(base+'_acc') + pn(base+'_dia') + pn(base+'_adj');
-}
-
+function fmt(n){ return n ? n.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:2}) : ''; }
+function fmtVal(v){ const d=v.replace(/\D/g,''); if(!d) return ''; return parseInt(d,10).toLocaleString('pt-BR'); }
+function getMes(base){ return pn(base+'_acc') + pn(base+'_dia') + pn(base+'_adj'); }
 function setC(id,v){ const e=el(id); if(e) e.value=v||''; }
+function showToast(msg){ const t=el('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2400); }
 
-function showToast(msg){
-  const t=el('toast'); t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2400);
+function toDateStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function daysDiff(dateStr,todayStr){ return Math.round((new Date(dateStr+'T00:00:00')-new Date(todayStr+'T00:00:00'))/(1000*60*60*24)); }
+function fmtDate(s){ if(!s) return '—'; const[y,m,d]=s.split('-'); return `${d}/${m}/${y}`; }
+function fmtStatus(s){
+  const map={analise_sgn:'Análise SGN',sgn_aprovado:'SGN aprovado',necessario_rebate:'Necessário rebate',
+    parado_especialista:'Parado c/ especialista',parado_gg:'Parado c/ GG',em_implantacao:'Em implantação',
+    ja_vopando:'Já vopando',poc_analise:'POC em análise',poc_aprovada:'POC aprovada',
+    aguardando_doc:'Aguardando documentação',sgn_analise:'SGN em análise',
+    assinatura:'Em assinatura de contrato',enviado_liberacao:'Enviado para liberação',liberado:'Liberado',outros:'Outros'};
+  return map[s]||s;
 }
 
 // ══════════════════════════════════════════════════
 // INPUT HANDLERS
 // ══════════════════════════════════════════════════
 function oI(k,v){ sv(k,v); recompute(); }
-
-function oIVal(k,elRef){
-  const formatted = fmtVal(elRef.value);
-  elRef.value = formatted;
-  sv(k, formatted);
-  recompute();
-}
-
+function oIVal(k,elRef){ const f=fmtVal(elRef.value); elRef.value=f; sv(k,f); recompute(); }
 function oISel(k,v){ sv(k,v); recompute(); }
 
 // ══════════════════════════════════════════════════
-// WA TOGGLE
+// RITMO E META DIÁRIA
 // ══════════════════════════════════════════════════
-function waToggle(section, checked){
-  sv('wa_'+section, checked?1:0);
+function calcRitmo(realizado, meta){
+  if(!meta || meta <= 0) return null;
+  const diasPassados = businessDaysUntilToday();
+  const diasTotal    = totalBusinessDaysMonth();
+  if(diasTotal === 0) return null;
+  const esperado = (meta / diasTotal) * diasPassados;
+  const ratio = esperado > 0 ? realizado / esperado : realizado > 0 ? 2 : 1;
+  return { ratio, esperado, diasPassados, diasTotal };
 }
 
-function waToggleUI(section){
-  return `<div class="wa-row">
-    <span class="wa-label">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.132.558 4.13 1.532 5.864L.072 23.928l6.196-1.623A11.944 11.944 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.794 9.794 0 01-5.003-1.374l-.36-.213-3.68.965.981-3.588-.234-.369A9.78 9.78 0 012.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
-      Incluir no WhatsApp
-    </span>
-    <label class="toggle-switch">
-      <input type="checkbox" id="wa_${section}" ${g('wa_'+section)?'checked':''} onchange="waToggle('${section}',this.checked)">
-      <span class="toggle-slider"></span>
-    </label>
+function ritmoBlock(prefix, realizado){
+  const meta = pn(prefix+'_meta');
+  if(!meta) return '';
+  const r = calcRitmo(realizado, meta);
+  if(!r) return '';
+  const diasRestantes = r.diasTotal - r.diasPassados;
+  const faltaMeta = Math.max(meta - realizado, 0);
+  const metaDiaria = diasRestantes > 0 ? faltaMeta / diasRestantes : faltaMeta;
+
+  let cls, lbl, msg;
+  if(r.ratio >= 1.1){ cls='acima'; lbl='📈 Acima do ritmo'; msg=`Você está adiantado! Continue assim.`; }
+  else if(r.ratio >= 0.9){ cls='no'; lbl='✅ No ritmo'; msg=`Produção alinhada com o ritmo esperado.`; }
+  else if(r.ratio >= 0.7){ cls='abaixo'; lbl='📉 Abaixo do ritmo'; msg=`Acelere para recuperar o terreno.`; }
+  else { cls='baixo'; lbl='🔴 Ritmo crítico'; msg=`Ritmo crítico — atenção urgente!`; }
+
+  return `<div class="ritmo-block">
+    <span class="ritmo-badge ${cls}">${lbl}</span>
+    <span class="ritmo-text">${msg} (${r.diasPassados}/${r.diasTotal} dias úteis)</span>
+  </div>
+  <div class="meta-diaria">Meta diária restante: <span>R$ ${fmt(metaDiaria)}</span> por dia útil (${diasRestantes} restantes)</div>`;
+}
+
+function ritmoBlockQtd(prefix, realizado){
+  const meta = pn(prefix+'_meta');
+  if(!meta) return '';
+  const r = calcRitmo(realizado, meta);
+  if(!r) return '';
+  const diasRestantes = r.diasTotal - r.diasPassados;
+  const faltaMeta = Math.max(meta - realizado, 0);
+  const metaDiaria = diasRestantes > 0 ? (faltaMeta / diasRestantes).toFixed(1) : faltaMeta;
+
+  let cls, lbl, msg;
+  if(r.ratio >= 1.1){ cls='acima'; lbl='📈 Acima do ritmo'; msg=`Ritmo excelente!`; }
+  else if(r.ratio >= 0.9){ cls='no'; lbl='✅ No ritmo'; msg=`Produção no ritmo esperado.`; }
+  else if(r.ratio >= 0.7){ cls='abaixo'; lbl='📉 Abaixo do ritmo'; msg=`Precisa acelerar.`; }
+  else { cls='baixo'; lbl='🔴 Ritmo crítico'; msg=`Ritmo crítico!`; }
+
+  return `<div class="ritmo-block">
+    <span class="ritmo-badge ${cls}">${lbl}</span>
+    <span class="ritmo-text">${msg} (${r.diasPassados}/${r.diasTotal} dias úteis)</span>
+  </div>
+  <div class="meta-diaria">Meta diária restante: <span>${metaDiaria}</span> por dia útil (${diasRestantes} restantes)</div>`;
+}
+
+// ══════════════════════════════════════════════════
+// HISTÓRICO DIÁRIO
+// ══════════════════════════════════════════════════
+function saveDailySnapshot(dateStr, values){
+  const key = 'daily_hist_' + MONTH_KEY;
+  let hist;
+  try { hist = JSON.parse(localStorage.getItem(SK+'_daily')||'{}'); } catch(e){ hist={}; }
+  if(!hist[dateStr]) hist[dateStr] = {};
+  Object.assign(hist[dateStr], values);
+  localStorage.setItem(SK+'_daily', JSON.stringify(hist));
+  // Sincroniza com Firebase
+  if(db){
+    db.ref(`agencia/boa_viagem/${MONTH_KEY}/gerentes/${GERENTE_ID}/daily_hist`).set(hist);
+  }
+}
+
+function getDailyHist(){
+  try { return JSON.parse(localStorage.getItem(SK+'_daily')||'{}'); } catch(e){ return {}; }
+}
+
+function renderDailyHist(moduleKey, fmtFn){
+  const hist = getDailyHist();
+  const todayStr = toDateStr(today);
+  const entries = Object.keys(hist)
+    .filter(d => d.startsWith(MONTH_KEY))
+    .sort();
+
+  if(entries.length === 0) return '';
+
+  let rows = '';
+  entries.forEach(dateStr => {
+    const val = hist[dateStr][moduleKey];
+    if(val === undefined || val === '' || val === null) return;
+    const [,, day] = dateStr.split('-');
+    const isToday = dateStr === todayStr;
+    const dayDate = new Date(dateStr+'T00:00:00');
+    const dayNames = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    rows += `<tr class="${isToday?'hoje':''}">
+      <td>${dayNames[dayDate.getDay()]} ${parseInt(day)}${isToday?' ◀ hoje':''}</td>
+      <td>${fmtFn ? fmtFn(val) : val}</td>
+    </tr>`;
+  });
+
+  if(!rows) return '';
+  return `<div class="daily-hist">
+    <div class="daily-hist-title">📈 Histórico do mês</div>
+    <table class="daily-table">
+      <thead><tr><th>Dia</th><th>Valor</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
   </div>`;
 }
 
 // ══════════════════════════════════════════════════
-// BUILD — HELPERS
+// BUILD HELPERS
 // ══════════════════════════════════════════════════
-function iHoje(id,n){
-  return `<input type="text" id="${id}" value="${g(id)}" placeholder="—" class="mono ${n?'n':'nm'}" oninput="oI('${id}',this.value)">`;
-}
-function iAdj(id,n){
-  return `<input type="text" id="${id}" value="${g(id)}" placeholder="0" class="adj mono ${n?'n':'nm'}" oninput="oI('${id}',this.value)">`;
-}
-function iCmp(id,n){
-  return `<input type="text" id="${id}" value="" placeholder="—" class="cmp mono ${n?'n':'nm'}" readonly>`;
-}
+function iHoje(id,n){ return `<input type="text" id="${id}" value="${g(id)}" placeholder="—" class="mono ${n?'n':'nm'}" oninput="oI('${id}',this.value)" title="Valor produzido hoje">`; }
+function iAdj(id,n){ return `<input type="text" id="${id}" value="${g(id)}" placeholder="0" class="adj mono ${n?'n':'nm'}" oninput="oI('${id}',this.value)" title="Ajuste manual de correção">`; }
+function iCmp(id,n){ return `<input type="text" id="${id}" value="" placeholder="—" class="cmp mono ${n?'n':'nm'}" readonly title="Total acumulado no mês">`; }
 function iInv(n){ return `<input type="text" class="inv mono ${n?'n':'nm'}" readonly>`; }
 
 function trio(base,narrow){
@@ -607,6 +732,18 @@ function trio(base,narrow){
     <div class="ic"><span class="cl">HOJE</span>${iHoje(base+'_dia',narrow)}</div>
     <div class="ic"><span class="cl o">AJUSTE</span>${iAdj(base+'_adj',narrow)}</div>
     <div class="ic"><span class="cl g">MÊS</span>${iCmp(base+'_mes',narrow)}</div>`;
+}
+function duoVal(base){
+  // Versão simplificada: só Hoje (valor R$) + Mês (calculado)
+  return `
+    <div class="ic"><span class="cl">HOJE</span><input id="${base}_dia" type="text" value="${g(base+'_dia')}" placeholder="0" class="mono" oninput="oIVal('${base}_dia',this);recompute()" title="Produção de hoje"></div>
+    <div class="ic"><span class="cl g">MÊS</span>${iCmp(base+'_mes',false)}</div>`;
+}
+function duoQtd(base){
+  // Versão simplificada: só Hoje (quantidade) + Mês (calculado)
+  return `
+    <div class="ic"><span class="cl">HOJE</span><input id="${base}_dia" type="text" value="${g(base+'_dia')}" placeholder="0" class="mono n" oninput="oI('${base}_dia',this.value);recompute()" title="Produção de hoje"></div>
+    <div class="ic"><span class="cl g">MÊS</span>${iCmp(base+'_mes',true)}</div>`;
 }
 function duoCmp(idD,idM,narrow){
   return `
@@ -619,33 +756,24 @@ function mkRow(label,content,t,m){
 }
 function lgd(){
   return `<div class="legend">
-    <div class="legend-item"><div class="dot g"></div><span>MÊS = dias fechados + hoje + ajuste</span></div>
-    <div class="legend-item"><div class="dot o"></div><span>AJUSTE = correção manual</span></div>
+    <div class="legend-item"><div class="dot g"></div><span>MÊS = acumulado + hoje</span></div>
+    <div class="legend-item" style="color:var(--text3);font-size:10px">Use ✏️ Ajuste para corrigir dias anteriores</div>
   </div>`;
 }
-
 function obsBlock(prefix){
-  const key = prefix+'_obs';
-  const val = g(key)||'';
-  return `
-  <button class="obs-toggle" onclick="toggleObs('${prefix}')">
+  const key=prefix+'_obs', val=g(key)||'';
+  return `<button class="obs-toggle" onclick="toggleObs('${prefix}')" title="Adicionar observação livre">
     ✏️ <span id="${prefix}_obs_lbl">Observação${val?': '+val.substring(0,30)+(val.length>30?'…':''):''}</span>
   </button>
   <div class="obs-body ${val?'open':''}" id="${prefix}_obs_body">
     <textarea id="${key}" placeholder="Observação livre…" oninput="oI('${key}',this.value)">${val}</textarea>
   </div>`;
 }
-
-function toggleObs(prefix){
-  const body = el(prefix+'_obs_body');
-  body.classList.toggle('open');
-}
-
+function toggleObs(prefix){ el(prefix+'_obs_body').classList.toggle('open'); }
 function metaBlock(prefix){
   const metaVal = pn(prefix+'_meta');
   const hasMeta = !!metaVal;
-  return `
-  <div class="meta-section" id="${prefix}_meta_block">
+  return `<div class="meta-section" id="${prefix}_meta_block">
     <div class="meta-row">
       <span class="meta-lbl">🎯 Meta do mês</span>
       <span class="meta-pct" id="${prefix}_meta_pct"></span>
@@ -657,36 +785,114 @@ function metaBlock(prefix){
       }
     </div>
     <div class="progress-bar"><div class="progress-fill" id="${prefix}_meta_bar" style="width:0%"></div></div>
+    <div id="${prefix}_meta_gap" style="margin-top:6px;font-size:11px;color:var(--text2)"></div>
   </div>`;
 }
 
-function updateMeta(prefix){
+function updateMeta(prefix, override){
   const metaVal = pn(prefix+'_meta');
-  if(!metaVal) {
-    const bar = el(prefix+'_meta_bar');
-    const pct = el(prefix+'_meta_pct');
-    if(bar) bar.style.width='0%';
-    if(pct) pct.textContent='';
-    return;
-  }
-  // get current mês value
-  let mesVal = 0;
-  if(prefix==='ativos'){
-    AT_PROD.forEach(p=>{ mesVal+=getMes(`at_${slug(p)}`); });
-  } else if(prefix==='giro'){
-    mesVal = getMes('giro');
-  } else {
-    mesVal = getMes(prefix);
-  }
-  const pctNum = Math.min((mesVal/metaVal)*100, 150);
+  if(!metaVal){ const bar=el(prefix+'_meta_bar'); const pct=el(prefix+'_meta_pct'); if(bar)bar.style.width='0%'; if(pct)pct.textContent=''; return; }
+  let mesVal = override !== undefined ? override : getMes(prefix);
+  const pctNum = Math.min((mesVal/metaVal)*100,150);
   const pctReal = (mesVal/metaVal)*100;
-  const bar = el(prefix+'_meta_bar');
-  const pctEl = el(prefix+'_meta_pct');
-  if(bar){
-    bar.style.width = Math.min(pctNum,100)+'%';
-    bar.className = 'progress-fill' + (pctReal>=100?' over':pctReal<50?' warn':'');
+  const bar=el(prefix+'_meta_bar'); const pctEl=el(prefix+'_meta_pct');
+  if(bar){ bar.style.width=Math.min(pctNum,100)+'%'; bar.className='progress-fill'+(pctReal>=100?' over':pctReal<50?' warn':''); }
+  if(pctEl) pctEl.textContent=pctReal.toFixed(1)+'%';
+  // GAP
+  const gapEl=el(prefix+'_meta_gap');
+  if(gapEl){
+    const gap=metaVal-mesVal;
+    if(gap>0) gapEl.innerHTML=`📊 GAP: <strong style="color:var(--orange)">${fmt(gap)}</strong> para atingir a meta`;
+    else gapEl.innerHTML=`<span style="color:var(--green);font-weight:700">✅ Meta atingida! Superou em ${fmt(Math.abs(gap))}</span>`;
   }
-  if(pctEl) pctEl.textContent = pctReal.toFixed(1)+'%';
+}
+
+// ══════════════════════════════════════════════════
+// RANKING ANÔNIMO POR MÓDULO
+// ══════════════════════════════════════════════════
+let RANK_DATA = {};
+const MGR_IDS = ['bruno','camyla','julio','kaio','roberta','sergio','thais','wheldson'];
+
+function getRankingFor(valFn){
+  return MGR_IDS.map(gid=>({gid, val: gid===GERENTE_ID ? valFn('_self') : valFn(gid)}))
+    .sort((a,b)=>b.val-a.val);
+}
+
+function getGerVal(gid, keys){
+  if(gid === '_self'){
+    if(Array.isArray(keys)) return keys.reduce((s,k)=>s+getMes(k),0);
+    return getMes(keys);
+  }
+  const d = RANK_DATA[gid];
+  if(!d) return 0;
+  if(Array.isArray(keys)){
+    return keys.reduce((s,k)=>{
+      const acc=parseFloat(String(d[k+'_acc']||'0').replace(/\./g,'').replace(',','.'))||0;
+      const dia=parseFloat(String(d[k+'_dia']||'0').replace(/\./g,'').replace(',','.'))||0;
+      const adj=parseFloat(String(d[k+'_adj']||'0').replace(/\./g,'').replace(',','.'))||0;
+      return s+acc+dia+adj;
+    },0);
+  }
+  const acc=parseFloat(String(d[keys+'_acc']||'0').replace(/\./g,'').replace(',','.'))||0;
+  const dia=parseFloat(String(d[keys+'_dia']||'0').replace(/\./g,'').replace(',','.'))||0;
+  const adj=parseFloat(String(d[keys+'_adj']||'0').replace(/\./g,'').replace(',','.'))||0;
+  return acc+dia+adj;
+}
+
+function buildRankingCard(title, rankingArr, fmtFn){
+  const myPos  = rankingArr.findIndex(r => r.gid === GERENTE_ID);
+  const myRank = myPos + 1;
+  const myVal  = myPos >= 0 ? rankingArr[myPos].val : 0;
+  const topVal = rankingArr[0]?.val || 0;
+  const gap    = topVal - myVal;
+  const isFirst = myRank === 1;
+
+  const medalIcon = myRank===1?'🥇':myRank===2?'🥈':myRank===3?'🥉':'';
+  const pct = topVal > 0 ? Math.round((myVal/topVal)*100) : 0;
+
+  let h = `<div class="card" style="margin-bottom:12px">
+    <div class="card-header"><span class="card-title">${title}</span></div>
+    <div style="padding:12px 14px">`;
+
+  // Minha posição
+  h += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+    <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--accent);line-height:1">${medalIcon||myRank+'º'}</div>
+    <div style="flex:1">
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Sua posição</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;color:var(--green)">${fmtFn(myVal)}</div>
+    </div>
+  </div>`;
+
+  // Barra de progresso
+  h += `<div style="margin-bottom:8px">
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:4px">
+      <span>Você</span><span>${pct}% do 1º lugar</span>
+    </div>
+    <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+      <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--green),#4caf7d);border-radius:3px;transition:width 0.6s ease"></div>
+    </div>
+  </div>`;
+
+  // Gap e 1º lugar (anônimo)
+  if(!isFirst){
+    h += `<div style="background:var(--surface2);border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:10px;color:var(--text3)">🥇 1º lugar (colega)</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700">${fmtFn(topVal)}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:10px;color:var(--text3)">Falta para liderar</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--orange)">${fmtFn(gap)}</div>
+      </div>
+    </div>`;
+  } else {
+    h += `<div style="background:var(--green-bg);border-radius:8px;padding:8px 12px;text-align:center;color:var(--green);font-weight:700;font-size:13px">
+      🏆 Você está liderando! Mantenha o ritmo!
+    </div>`;
+  }
+
+  h += `</div></div>`;
+  return h;
 }
 
 // ══════════════════════════════════════════════════
@@ -701,89 +907,373 @@ function buildAll(){
     `<div class="section ${i===0?'active':''}" id="sec-${t.id}"></div>`
   ).join('');
   bDash(); bTAC(); bCHEMP(); bGiro(); bAtivos();
+  bContas();
   SIMPLES_CFG.forEach(sim=>bSimple(sim));
-  bViab(); bSafrapay(); bCredito();
+  bSeguro(); bViab(); bSafrapay(); bCredito();
+  checkInactivity();
 }
 
-// TAC
+// ── TAC ──
 function bTAC(){
+  const mesVal = getMes('tac');
+  const hist = renderDailyHist('tac_dia', v => `R$ ${fmtVal(String(v))}`);
   let h=`<div class="card">
     <div class="card-header"><span class="card-title">TAC</span></div>
     ${lgd()}<div class="card-body">`;
-  h+=mkRow('Hoje / Ajuste / Mês', trio('tac',false), false, true);
-  h+=`</div>${metaBlock('tac')}${obsBlock('tac')}${waToggleUI('tac')}</div>`;
+  h+=mkRow('Hoje / Mês', duoVal('tac'), false, true);
+  h+=`</div>${metaBlock('tac')}${ritmoBlock('tac', mesVal)}${hist}${obsBlock('tac')}</div>`;
+  h+=`<button class="btn-ajuste" onclick="openAjuste('tac','TAC')" title="Lançar ajuste para data específica">✏️ Lançar Ajuste</button>`;
+  h+=`<button class="section-clear-btn" onclick="openClearModal('tac','TAC',()=>clearModule('tac'))" title="Apagar todos os registros de TAC do mês">🗑️ Limpar registros de TAC</button>`;
   el('sec-tac').innerHTML=h;
 }
 
-// CHEMP
+// ── CHEMP ──
 function bCHEMP(){
-  el('sec-chemp').innerHTML=`
-  <div class="card">
+  el('sec-chemp').innerHTML=`<div class="card">
     <div class="card-header"><span class="card-title">CHEMP</span></div>
     <div class="chemp-grid">
       <div class="cc"><div class="cc-lbl">Saldo Mês Anterior</div>
-        <input id="chemp_ant" type="text" value="${g('chemp_ant')}" oninput="oIVal('chemp_ant',this)"></div>
+        <input id="chemp_ant" type="text" value="${g('chemp_ant')}" oninput="oIVal('chemp_ant',this)" title="Saldo do mês anterior"></div>
       <div class="cc"><div class="cc-lbl">Saldo Dia Atual</div>
-        <input id="chemp_dia" type="text" value="${g('chemp_dia')}" oninput="oIVal('chemp_dia',this)"></div>
+        <input id="chemp_dia" type="text" value="${g('chemp_dia')}" oninput="oIVal('chemp_dia',this)" title="Saldo atual do CHEMP"></div>
       <div class="cc"><div class="cc-lbl">Saldo Incremento (Δ)</div>
-        <input id="chemp_delta" type="text" value="" class="cmp" readonly></div>
+        <input id="chemp_delta" type="text" value="" class="cmp" readonly title="Variação calculada automaticamente"></div>
       <div class="cc"><div class="cc-lbl">Novos Limites Contratados</div>
-        <input id="chemp_novos" type="text" value="${g('chemp_novos')}" oninput="oIVal('chemp_novos',this)"></div>
+        <input id="chemp_novos" type="text" value="${g('chemp_novos')}" oninput="oIVal('chemp_novos',this)" title="Novos limites do CHEMP"></div>
     </div>
-    ${obsBlock('chemp')}${waToggleUI('chemp')}
-  </div>`;
+    ${obsBlock('chemp')}
+  </div>
+  <button class="section-clear-btn" onclick="openClearModal('chemp','CHEMP',()=>clearModule('chemp'))" title="Apagar todos os registros de CHEMP do mês">🗑️ Limpar registros de CHEMP</button>`;
 }
 
-// GIRO
+// ── GIRO ──
 function bGiro(){
+  const mesVal = getMes('giro');
+  const hist = renderDailyHist('giro_dia', v => String(v));
   let h=`<div class="card">
     <div class="card-header"><span class="card-title">GIRO DE CARTEIRA</span><span class="card-subtitle">quantidade</span></div>
     ${lgd()}<div class="card-body">`;
-  h+=mkRow('Hoje / Ajuste / Mês', trio('giro',true), false, true);
-  h+=`</div>${metaBlock('giro')}${obsBlock('giro')}${waToggleUI('giro')}</div>`;
+  h+=mkRow('Hoje / Mês', duoQtd('giro'), false, true);
+  h+=`</div>${metaBlock('giro')}${ritmoBlockQtd('giro', mesVal)}${hist}${obsBlock('giro')}</div>`;
+  h+=`<button class="btn-ajuste" onclick="openAjuste('giro','Giro de Carteira')" title="Lançar ajuste para data específica">✏️ Lançar Ajuste</button>`;
+  h+=`<button class="section-clear-btn" onclick="openClearModal('giro','Giro de Carteira',()=>clearModule('giro'))" title="Apagar todos os registros de Giro de Carteira do mês">🗑️ Limpar registros de Giro</button>`;
   el('sec-giro').innerHTML=h;
 }
 
-// ATIVOS
+// ── ATIVOS ──
 function bAtivos(){
-  let h=`<div class="card">
-    <div class="card-header"><span class="card-title">ATIVOS</span></div>
-    ${lgd()}<div class="card-body">`;
-  AT_PROD.forEach(p=>{ h+=mkRow(p, trio(`at_${slug(p)}`,false), false, false); });
-  h+=mkRow('Total', duoCmp('at_dia_total','at_mes_total',false), true);
-  h+=`</div>${metaBlock('ativos')}${obsBlock('ativos')}${waToggleUI('ativos')}</div>`;
-  el('sec-ativos').innerHTML=h;
+  // Ativos = lógica de saldo (igual CHEMP): saldo anterior + saldo atual → delta calculado
+  // Sem acumulação diária — é posição de saldo
+  const deltaTotal = AT_PROD.reduce((s,p)=>{
+    const pid = slug(p);
+    const ant = pnRaw(g(`at_${pid}_ant`));
+    const atu = pnRaw(g(`at_${pid}_atu`));
+    return s + (atu - ant);
+  }, 0);
+
+  let h = `<div class="card">
+    <div class="card-header"><span class="card-title">ATIVOS</span><span class="card-subtitle">posição de saldo</span></div>
+    <div style="padding:0 14px 8px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:2px">
+        <span style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.8px">Produto</span>
+        <span style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.8px;text-align:right">Saldo Ant.</span>
+        <span style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.8px;text-align:right">Saldo Atual</span>
+      </div>`;
+
+  AT_PROD.forEach(p => {
+    const pid = slug(p);
+    const antKey = `at_${pid}_ant`;
+    const atuKey = `at_${pid}_atu`;
+    const ant = pnRaw(g(antKey));
+    const atu = pnRaw(g(atuKey));
+    const delta = atu - ant;
+    const deltaColor = delta > 0 ? 'var(--green)' : delta < 0 ? 'var(--red)' : 'var(--text3)';
+    const deltaSinal = delta > 0 ? '+' : '';
+
+    h += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:8px 0;border-bottom:1px solid var(--border);align-items:center">
+      <div>
+        <div style="font-size:12px;font-weight:600">${p}</div>
+        ${delta !== 0 ? `<div style="font-size:10px;color:${deltaColor};font-weight:700">Δ ${deltaSinal}${fmt(delta)}</div>` : ''}
+      </div>
+      <div style="text-align:right">
+        <input type="text" value="${g(antKey)}" placeholder="0" class="mono" style="text-align:right;width:90px"
+          oninput="oIVal('${antKey}',this);recompute()" title="Saldo do mês anterior — ${p}">
+      </div>
+      <div style="text-align:right">
+        <input type="text" value="${g(atuKey)}" placeholder="0" class="mono" style="text-align:right;width:90px"
+          oninput="oIVal('${atuKey}',this);recompute()" title="Saldo atual — ${p}">
+      </div>
+    </div>`;
+  });
+
+  // Total
+  const antTotalVal = AT_PROD.reduce((s,p)=>s+pnRaw(g(`at_${slug(p)}_ant`)),0);
+  const atuTotalVal = AT_PROD.reduce((s,p)=>s+pnRaw(g(`at_${slug(p)}_atu`)),0);
+  const deltaTotalVal = atuTotalVal - antTotalVal;
+  const dtColor = deltaTotalVal > 0 ? 'var(--green)' : deltaTotalVal < 0 ? 'var(--red)' : 'var(--text2)';
+  const dtSinal = deltaTotalVal > 0 ? '+' : '';
+
+  h += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:10px 0;background:var(--surface2);border-radius:0 0 8px 8px;margin:0 -14px;padding-left:14px;padding-right:14px">
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--accent)">TOTAL</div>
+      <div style="font-size:10px;font-weight:700;color:${dtColor}">Δ ${dtSinal}R$ ${fmt(Math.abs(deltaTotalVal))}</div>
+    </div>
+    <div style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--text2)">R$ ${fmt(antTotalVal)}</div>
+    <div style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;color:var(--accent)">R$ ${fmt(atuTotalVal)}</div>
+  </div>
+  </div>`;
+
+  // Meta e ritmo baseados no delta (incremento)
+  const metaVal = pn('ativos_meta');
+  if(metaVal){
+    const pct = metaVal > 0 ? Math.min((deltaTotalVal/metaVal)*100, 100) : 0;
+    const gapVal = Math.max(metaVal - deltaTotalVal, 0);
+    h += `<div class="card" style="margin-top:8px">
+      <div class="meta-section" style="border:none">
+        <div class="meta-row">
+          <span class="meta-lbl">🎯 Meta (incremento)</span>
+          <span class="meta-pct" style="color:${pct>=100?'var(--green)':pct>=70?'var(--orange)':'var(--red)'}">${pct.toFixed(1)}%</span>
+        </div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px">R$ ${fmt(metaVal)}</div>
+        <div class="progress-bar"><div class="progress-fill ${pct>=100?'over':pct<50?'warn':''}" style="width:${pct}%"></div></div>
+        ${gapVal > 0 ? `<div style="margin-top:6px;font-size:11px;color:var(--text2)">📊 GAP: <strong style="color:var(--orange)">R$ ${fmt(gapVal)}</strong> para atingir a meta</div>` : `<div style="margin-top:6px;font-size:11px;color:var(--green);font-weight:700">✅ Meta atingida!</div>`}
+      </div>
+    </div>`;
+  }
+
+  h += obsBlock('ativos');
+  h += `</div>`;
+  h += `<button class="section-clear-btn" onclick="openClearModal('ativos','Ativos',()=>clearModule('at'))" title="Apagar todos os registros de Ativos do mês">🗑️ Limpar registros de Ativos</button>`;
+  el('sec-ativos').innerHTML = h;
 }
 
-// SIMPLES
+// ── CONTAS ──
+function bContas(){
+  const amarela = pn('contas_amarela_dia') + pn('contas_amarela_acc');
+  const verde   = pn('contas_verde_dia') + pn('contas_verde_acc');
+  const outros  = pn('contas_outros_dia') + pn('contas_outros_acc');
+  const total   = amarela + verde + outros;
+
+  const hist = renderDailyHist('contas_total_dia', v => String(v));
+
+  let h = `<div class="card">
+    <div class="card-header"><span class="card-title">CONTAS</span><span class="card-subtitle">abertura por tipo</span></div>
+    ${lgd()}
+    <div style="padding:12px 14px;border-bottom:1px solid var(--border)">
+      <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.8px">Abertura Hoje por Tipo</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div>
+          <div style="font-size:9px;color:var(--orange);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">🟡 Amarela</div>
+          <input type="text" id="contas_amarela_dia" value="${g('contas_amarela_dia')}" placeholder="0" class="mono n" oninput="oI('contas_amarela_dia',this.value);recompute()" title="Contas amarelas abertas hoje">
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">🟢 Verde</div>
+          <input type="text" id="contas_verde_dia" value="${g('contas_verde_dia')}" placeholder="0" class="mono n" oninput="oI('contas_verde_dia',this.value);recompute()" title="Contas verdes abertas hoje">
+        </div>
+        <div>
+          <div style="font-size:9px;color:var(--blue);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">🔵 Outros</div>
+          <input type="text" id="contas_outros_dia" value="${g('contas_outros_dia')}" placeholder="0" class="mono n" oninput="oI('contas_outros_dia',this.value);recompute()" title="Outras contas abertas hoje">
+        </div>
+      </div>
+    </div>
+    <div style="padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface2)">
+      <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Acumulado no Mês</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+        <div style="text-align:center;background:rgba(196,107,0,0.08);padding:8px;border-radius:8px;border:1px solid rgba(196,107,0,0.2)">
+          <div style="font-size:9px;color:var(--orange);font-weight:700;margin-bottom:4px">🟡 AMARELA</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:800;color:var(--orange)" id="contas_amarela_total">${Math.round(amarela)||'0'}</div>
+        </div>
+        <div style="text-align:center;background:rgba(30,107,62,0.08);padding:8px;border-radius:8px;border:1px solid rgba(30,107,62,0.2)">
+          <div style="font-size:9px;color:var(--green);font-weight:700;margin-bottom:4px">🟢 VERDE</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:800;color:var(--green)" id="contas_verde_total">${Math.round(verde)||'0'}</div>
+        </div>
+        <div style="text-align:center;background:rgba(26,74,122,0.08);padding:8px;border-radius:8px;border:1px solid rgba(26,74,122,0.2)">
+          <div style="font-size:9px;color:var(--blue);font-weight:700;margin-bottom:4px">🔵 OUTROS</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:800;color:var(--blue)" id="contas_outros_total">${Math.round(outros)||'0'}</div>
+        </div>
+      </div>
+      <div class="contas-total-row">
+        <span class="contas-total-lbl">✅ Total Geral de Contas</span>
+        <span class="contas-total-val" id="contas_total_geral">${Math.round(total)||'0'}</span>
+      </div>
+    </div>
+    ${metaBlock('contas')}${ritmoBlockQtd('contas', total)}${hist}${obsBlock('contas')}
+  </div>`;
+  h+=`<button class="btn-ajuste" onclick="openAjusteContas()" title="Lançar ajuste de contas para data específica">✏️ Lançar Ajuste de Contas</button>`;
+  h+=`<button class="section-clear-btn" onclick="openClearModal('contas','Contas',()=>clearModule('contas'))" title="Apagar todos os registros de Contas do mês">🗑️ Limpar registros de Contas</button>`;
+  el('sec-contas').innerHTML = h;
+}
+
+// ── SIMPLES ──
 function bSimple({id,title,prefix}){
+  const mesVal = getMes(prefix);
+  const hist = renderDailyHist(prefix+'_dia', v => `R$ ${fmtVal(String(v))}`);
   let h=`<div class="card">
     <div class="card-header"><span class="card-title">${title}</span></div>
     ${lgd()}<div class="card-body">`;
-  h+=mkRow('Hoje / Ajuste / Mês', trio(prefix,true), false, true);
-  h+=`</div>${metaBlock(prefix)}${obsBlock(prefix)}${waToggleUI(id)}</div>`;
+  h+=mkRow('Hoje / Mês', duoVal(prefix), false, true);
+  h+=`</div>${metaBlock(prefix)}${ritmoBlock(prefix, mesVal)}${hist}${obsBlock(prefix)}</div>`;
+  h+=`<button class="btn-ajuste" onclick="openAjuste('${prefix}','${title}')" title="Lançar ajuste para data específica">✏️ Lançar Ajuste</button>`;
+  h+=`<button class="section-clear-btn" onclick="openClearModal('${prefix}','${title}',()=>clearModule('${prefix}'))" title="Apagar todos os registros de ${title} do mês">🗑️ Limpar registros de ${title}</button>`;
   el(`sec-${id}`).innerHTML=h;
+}
+
+// ══════════════════════════════════════════════════
+// SEGURO — reformulado
+// ══════════════════════════════════════════════════
+function getSeguroList(){ return g('seguro_list') ? JSON.parse(g('seguro_list')) : []; }
+function saveSeguroList(list){ sv('seguro_list', JSON.stringify(list)); }
+
+const SEGURO_TIPOS = [
+  'Seguro Prestamista','Seguro Vida Individual','Seguro Patrimonial',
+  'Seguro Capital Global','Seguro Residencial','Seguro Perda de Receita'
+];
+
+function bSeguro(){ renderSeguro(); }
+
+function renderSeguro(){
+  const list = getSeguroList();
+  const totalValor = list.reduce((s,v)=>s+parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0, 0);
+  const metaVal = pn('seguro_meta');
+
+  let h = `<div class="card">
+    <div class="card-header"><span class="card-title">SEGURO</span><span class="card-count">${list.length} registro(s)</span></div>`;
+
+  if(list.length === 0){
+    h += `<div class="empty-state"><div class="empty-state-icon">🛡️</div>Nenhum seguro registrado.</div>`;
+  } else {
+    list.forEach((v,i)=>{
+      const editing = g('seguro_editing') == i;
+      if(editing){
+        h += `<div class="seguro-item" style="flex-direction:column;gap:8px;padding:12px 14px;background:var(--surface2)">
+          <div class="form-row"><div class="form-label required">Tipo</div>
+            <select id="seguro_edit_tipo_${i}" title="Tipo de seguro">
+              <option value="">Selecione…</option>
+              ${SEGURO_TIPOS.map(t=>`<option value="${t}" ${v.tipo===t?'selected':''}>${t}</option>`).join('')}
+            </select></div>
+          <div class="form-row"><div class="form-label required">Valor (R$)</div>
+            <input type="text" id="seguro_edit_valor_${i}" value="${v.valor||''}" class="mono" oninput="this.value=fmtVal(this.value)" title="Valor do seguro"></div>
+          <div class="form-row"><div class="form-label">Data</div>
+            <input type="date" id="seguro_edit_data_${i}" value="${v.data||toDateStr(today)}" title="Data do seguro"></div>
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <button style="flex:1;padding:8px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer" onclick="saveSeguroEdit(${i})" title="Salvar edição">✅ Salvar</button>
+            <button style="padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:12px;cursor:pointer" onclick="cancelSeguroEdit()" title="Cancelar edição">✕ Cancelar</button>
+          </div>
+        </div>`;
+      } else {
+        h += `<div class="seguro-item">
+          <div style="flex:1">
+            <div class="seguro-tipo">${v.tipo||'—'}</div>
+            <div class="seguro-data">${v.data ? fmtDate(v.data) : '—'}</div>
+          </div>
+          <div class="seguro-val">R$ ${fmtVal(String(v.valor||'0'))}</div>
+          <button class="btn-remove-sm" onclick="editSeguro(${i})" title="Editar este seguro" style="background:var(--blue-bg);color:var(--blue);margin-right:4px">✏️</button>
+          <button class="btn-remove-sm" onclick="removeSeguro(${i})" title="Remover registro">✕</button>
+        </div>`;
+      }
+    });
+    h += `<div class="row tr"><span class="lbl t">Total de Seguros</span><span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--green);padding:4px 14px">R$ ${fmt(totalValor)}</span></div>`;
+  }
+
+  h += `</div>`;
+
+  // Form novo seguro
+  h += `<div class="card">
+    <div class="card-header light"><span class="card-title">+ Registrar Seguro</span></div>
+    <div style="padding:12px 14px">
+      <div class="form-row">
+        <div class="form-label required">Tipo de Seguro</div>
+        <select id="seguro_new_tipo" title="Selecione o tipo de seguro">
+          <option value="">Selecione…</option>
+          ${SEGURO_TIPOS.map(t=>`<option value="${t}">${t}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-row">
+        <div class="form-label required">Valor (R$)</div>
+        <input type="text" id="seguro_new_valor" placeholder="0" class="mono" oninput="this.value=fmtVal(this.value)" title="Valor do prêmio do seguro">
+      </div>
+      <div class="form-row">
+        <div class="form-label">Data</div>
+        <input type="date" id="seguro_new_data" value="${toDateStr(today)}" title="Data do registro">
+      </div>
+      <button style="width:100%;margin-top:8px;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer" onclick="addSeguro()" title="Adicionar seguro à lista">+ Adicionar Seguro</button>
+    </div>
+  </div>`;
+
+  if(metaVal){
+    h += `<div class="card"><div class="meta-section" style="border:none">
+      <div class="meta-row"><span class="meta-lbl">🎯 Meta do mês</span><span class="meta-pct" id="seguro_meta_pct_ext">${((totalValor/metaVal)*100).toFixed(1)}%</span></div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px">${fmt(metaVal)}</div>
+      <div class="progress-bar"><div class="progress-fill ${totalValor>=metaVal?'over':totalValor/metaVal<0.5?'warn':''}" style="width:${Math.min((totalValor/metaVal)*100,100)}%"></div></div>
+    </div>
+    ${ritmoBlock('seguro', totalValor)}
+    </div>`;
+  }
+
+  h += obsBlock('seguro');
+  h += `<button class="section-clear-btn" onclick="openClearModal('seguro','Seguros',()=>clearModule('seguro','seguro_list'))" title="Apagar todos os registros de Seguros do mês">🗑️ Limpar registros de Seguros</button>`;
+  el('sec-seguro').innerHTML = h;
+}
+
+function addSeguro(){
+  const tipo = el('seguro_new_tipo')?.value;
+  const valor = el('seguro_new_valor')?.value;
+  const data = el('seguro_new_data')?.value;
+  if(!tipo){ showToast('⚠️ Selecione o tipo de seguro'); return; }
+  if(!valor){ showToast('⚠️ Informe o valor'); return; }
+  const list = getSeguroList();
+  list.push({ tipo, valor, data: data || toDateStr(today), ts: new Date().toISOString() });
+  saveSeguroList(list);
+  renderSeguro();
+  showToast('Seguro adicionado ✓');
+}
+
+function removeSeguro(i){
+  if(!confirm(`Remover este registro de seguro?`)) return;
+  const list = getSeguroList();
+  list.splice(i,1);
+  saveSeguroList(list);
+  sv('seguro_editing','');
+  renderSeguro();
+  showToast('Removido ✓');
+}
+
+function editSeguro(i){
+  sv('seguro_editing', String(i));
+  renderSeguro();
+}
+
+function cancelSeguroEdit(){
+  sv('seguro_editing','');
+  renderSeguro();
+}
+
+function saveSeguroEdit(i){
+  const tipo  = el(`seguro_edit_tipo_${i}`)?.value;
+  const valor = el(`seguro_edit_valor_${i}`)?.value;
+  const data  = el(`seguro_edit_data_${i}`)?.value;
+  if(!tipo || !valor){ showToast('Preencha tipo e valor','w'); return; }
+  const list = getSeguroList();
+  list[i] = { ...list[i], tipo, valor, data };
+  saveSeguroList(list);
+  sv('seguro_editing','');
+  renderSeguro();
+  showToast('Seguro atualizado ✓');
 }
 
 // ══════════════════════════════════════════════════
 // VIABILIZADOS
 // ══════════════════════════════════════════════════
-function bViab(){
-  renderViab();
-}
-
-function getViabList(){
-  return g('viab_list') ? JSON.parse(g('viab_list')) : [];
-}
-function saveViabList(list){
-  sv('viab_list', JSON.stringify(list));
-}
+function bViab(){ renderViab(); }
+function getViabList(){ return g('viab_list') ? JSON.parse(g('viab_list')) : []; }
+function saveViabList(list){ sv('viab_list', JSON.stringify(list)); }
 
 function renderViab(){
   const list = getViabList();
   const pipes = list.filter(x=>x.tipo==='pipe').length;
   const prods = list.filter(x=>x.tipo==='prod').length;
   const today_str = toDateStr(today);
+  const metaVal = pn('viab_meta');
 
   let alerts = '';
   list.forEach(v=>{
@@ -801,83 +1291,76 @@ function renderViab(){
       <span class="card-count">🔵 ${pipes} pipe · ✅ ${prods} prod</span>
     </div>`;
   if(alerts) h+=alerts;
+
   if(list.length===0){
     h+=`<div class="empty-state"><div class="empty-state-icon">👥</div>Nenhum cliente adicionado.</div>`;
   } else {
-    list.forEach((v,i)=>{
-      h+=renderViabCard(v,i);
-    });
+    list.forEach((v,i)=>{ h+=renderViabCard(v,i); });
   }
+
+  if(metaVal){
+    const pctViab = metaVal > 0 ? Math.min((prods/metaVal)*100,100) : 0;
+    const gapViab = Math.max(metaVal - prods, 0);
+    h+=`<div class="meta-section">
+      <div class="meta-row"><span class="meta-lbl">🎯 Meta: ${metaVal} produções</span><span class="meta-pct ${prods>=metaVal?'':prods/metaVal<0.5?'warn':''}">${pctViab.toFixed(1)}%</span></div>
+      <div class="progress-bar"><div class="progress-fill ${prods>=metaVal?'over':prods/metaVal<0.5?'warn':''}" style="width:${pctViab}%"></div></div>
+      ${gapViab>0
+        ? `<div style="margin-top:6px;font-size:11px;color:var(--text2)">📊 GAP: <strong style="color:var(--orange)">${gapViab} produção(ões)</strong> para atingir a meta</div>`
+        : `<div style="margin-top:6px;font-size:11px;color:var(--green);font-weight:700">✅ Meta atingida!</div>`}
+    </div>
+    ${ritmoBlockQtd('viab', prods)}`;
+  }
+
   h+=`</div>
-  <button class="btn-add" onclick="addViab()">＋ Adicionar cliente</button>
-  ${waToggleUI('viab').replace('wa-row','wa-row').replace('border-top','border-top')}`;
+  <button class="btn-add" onclick="addViab()" title="Adicionar novo cliente viabilizado">＋ Adicionar cliente viabilizado</button>
+  <button class="section-clear-btn" onclick="openClearModal('viab','Viabilizados',()=>clearModule('viab','viab_list'))" title="Apagar todos os registros de Viabilizados do mês">🗑️ Limpar registros de Viabilizados</button>`;
   el('sec-viab').innerHTML=h;
 }
 
 function renderViabCard(v,i){
-  const typePipe = v.tipo==='pipe';
-  const typeProd = v.tipo==='prod';
-  let condHtml = '';
-  if(v.viabiliza==='safrapay'||v.viabiliza==='cobranca'||v.viabiliza==='captacao'){
-    condHtml=`<div class="form-row">
-      <div class="form-label">Valor</div>
-      <input type="text" value="${v.valor||''}" placeholder="0" class="mono" oninput="viabSet(${i},'valor',fmtVal(this.value));this.value=fmtVal(this.value)">
-    </div>`;
-  } else if(v.viabiliza==='credito'){
-    condHtml=`<div class="form-row">
-      <div class="form-label">Status do Crédito</div>
-      <select onchange="viabSet(${i},'statusCredito',this.value)">
-        <option value="">Selecione…</option>
-        <option value="aprovacao" ${v.statusCredito==='aprovacao'?'selected':''}>Crédito em aprovação</option>
-        <option value="aprovado" ${v.statusCredito==='aprovado'?'selected':''}>Crédito aprovado</option>
-      </select>
-    </div>`;
+  const locked = v._confirmed && !v._editing;
+  let condHtml='';
+  if(v.viabiliza==='credito'){
+    condHtml=`<div class="form-row"><div class="form-label">Valor R$</div>
+      <input type="text" value="${v.valor||''}" placeholder="0" class="mono" ${locked?'disabled':''} oninput="viabSet(${i},'valor',fmtVal(this.value));this.value=fmtVal(this.value)"></div>`;
   } else if(v.viabiliza==='margem'){
-    condHtml=`<div class="form-row">
-      <div class="form-label">Como trará a margem</div>
-      <input type="text" value="${v.margem||''}" placeholder="Descreva…" oninput="viabSet(${i},'margem',this.value)">
-    </div>`;
+    condHtml=`<div class="form-row"><div class="form-label">Margem</div>
+      <input type="text" value="${v.margem||''}" placeholder="Ex: R$ 500" ${locked?'disabled':''} oninput="viabSet(${i},'margem',this.value)"></div>`;
   }
-
   let dateHtml='';
   if(v.tipo){
-    dateHtml=`<div class="form-row">
-      <div class="form-label">${typePipe?'Data prevista de viabilização':'Data de viabilização'}</div>
-      <input type="date" value="${v.data||''}" onchange="viabSet(${i},'data',this.value)">
-    </div>`;
+    dateHtml=`<div class="form-row"><div class="form-label">${v.tipo==='pipe'?'Data prevista':'Data de produção'}</div>
+      <input type="date" value="${v.data||''}" ${locked?'disabled':''} onchange="viabSet(${i},'data',this.value)"></div>`;
   }
-
   const badge = v.tipo ? `<span class="pipe-badge ${v.tipo}">${v.tipo==='pipe'?'🔵 Pipe':'✅ Produção'}</span>` : '';
 
   return `<div class="cliente-card">
     <div class="cliente-card-header">
       <span class="cliente-card-title">Cliente ${i+1} ${badge}</span>
-      <button class="btn-remove" onclick="removeViab(${i})">✕ Remover</button>
+      <div class="card-actions">
+        ${locked
+          ? `<button class="btn-edit" onclick="editViab(${i})" title="Editar este registro">✏️ Editar</button>`
+          : `<button class="btn-confirm" onclick="confirmViab(${i})" title="Confirmar e fechar este registro">✔ Confirmar</button>`
+        }
+        <button class="btn-remove" onclick="removeViab(${i})" title="Remover este cliente">✕</button>
+      </div>
     </div>
-    <div class="cliente-card-body">
-      <div class="form-row">
-        <div class="form-label required">Cliente</div>
-        <input type="text" value="${v.cliente||''}" placeholder="Nome do cliente" oninput="viabSet(${i},'cliente',this.value)">
-      </div>
-      <div class="form-row">
-        <div class="form-label required">Viabiliza por</div>
-        <select onchange="viabSet(${i},'viabiliza',this.value);renderViab()">
+    <div class="cliente-card-body ${locked?'locked':''}">
+      <div class="form-row"><div class="form-label required">Cliente</div>
+        <input type="text" value="${v.cliente||''}" placeholder="Nome do cliente" ${locked?'disabled':''} oninput="viabSet(${i},'cliente',this.value)"></div>
+      <div class="form-row"><div class="form-label required">Viabiliza por</div>
+        <select ${locked?'disabled':''} onchange="viabSet(${i},'viabiliza',this.value);renderViab()">
           <option value="">Selecione…</option>
-          <option value="safrapay"  ${v.viabiliza==='safrapay' ?'selected':''}>Safrapay</option>
-          <option value="cobranca"  ${v.viabiliza==='cobranca' ?'selected':''}>Cobrança</option>
-          <option value="captacao"  ${v.viabiliza==='captacao' ?'selected':''}>Captação</option>
-          <option value="credito"   ${v.viabiliza==='credito'  ?'selected':''}>Crédito</option>
-          <option value="margem"    ${v.viabiliza==='margem'   ?'selected':''}>Margem</option>
-        </select>
-      </div>
+          ${[['safrapay','Safrapay'],['cobranca','Cobrança'],['captacao','Captação'],['credito','Crédito'],['margem','Margem']].map(([val,lbl])=>
+            `<option value="${val}" ${v.viabiliza===val?'selected':''}>${lbl}</option>`
+          ).join('')}
+        </select></div>
       ${condHtml}
-      <div class="form-row">
-        <div class="form-label required">Tipo</div>
+      <div class="form-row"><div class="form-label required">Tipo</div>
         <div class="type-toggle">
-          <button class="type-btn pipe ${v.tipo==='pipe'?'active':''}" onclick="viabSet(${i},'tipo','pipe');renderViab()">🔵 Pipe</button>
-          <button class="type-btn prod ${v.tipo==='prod'?'active':''}" onclick="viabSet(${i},'tipo','prod');renderViab()">✅ Produção</button>
-        </div>
-      </div>
+          <button class="type-btn pipe ${v.tipo==='pipe'?'active':''}" ${locked?'disabled':''} onclick="viabSet(${i},'tipo','pipe');renderViab()" title="Marcar como pipe">🔵 Pipe</button>
+          <button class="type-btn prod ${v.tipo==='prod'?'active':''}" ${locked?'disabled':''} onclick="viabSet(${i},'tipo','prod');renderViab()" title="Marcar como produção">✅ Produção</button>
+        </div></div>
       ${dateHtml}
     </div>
   </div>`;
@@ -885,51 +1368,53 @@ function renderViabCard(v,i){
 
 function addViab(){
   const list = getViabList();
-  list.push({cliente:'',viabiliza:'',tipo:'',data:'',valor:'',statusCredito:'',margem:''});
+  list.push({cliente:'',viabiliza:'',tipo:'',data:'',valor:'',margem:'',_confirmed:false});
   saveViabList(list);
   renderViab();
 }
-
+function confirmViab(i){
+  const list = getViabList();
+  if(!list[i].cliente){ showToast('⚠️ Preencha o nome do cliente'); return; }
+  if(!confirm(`Confirmar registro de "${list[i].cliente}"?\nApós confirmar, use "Editar" para alterações.`)) return;
+  list[i]._confirmed = true; list[i]._editing = false;
+  saveViabList(list); renderViab(); showToast('✅ Registro confirmado!');
+}
+function editViab(i){
+  const list = getViabList();
+  list[i]._editing = true; list[i]._confirmed = false;
+  saveViabList(list); renderViab();
+}
 function removeViab(i){
+  if(!confirm('Remover este cliente?')) return;
   const list = getViabList();
-  list.splice(i,1);
-  saveViabList(list);
-  renderViab();
-  showToast('Cliente removido');
+  list.splice(i,1); saveViabList(list); renderViab(); showToast('Removido ✓');
 }
-
 function viabSet(i,field,val){
-  const list = getViabList();
-  if(list[i]) list[i][field]=val;
-  saveViabList(list);
+  const list=getViabList(); if(list[i]) list[i][field]=val; saveViabList(list);
 }
 
 // ══════════════════════════════════════════════════
 // SAFRAPAY
 // ══════════════════════════════════════════════════
-function bSafrapay(){
-  renderSafrapay();
-}
-
-function getSafrapayList(){
-  return g('safrapay_list') ? JSON.parse(g('safrapay_list')) : [];
-}
-function saveSafrapayList(list){
-  sv('safrapay_list', JSON.stringify(list));
-}
+function bSafrapay(){ renderSafrapay(); }
+function getSafrapayList(){ return g('safrapay_list') ? JSON.parse(g('safrapay_list')) : []; }
+function saveSafrapayList(list){ sv('safrapay_list', JSON.stringify(list)); }
 
 function renderSafrapay(){
   const list = getSafrapayList();
   const pipes = list.filter(x=>x.tipo==='pipe').length;
   const prods = list.filter(x=>x.tipo==='prod').length;
   const today_str = toDateStr(today);
+  const metaQtd = pn('safrapay_qtd_meta');
+  const metaVop = pn('safrapay_vop_meta');
+  const totalVop = list.filter(x=>x.tipo==='prod').reduce((s,v)=>s+parseFloat(String(v.vop||'0').replace(/\./g,'').replace(',','.'))||0,0);
 
   let alerts = '';
   list.forEach(v=>{
     if(!v.data||v.tipo!=='pipe') return;
     const diff = daysDiff(v.data, today_str);
-    if(diff < 0) alerts+=`<div class="pipe-alert">⚠️ ${v.cliente||'Cliente'} — data prevista vencida (${fmtDate(v.data)})</div>`;
-    else if(diff <= 3) alerts+=`<div class="pipe-alert warn">⏰ ${v.cliente||'Cliente'} — implantação em ${diff} dia(s) (${fmtDate(v.data)})</div>`;
+    if(diff < 0) alerts+=`<div class="pipe-alert">⚠️ ${v.cliente||'Cliente'} — data prevista para início de VOP vencida (${fmtDate(v.data)})</div>`;
+    else if(diff <= 3) alerts+=`<div class="pipe-alert warn">⏰ ${v.cliente||'Cliente'} — início de VOP em ${diff} dia(s) (${fmtDate(v.data)})</div>`;
   });
 
   let h=`<div class="card">
@@ -943,102 +1428,235 @@ function renderSafrapay(){
   } else {
     list.forEach((v,i)=>{ h+=renderSafrapayCard(v,i); });
   }
+
+  if(metaQtd || metaVop){
+    h+=`<div class="meta-section">`;
+    if(metaQtd){
+      const pctQ = Math.min((prods/metaQtd)*100,100);
+      const gapQ = Math.max(metaQtd-prods,0);
+      h+=`<div class="meta-row"><span class="meta-lbl">🎯 Meta Qtd: ${metaQtd} prod</span><span class="meta-pct">${pctQ.toFixed(1)}%</span></div>
+        <div class="progress-bar" style="margin-bottom:4px"><div class="progress-fill ${prods>=metaQtd?'over':prods/metaQtd<0.5?'warn':''}" style="width:${pctQ}%"></div></div>
+        ${gapQ>0?`<div style="font-size:11px;color:var(--text2);margin-bottom:8px">📊 GAP: <strong style="color:var(--orange)">${gapQ} produção(ões)</strong></div>`:`<div style="font-size:11px;color:var(--green);font-weight:700;margin-bottom:8px">✅ Meta qtd atingida!</div>`}`;
+    }
+    if(metaVop){
+      const pctV = Math.min((totalVop/metaVop)*100,100);
+      const gapV = Math.max(metaVop-totalVop,0);
+      h+=`<div class="meta-row"><span class="meta-lbl">🎯 Meta VOP: R$ ${fmt(metaVop)}</span><span class="meta-pct">${pctV.toFixed(1)}%</span></div>
+        <div class="progress-bar" style="margin-bottom:4px"><div class="progress-fill ${totalVop>=metaVop?'over':totalVop/metaVop<0.5?'warn':''}" style="width:${pctV}%"></div></div>
+        ${gapV>0?`<div style="font-size:11px;color:var(--text2)">📊 GAP VOP: <strong style="color:var(--orange)">R$ ${fmt(gapV)}</strong></div>`:`<div style="font-size:11px;color:var(--green);font-weight:700">✅ Meta VOP atingida!</div>`}`;
+    }
+    h+=`</div>`;
+    if(metaQtd) h+=ritmoBlockQtd('safrapay_qtd', prods);
+  }
+
   h+=`</div>
-  <button class="btn-add" onclick="addSafrapay()">＋ Adicionar cliente Safrapay</button>
-  ${waToggleUI('safrapay')}`;
+  <button class="btn-add" onclick="addSafrapay()" title="Adicionar novo cliente SafraPay">＋ Adicionar cliente Safrapay</button>
+  <button class="section-clear-btn" onclick="openClearModal('safrapay','SafraPay',()=>clearModule('safrapay','safrapay_list'))" title="Apagar todos os registros de SafraPay do mês">🗑️ Limpar registros de SafraPay</button>`;
   el('sec-safrapay').innerHTML=h;
 }
 
 function renderSafrapayCard(v,i){
+  const locked = v._confirmed && !v._editing;
   const arvSim = v.arv==='sim';
   let dateHtml='';
   if(v.tipo){
-    dateHtml=`<div class="form-row">
-      <div class="form-label">${v.tipo==='pipe'?'Data prevista':'Data de implantação'}</div>
-      <input type="date" value="${v.data||''}" onchange="spSet(${i},'data',this.value)">
-    </div>`;
+    const lbl = v.tipo==='pipe' ? 'Data prevista para início de VOP' : 'Data de implantação';
+    dateHtml=`<div class="form-row"><div class="form-label">${lbl}</div>
+      <input type="date" value="${v.data||''}" ${locked?'disabled':''} onchange="spSet(${i},'data',this.value)"></div>`;
   }
-
   const badge = v.tipo ? `<span class="pipe-badge ${v.tipo}">${v.tipo==='pipe'?'🔵 Pipe':'✅ Produção'}</span>` : '';
 
   return `<div class="cliente-card">
     <div class="cliente-card-header">
       <span class="cliente-card-title">Cliente ${i+1} ${badge}</span>
-      <button class="btn-remove" onclick="removeSafrapay(${i})">✕ Remover</button>
+      <div class="card-actions">
+        ${locked
+          ? `<button class="btn-edit" onclick="editSafrapay(${i})" title="Editar este registro">✏️ Editar</button>`
+          : `<button class="btn-confirm" onclick="confirmSafrapay(${i})" title="Confirmar e fechar este registro">✔ Confirmar</button>`
+        }
+        <button class="btn-remove" onclick="removeSafrapay(${i})" title="Remover este cliente">✕</button>
+      </div>
     </div>
-    <div class="cliente-card-body">
-      <div class="form-row">
-        <div class="form-label required">Cliente</div>
-        <input type="text" value="${v.cliente||''}" placeholder="Nome do cliente" oninput="spSet(${i},'cliente',this.value)">
-      </div>
-      <div class="form-row">
-        <div class="form-label required">Tipo</div>
+    <div class="cliente-card-body ${locked?'locked':''}">
+      <div class="form-row"><div class="form-label required">Cliente</div>
+        <input type="text" value="${v.cliente||''}" placeholder="Nome do cliente" ${locked?'disabled':''} oninput="spSet(${i},'cliente',this.value)"></div>
+      <div class="form-row"><div class="form-label required">Tipo</div>
         <div class="type-toggle">
-          <button class="type-btn pipe ${v.tipo==='pipe'?'active':''}" onclick="spSet(${i},'tipo','pipe');renderSafrapay()">🔵 Pipe</button>
-          <button class="type-btn prod ${v.tipo==='prod'?'active':''}" onclick="spSet(${i},'tipo','prod');renderSafrapay()">✅ Produção</button>
-        </div>
-      </div>
+          <button class="type-btn pipe ${v.tipo==='pipe'?'active':''}" ${locked?'disabled':''} onclick="spSet(${i},'tipo','pipe');renderSafrapay()" title="Marcar como pipe">🔵 Pipe</button>
+          <button class="type-btn prod ${v.tipo==='prod'?'active':''}" ${locked?'disabled':''} onclick="spSet(${i},'tipo','prod');renderSafrapay()" title="Marcar como produção">✅ Produção</button>
+        </div></div>
       ${dateHtml}
-      <div class="form-row">
-        <div class="form-label">VOP Total</div>
-        <input type="text" value="${v.vop||''}" placeholder="0" class="mono" oninput="spSet(${i},'vop',fmtVal(this.value));this.value=fmtVal(this.value)">
-      </div>
-      <div class="form-row">
-        <div class="form-label">Possui ARV?</div>
+      <div class="form-row"><div class="form-label">VOP Total</div>
+        <input type="text" value="${v.vop||''}" placeholder="0" class="mono" ${locked?'disabled':''} oninput="spSet(${i},'vop',fmtVal(this.value));this.value=fmtVal(this.value)" title="Valor de VOP total"></div>
+      <div class="form-row"><div class="form-label">Possui ARV?</div>
         <div class="yn-toggle">
-          <button class="yn-btn yes ${arvSim?'active':''}" onclick="spSet(${i},'arv','sim');renderSafrapay()">Sim</button>
-          <button class="yn-btn no ${v.arv==='nao'?'active':''}" onclick="spSet(${i},'arv','nao');renderSafrapay()">Não</button>
-        </div>
-      </div>
-      ${arvSim?`<div class="form-row">
-        <div class="form-label">Valor ARV</div>
-        <input type="text" value="${v.arvValor||''}" placeholder="0" class="mono" oninput="spSet(${i},'arvValor',fmtVal(this.value));this.value=fmtVal(this.value)">
-      </div>`:''}
-      <div class="form-row">
-        <div class="form-label">Status</div>
-        <select onchange="spSet(${i},'status',this.value)">
+          <button class="yn-btn yes ${arvSim?'active':''}" ${locked?'disabled':''} onclick="spSet(${i},'arv','sim');renderSafrapay()" title="Possui ARV">Sim</button>
+          <button class="yn-btn no ${v.arv==='nao'?'active':''}" ${locked?'disabled':''} onclick="spSet(${i},'arv','nao');renderSafrapay()" title="Não possui ARV">Não</button>
+        </div></div>
+      ${arvSim?`<div class="form-row"><div class="form-label">Valor ARV</div>
+        <input type="text" value="${v.arvValor||''}" placeholder="0" class="mono" ${locked?'disabled':''} oninput="spSet(${i},'arvValor',fmtVal(this.value));this.value=fmtVal(this.value)" title="Valor ARV"></div>`:''}
+      <div class="form-row"><div class="form-label">Status</div>
+        <select ${locked?'disabled':''} onchange="spSet(${i},'status',this.value)" title="Status atual do cliente">
           <option value="">Selecione…</option>
-          <option value="analise_sgn"      ${v.status==='analise_sgn'?'selected':''}>Análise SGN</option>
-          <option value="sgn_aprovado"     ${v.status==='sgn_aprovado'?'selected':''}>SGN aprovado</option>
-          <option value="necessario_rebate"${v.status==='necessario_rebate'?'selected':''}>Necessário rebate</option>
-          <option value="parado_especialista"${v.status==='parado_especialista'?'selected':''}>Parado com especialista cash</option>
-          <option value="parado_gg"        ${v.status==='parado_gg'?'selected':''}>Parado com GG</option>
-          <option value="em_implantacao"   ${v.status==='em_implantacao'?'selected':''}>Em implantação</option>
-          <option value="ja_vopando"       ${v.status==='ja_vopando'?'selected':''}>Já vopando</option>
-        </select>
-      </div>
+          ${['analise_sgn','sgn_aprovado','necessario_rebate','parado_especialista','parado_gg','em_implantacao','ja_vopando'].map(s=>
+            `<option value="${s}" ${v.status===s?'selected':''}>${fmtStatus(s)}</option>`
+          ).join('')}
+        </select></div>
     </div>
   </div>`;
 }
 
 function addSafrapay(){
-  const list = getSafrapayList();
-  list.push({cliente:'',tipo:'',data:'',vop:'',arv:'',arvValor:'',status:''});
-  saveSafrapayList(list);
-  renderSafrapay();
+  const list=getSafrapayList();
+  list.push({cliente:'',tipo:'',data:'',vop:'',arv:'',arvValor:'',status:'',_confirmed:false});
+  saveSafrapayList(list); renderSafrapay();
 }
-
+function confirmSafrapay(i){
+  const list=getSafrapayList();
+  if(!list[i].cliente){ showToast('⚠️ Preencha o nome do cliente'); return; }
+  if(!confirm(`Confirmar "${list[i].cliente}"?`)) return;
+  list[i]._confirmed=true; list[i]._editing=false;
+  saveSafrapayList(list); renderSafrapay(); showToast('✅ Confirmado!');
+}
+function editSafrapay(i){
+  const list=getSafrapayList(); list[i]._editing=true; list[i]._confirmed=false;
+  saveSafrapayList(list); renderSafrapay();
+}
 function removeSafrapay(i){
-  const list = getSafrapayList();
-  list.splice(i,1);
-  saveSafrapayList(list);
-  renderSafrapay();
-  showToast('Cliente removido');
+  if(!confirm('Remover este cliente?')) return;
+  const list=getSafrapayList(); list.splice(i,1); saveSafrapayList(list); renderSafrapay(); showToast('Removido ✓');
+}
+function spSet(i,field,val){ const list=getSafrapayList(); if(list[i]) list[i][field]=val; saveSafrapayList(list); }
+
+// ══════════════════════════════════════════════════
+// CRÉDITO
+// ══════════════════════════════════════════════════
+function bCredito(){ renderCredito(); }
+function getCreditoList(){ return g('credito_list') ? JSON.parse(g('credito_list')) : []; }
+function saveCreditoList(list){ sv('credito_list', JSON.stringify(list)); }
+
+function renderCredito(){
+  const list = getCreditoList();
+  const pipes = list.filter(x=>x.tipo==='pipe').length;
+  const prods = list.filter(x=>x.tipo==='prod').length;
+  const totalValor = list.filter(x=>x.tipo==='prod').reduce((s,v)=>s+parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0,0);
+  const today_str = toDateStr(today);
+  const metaVal = pn('credito_meta');
+
+  let alerts = '';
+  list.forEach(v=>{
+    if(!v.data || v.tipo!=='pipe') return;
+    const diff = daysDiff(v.data, today_str);
+    if(diff < 0) alerts+=`<div class="pipe-alert">⚠️ ${v.cliente||'Cliente'} — data prevista vencida (${fmtDate(v.data)})</div>`;
+    else if(diff <= 3) alerts+=`<div class="pipe-alert warn">⏰ ${v.cliente||'Cliente'} — liberação em ${diff} dia(s) (${fmtDate(v.data)})</div>`;
+  });
+
+  let h=`<div class="card">
+    <div class="card-header blue">
+      <span class="card-title">CRÉDITO BS</span>
+      <span class="card-count">🔵 ${pipes} pipe · ✅ ${prods} prod</span>
+    </div>`;
+  if(alerts) h+=alerts;
+  if(list.length===0){
+    h+=`<div class="empty-state"><div class="empty-state-icon">💼</div>Nenhum cliente adicionado.</div>`;
+  } else {
+    list.forEach((v,i)=>{ h+=renderCreditoCard(v,i); });
+  }
+
+  if(metaVal){
+    const pctC = Math.min((totalValor/metaVal)*100,100);
+    const gapC = Math.max(metaVal-totalValor,0);
+    h+=`<div class="meta-section">
+      <div class="meta-row"><span class="meta-lbl">🎯 Meta: R$ ${fmt(metaVal)}</span><span class="meta-pct">${pctC.toFixed(1)}%</span></div>
+      <div class="progress-bar"><div class="progress-fill ${totalValor>=metaVal?'over':totalValor/metaVal<0.5?'warn':''}" style="width:${pctC}%"></div></div>
+      ${gapC>0
+        ? `<div style="margin-top:6px;font-size:11px;color:var(--text2)">📊 GAP: <strong style="color:var(--orange)">R$ ${fmt(gapC)}</strong> para atingir a meta</div>`
+        : `<div style="margin-top:6px;font-size:11px;color:var(--green);font-weight:700">✅ Meta atingida!</div>`}
+    </div>
+    ${ritmoBlock('credito', totalValor)}`;
+  }
+
+  h+=`</div>
+  <button class="btn-add" onclick="addCredito()" title="Adicionar novo cliente de crédito">＋ Adicionar cliente</button>
+  <button class="section-clear-btn" onclick="openClearModal('credito','Crédito BS',()=>clearModule('credito','credito_list'))" title="Apagar todos os registros de Crédito do mês">🗑️ Limpar registros de Crédito</button>`;
+  el('sec-credito').innerHTML=h;
 }
 
-function spSet(i,field,val){
-  const list = getSafrapayList();
-  if(list[i]) list[i][field]=val;
-  saveSafrapayList(list);
+function renderCreditoCard(v,i){
+  const locked = v._confirmed && !v._editing;
+  const badge = v.tipo ? `<span class="pipe-badge ${v.tipo}">${v.tipo==='pipe'?'🔵 Pipe':'✅ Produção'}</span>` : '';
+  const isOutros = v.status==='outros';
+  let dateHtml='';
+  if(v.tipo){
+    dateHtml=`<div class="form-row"><div class="form-label">${v.tipo==='pipe'?'Data prevista':'Data de produção'}</div>
+      <input type="date" value="${v.data||''}" ${locked?'disabled':''} onchange="crSet(${i},'data',this.value)"></div>`;
+  }
+
+  return `<div class="cliente-card">
+    <div class="cliente-card-header">
+      <span class="cliente-card-title">Cliente ${i+1} ${badge}</span>
+      <div class="card-actions">
+        ${locked
+          ? `<button class="btn-edit" onclick="editCredito(${i})" title="Editar este registro">✏️ Editar</button>`
+          : `<button class="btn-confirm" onclick="confirmCredito(${i})" title="Confirmar e fechar este registro">✔ Confirmar</button>`
+        }
+        <button class="btn-remove" onclick="removeCredito(${i})" title="Remover este cliente">✕</button>
+      </div>
+    </div>
+    <div class="cliente-card-body ${locked?'locked':''}">
+      <div class="form-row"><div class="form-label required">Cliente</div>
+        <input type="text" value="${v.cliente||''}" placeholder="Nome do cliente" ${locked?'disabled':''} oninput="crSet(${i},'cliente',this.value)"></div>
+      <div class="form-row"><div class="form-label required">Tipo</div>
+        <div class="type-toggle">
+          <button class="type-btn pipe ${v.tipo==='pipe'?'active':''}" ${locked?'disabled':''} onclick="crSet(${i},'tipo','pipe');renderCredito()" title="Marcar como pipe">🔵 Pipe</button>
+          <button class="type-btn prod ${v.tipo==='prod'?'active':''}" ${locked?'disabled':''} onclick="crSet(${i},'tipo','prod');renderCredito()" title="Marcar como produção">✅ Produção</button>
+        </div></div>
+      ${dateHtml}
+      <div class="form-row"><div class="form-label">Valor</div>
+        <input type="text" value="${v.valor||''}" placeholder="0" class="mono" ${locked?'disabled':''} oninput="crSet(${i},'valor',fmtVal(this.value));this.value=fmtVal(this.value)" title="Valor do crédito"></div>
+      <div class="form-row"><div class="form-label">Garantia</div>
+        <input type="text" value="${v.garantia||''}" placeholder="Descreva a garantia" ${locked?'disabled':''} oninput="crSet(${i},'garantia',this.value)" title="Tipo de garantia do crédito"></div>
+      <div class="form-row"><div class="form-label required">Status</div>
+        <select ${locked?'disabled':''} onchange="crSet(${i},'status',this.value);renderCredito()" title="Status atual do crédito">
+          <option value="">Selecione…</option>
+          ${['poc_analise','poc_aprovada','aguardando_doc','sgn_analise','assinatura','enviado_liberacao','liberado','outros'].map(s=>
+            `<option value="${s}" ${v.status===s?'selected':''}>${fmtStatus(s)}</option>`
+          ).join('')}
+        </select></div>
+      ${isOutros && !locked ? `<div class="form-row"><div class="form-label required">Descreva o status</div>
+        <input type="text" value="${v.obsStatus||''}" placeholder="Descreva…" oninput="crSet(${i},'obsStatus',this.value)"></div>` : ''}
+    </div>
+  </div>`;
 }
+
+function addCredito(){
+  const list=getCreditoList();
+  list.push({cliente:'',tipo:'',data:'',valor:'',garantia:'',status:'',obsStatus:'',_confirmed:false});
+  saveCreditoList(list); renderCredito();
+}
+function confirmCredito(i){
+  const list=getCreditoList();
+  if(!list[i].cliente){ showToast('⚠️ Preencha o nome do cliente'); return; }
+  if(!confirm(`Confirmar "${list[i].cliente}"?`)) return;
+  list[i]._confirmed=true; list[i]._editing=false;
+  saveCreditoList(list); renderCredito(); showToast('✅ Confirmado!');
+}
+function editCredito(i){
+  const list=getCreditoList(); list[i]._editing=true; list[i]._confirmed=false;
+  saveCreditoList(list); renderCredito();
+}
+function removeCredito(i){
+  if(!confirm('Remover este cliente?')) return;
+  const list=getCreditoList(); list.splice(i,1); saveCreditoList(list); renderCredito(); showToast('Removido ✓');
+}
+function crSet(i,field,val){ const list=getCreditoList(); if(list[i]) list[i][field]=val; saveCreditoList(list); }
 
 // ══════════════════════════════════════════════════
 // RECOMPUTE
 // ══════════════════════════════════════════════════
 function recompute(){
   // TAC
-  const tacMes = getMes('tac');
-  setC('tac_mes', fmt(tacMes));
+  setC('tac_mes', fmt(getMes('tac')));
 
   // CHEMP delta
   const ant=pn('chemp_ant'), dC=pn('chemp_dia'), delta=dC-ant;
@@ -1046,28 +1664,35 @@ function recompute(){
   if(de){ de.value=(ant||dC)?fmt(Math.abs(delta))+(delta<0?' ▼':delta>0?' ▲':''):''; de.className=(delta>=0?'cmp':'cmp-r'); }
 
   // GIRO
-  const giroMes = getMes('giro');
-  setC('giro_mes', giroMes?String(Math.round(giroMes)):'');
+  setC('giro_mes', getMes('giro')?String(Math.round(getMes('giro'))):'');
 
-  // ATIVOS
-  let dT=0,mT=0;
+  // ATIVOS — lógica de saldo (ant/atu)
+  let mT=0;
   AT_PROD.forEach(p=>{
-    const pid=slug(p), mes=getMes(`at_${pid}`);
-    setC(`at_${pid}_mes`, fmt(mes));
-    dT+=pn(`at_${pid}_dia`); mT+=mes;
+    const pid=slug(p);
+    const atu=pnRaw(g(`at_${pid}_atu`));
+    mT+=atu;
   });
-  setC('at_dia_total',fmt(dT)); setC('at_mes_total',fmt(mT));
+  const atuTotalEl=el('at_atu_total'); if(atuTotalEl) atuTotalEl.textContent=fmt(mT);
+  updateMeta('ativos', AT_PROD.reduce((s,p)=>s+(pnRaw(g(`at_${slug(p)}_atu`))-pnRaw(g(`at_${slug(p)}_ant`))),0));
+
+  // CONTAS
+  const amarela = pn('contas_amarela_dia') + pn('contas_amarela_acc');
+  const verde   = pn('contas_verde_dia')   + pn('contas_verde_acc');
+  const outros  = pn('contas_outros_dia')  + pn('contas_outros_acc');
+  const totalContas = amarela + verde + outros;
+  const ea=el('contas_amarela_total'), ev=el('contas_verde_total'), eo=el('contas_outros_total'), et=el('contas_total_geral');
+  if(ea) ea.textContent=Math.round(amarela)||'0';
+  if(ev) ev.textContent=Math.round(verde)||'0';
+  if(eo) eo.textContent=Math.round(outros)||'0';
+  if(et) et.textContent=Math.round(totalContas)||'0';
+  updateMeta('contas', totalContas);
 
   // SIMPLES
-  SIMPLES_CFG.forEach(({prefix})=>{
-    setC(prefix+'_mes', fmt(getMes(prefix)));
-    updateMeta(prefix);
-  });
+  SIMPLES_CFG.forEach(({prefix})=>{ setC(prefix+'_mes', fmt(getMes(prefix))); updateMeta(prefix); });
 
   // METAS
-  updateMeta('tac');
-  updateMeta('giro');
-  updateMeta('ativos');
+  updateMeta('tac'); updateMeta('giro'); updateMeta('ativos', mT);
 }
 
 // ══════════════════════════════════════════════════
@@ -1079,101 +1704,254 @@ function toggleStatus(){
   sv('dia_concluido', newVal);
   sv('dia_ultima_atualizacao', new Date().toISOString());
   if(newVal) updateStreak();
-  updateStatusPill();
-  renderDash();
-  checkMedals();
+  updateStatusPill(); renderDash(); checkMedals();
   showToast(newVal ? '✅ Dia marcado como concluído!' : '⏳ Marcado como pendente');
 }
-
 function updateStatusPill(){
-  const pill = el('statusPill');
-  if(!pill) return;
-  if(g('dia_concluido')){
-    pill.className='status-pill done';
-    pill.textContent='✅ Concluído';
-  } else {
-    pill.className='status-pill pending';
-    pill.textContent='⏳ Pendente';
+  const pill=el('statusPill'); if(!pill) return;
+  if(g('dia_concluido')){ pill.className='status-pill done'; pill.textContent='✅ Concluído'; }
+  else { pill.className='status-pill pending'; pill.textContent='⏳ Pendente'; }
+}
+
+// ══════════════════════════════════════════════════
+// FECHAMENTO AUTOMÁTICO DE DIA
+// ══════════════════════════════════════════════════
+const DAILY_HIST_KEY = SK + '_daily';
+const AUDIT_KEY      = SK + '_audit';
+
+function getDailyHist(){ try{ return JSON.parse(localStorage.getItem(DAILY_HIST_KEY)||'{}'); }catch(e){ return {}; } }
+function saveDailyHist(h){ try{ localStorage.setItem(DAILY_HIST_KEY, JSON.stringify(h)); }catch(e){} }
+function getAuditLog(){ try{ return JSON.parse(localStorage.getItem(AUDIT_KEY)||'[]'); }catch(e){ return []; } }
+function saveAuditLog(l){ try{ localStorage.setItem(AUDIT_KEY, JSON.stringify(l)); }catch(e){} }
+
+// Registra entrada no log de auditoria
+function auditLog(modulo, data, valorAnt, valorNovo, tipo){
+  const log = getAuditLog();
+  const entry = {
+    ts: new Date().toISOString(),
+    gerente: GERENTE_NOME,
+    gerente_id: GERENTE_ID,
+    modulo,
+    data_alvo: data,
+    valor_anterior: valorAnt,
+    valor_novo: valorNovo,
+    tipo  // 'fechamento_auto' | 'ajuste_substituicao' | 'ajuste_adicao'
+  };
+  log.push(entry);
+  // Manter apenas últimos 500 registros
+  if(log.length > 500) log.splice(0, log.length - 500);
+  saveAuditLog(log);
+  // Sincronizar log com Firebase para o GG ver
+  sv('_audit_log', JSON.stringify(log.slice(-100)));
+}
+
+// Snapshot dos valores "Hoje" de todos os módulos
+function snapToday(dateStr){
+  const snap = { data: dateStr, ts: new Date().toISOString() };
+  snap.tac        = g('tac_dia') || '0';
+  snap.giro       = g('giro_dia') || '0';
+  snap.contas_amarela = g('contas_amarela_dia') || '0';
+  snap.contas_verde   = g('contas_verde_dia') || '0';
+  snap.contas_outros  = g('contas_outros_dia') || '0';
+  SIMPLES_CFG.forEach(({prefix}) => { snap[prefix] = g(prefix+'_dia') || '0'; });
+  AT_PROD.forEach(p => { snap[`at_${slug(p)}`] = g(`at_${slug(p)}_atu`) || '0'; });
+  return snap;
+}
+
+// Fecha o dia: acumula valores e salva no histórico diário
+function closeDayAuto(dateStr){
+  const snap = snapToday(dateStr);
+  // Salvar no histórico diário
+  const hist = getDailyHist();
+  hist[dateStr] = snap;
+  saveDailyHist(hist);
+
+  // Acumular nos módulos numéricos
+  ['tac','giro'].forEach(p=>{
+    const val = pn(p+'_dia');
+    if(val){ sv(p+'_acc', String(pn(p+'_acc') + val)); }
+    sv(p+'_dia','');
+    auditLog(p, dateStr, g(p+'_acc'), String(pn(p+'_acc')), 'fechamento_auto');
+  });
+  SIMPLES_CFG.forEach(({prefix})=>{
+    const val = pn(prefix+'_dia');
+    if(val){ sv(prefix+'_acc', String(pn(prefix+'_acc') + val)); }
+    sv(prefix+'_dia','');
+  });
+  ['amarela','verde','outros'].forEach(t=>{
+    const val = pn(`contas_${t}_dia`);
+    if(val){ sv(`contas_${t}_acc`, String(pn(`contas_${t}_acc`) + val)); }
+    sv(`contas_${t}_dia`,'');
+  });
+
+  sv('_ultimo_fechamento', dateStr);
+  sv('dia_concluido', 0);
+}
+
+// Verifica ao abrir se o dia mudou e fecha automaticamente
+function checkAutoDayClose(){
+  const todayStr = toDateStr(today);
+  const ultimoFechamento = g('_ultimo_fechamento');
+
+  // Se nunca fechou ou fechou em data anterior ao dia atual
+  if(ultimoFechamento && ultimoFechamento < todayStr){
+    // Fechar cada dia que passou sem fechar (pode ter ficado offline no fim de semana)
+    let d = new Date(ultimoFechamento + 'T00:00:00');
+    d.setDate(d.getDate() + 1);
+    while(toDateStr(d) < todayStr){
+      const ds = toDateStr(d);
+      // Só fecha dias úteis que não foram fechados
+      const hist = getDailyHist();
+      if(isBusinessDay(d) && !hist[ds]){
+        // Dia passou sem registro — salva como vazio no histórico
+        const hist2 = getDailyHist();
+        hist2[ds] = { data: ds, ts: new Date().toISOString(), _vazio: true };
+        saveDailyHist(hist2);
+      }
+      d.setDate(d.getDate() + 1);
+    }
+    // Fechar o último dia com os valores atuais
+    closeDayAuto(ultimoFechamento < todayStr ? todayStr : ultimoFechamento);
+    showToast('📅 Novo dia detectado — produção de ontem salva automaticamente');
+    renderVals(); recompute(); updateStatusPill();
+    buildAll();
+  } else if(!ultimoFechamento){
+    // Primeiro uso — só registra hoje como data base
+    sv('_ultimo_fechamento', todayStr);
   }
 }
 
 // ══════════════════════════════════════════════════
-// FECHAR DIA
+// AJUSTE RETROATIVO
 // ══════════════════════════════════════════════════
-function newDay(){
-  if(!confirm('Fechar o dia?\n\nOs valores de HOJE serão incorporados ao acumulado do mês e os campos "Hoje" serão zerados.')) return;
-
-  ['tac','giro'].forEach(p=>{
-    sv(p+'_acc', pn(p+'_acc')+pn(p+'_dia') || '');
-    sv(p+'_dia','');
-  });
-  AT_PROD.forEach(p=>{
-    const base=`at_${slug(p)}`;
-    sv(base+'_acc', pn(base+'_acc')+pn(base+'_dia') || '');
-    sv(base+'_dia','');
-  });
-  SIMPLES_CFG.forEach(({prefix})=>{
-    sv(prefix+'_acc', pn(prefix+'_acc')+pn(prefix+'_dia') || '');
-    sv(prefix+'_dia','');
-  });
-  sv('chemp_dia','');
-  sv('dia_concluido',0);
-
-  renderVals(); recompute(); updateStatusPill();
-  showToast('Dia fechado ✓ Acumulados atualizados');
+function openAjuste(modulo, label){
+  sv('_ajuste_modulo', modulo);
+  sv('_ajuste_label', label);
+  const todayStr = toDateStr(today);
+  el('ajuste_data').value = todayStr;
+  el('ajuste_valor').value = '';
+  el('ajuste_modulo_label').textContent = label;
+  el('modalAjuste').classList.add('open');
 }
 
-// ══════════════════════════════════════════════════
-// RESET MÊS
+function confirmarAjuste(){
+  const modulo   = g('_ajuste_modulo');
+  const label    = g('_ajuste_label');
+  const dataAlvo = el('ajuste_data').value;
+  const valor    = el('ajuste_valor').value;
+  const todayStr = toDateStr(today);
+
+  if(!dataAlvo || !valor){ showToast('⚠️ Preencha data e valor', 'w'); return; }
+
+  const valNum = pnRaw(valor);
+  if(!valNum){ showToast('⚠️ Valor inválido', 'w'); return; }
+
+  // Determinar chaves do módulo
+  let accKey, diaKey;
+  if(modulo === 'contas_amarela' || modulo === 'contas_verde' || modulo === 'contas_outros'){
+    accKey = modulo + '_acc'; diaKey = modulo + '_dia';
+  } else {
+    accKey = modulo + '_acc'; diaKey = modulo + '_dia';
+  }
+
+  const valorAntAcc = pn(accKey);
+  const hist = getDailyHist();
+
+  if(dataAlvo === todayStr){
+    // Ajuste no dia atual: substitui campo "Hoje"
+    const anterior = g(diaKey) || '0';
+    sv(diaKey, fmtVal(String(valNum)));
+    auditLog(label, dataAlvo, anterior, String(valNum), 'ajuste_substituicao');
+    // Atualizar histórico do dia atual
+    if(!hist[todayStr]) hist[todayStr] = snapToday(todayStr);
+    hist[todayStr][modulo] = String(valNum);
+    saveDailyHist(hist);
+    renderVals(); recompute(); bAtivos();
+    closeModal('modalAjuste');
+    showToast(`✅ Ajuste de hoje atualizado — ${label}`);
+  } else {
+    // Ajuste em data passada: pergunta adicionar ou substituir
+    const valorAnteriorDia = hist[dataAlvo] ? (hist[dataAlvo][modulo] || '0') : '0';
+    const opcao = confirm(
+      `Ajuste retroativo para ${fmtDate(dataAlvo)}\n\n` +
+      `Valor registrado: ${valorAnteriorDia}\n` +
+      `Novo valor: ${fmtVal(String(valNum))}\n\n` +
+      `OK = Adicionar ao valor existente\nCancelar = Substituir`
+    );
+    let novoValorDia, diffAcc;
+    if(opcao){
+      // Adicionar
+      novoValorDia = pnRaw(valorAnteriorDia) + valNum;
+      diffAcc = valNum;
+      auditLog(label, dataAlvo, valorAnteriorDia, String(novoValorDia), 'ajuste_adicao');
+    } else {
+      // Substituir
+      novoValorDia = valNum;
+      diffAcc = valNum - pnRaw(valorAnteriorDia);
+      auditLog(label, dataAlvo, valorAnteriorDia, String(novoValorDia), 'ajuste_substituicao');
+    }
+    // Atualizar histórico diário
+    if(!hist[dataAlvo]) hist[dataAlvo] = { data: dataAlvo };
+    hist[dataAlvo][modulo] = String(novoValorDia);
+    saveDailyHist(hist);
+    // Atualizar acumulado
+    const novoAcc = Math.max(0, valorAntAcc + diffAcc);
+    sv(accKey, String(novoAcc));
+    renderVals(); recompute();
+    closeModal('modalAjuste');
+    showToast(`✅ Ajuste retroativo salvo — ${label} (${fmtDate(dataAlvo)})`);
+  }
+  buildAll();
+}
+
+
+// Ajuste específico para contas (com tipo)
+function openAjusteContas(){
+  const tipo = prompt('Tipo de conta para ajuste:\n1 = Amarela\n2 = Verde\n3 = Outros\n\nDigite 1, 2 ou 3:');
+  const map = {'1':'contas_amarela','2':'contas_verde','3':'contas_outros'};
+  const labels = {'1':'Conta Amarela','2':'Conta Verde','3':'Conta Outros'};
+  if(!map[tipo]) return;
+  openAjuste(map[tipo], labels[tipo]);
+}
 // ══════════════════════════════════════════════════
 function confirmReset(){
   if(!confirm('Resetar TODOS os dados do mês?\n(Use no dia 1º do mês)\n\nPipes futuros serão preservados automaticamente.')) return;
-
-  // preservar pipes futuros
   const today_str = toDateStr(today);
   const viabFuturos = getViabList().filter(v=>v.tipo==='pipe' && v.data && v.data >= today_str);
   const spFuturos   = getSafrapayList().filter(v=>v.tipo==='pipe' && v.data && v.data >= today_str);
   const crFuturos   = getCreditoList().filter(v=>v.tipo==='pipe' && v.data && v.data >= today_str);
-
-  // salvar histórico
   saveHistory();
-
-  // reset
-  const waKeys = {};
-  Object.keys(WA_DEFAULTS).forEach(k=>{ waKeys['wa_'+k]=WA_DEFAULTS[k]; });
-  S = { ...waKeys };
+  S = {};
   sv('viab_list',    JSON.stringify(viabFuturos));
   sv('safrapay_list',JSON.stringify(spFuturos));
   sv('credito_list', JSON.stringify(crFuturos));
   saveS();
-
   buildAll(); renderVals(); recompute(); updateStatusPill();
   showToast(`Reset feito ✓ ${viabFuturos.length+spFuturos.length+crFuturos.length} pipe(s) preservado(s)`);
 }
 
 // ══════════════════════════════════════════════════
-// HISTÓRICO
+// HISTÓRICO MENSAL
 // ══════════════════════════════════════════════════
 function saveHistory(){
   try {
-    const raw = JSON.parse(localStorage.getItem(SK)||'{}');
-    const hist = JSON.parse(localStorage.getItem(SK+'_hist')||'{}');
-    if(raw[MONTH_KEY]) hist[MONTH_KEY] = raw[MONTH_KEY];
+    const raw=JSON.parse(localStorage.getItem(SK)||'{}');
+    const hist=JSON.parse(localStorage.getItem(SK+'_hist')||'{}');
+    if(raw[MONTH_KEY]) hist[MONTH_KEY]=raw[MONTH_KEY];
     localStorage.setItem(SK+'_hist', JSON.stringify(hist));
   } catch(e){}
 }
-
 function openHist(){
   try {
-    const hist = JSON.parse(localStorage.getItem(SK+'_hist')||'{}');
-    const keys = Object.keys(hist).sort().reverse();
+    const hist=JSON.parse(localStorage.getItem(SK+'_hist')||'{}');
+    const keys=Object.keys(hist).sort().reverse();
     if(keys.length===0){
       el('histBody').innerHTML=`<div class="empty-state"><div class="empty-state-icon">📂</div>Nenhum histórico ainda.</div>`;
     } else {
+      const months=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
       el('histBody').innerHTML = keys.map(k=>{
-        const [year,month] = k.split('-');
-        const months=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-        const label = `${months[parseInt(month)-1]} ${year}`;
+        const [year,month]=k.split('-');
+        const label=`${months[parseInt(month)-1]} ${year}`;
         return `<div class="hist-month">
           <div class="hist-month-header" onclick="toggleHistMonth('${k}')">
             <span class="hist-month-title">📅 ${label}</span>
@@ -1186,329 +1964,27 @@ function openHist(){
   } catch(e){ el('histBody').innerHTML='<p style="color:var(--red);padding:12px">Erro ao carregar histórico.</p>'; }
   el('modalHist').classList.add('open');
 }
-
-function toggleHistMonth(k){
-  const b = el('hist_'+k);
-  if(b) b.classList.toggle('open');
-}
-
+function toggleHistMonth(k){ const b=el('hist_'+k); if(b) b.classList.toggle('open'); }
 function buildHistText(data){
   if(!data) return '—';
-  const lines = [];
+  const lines=[];
   lines.push(`TAC Mês: ${data.tac_acc||'0'}`);
   lines.push(`CHEMP Saldo: ${data.chemp_dia||'—'}`);
   lines.push(`Giro Mês: ${data.giro_acc||'0'}`);
   AT_PROD.forEach(p=>{ lines.push(`Ativos ${p}: ${data[`at_${slug(p)}_acc`]||'0'}`); });
   SIMPLES_CFG.forEach(({prefix,title})=>{ lines.push(`${title}: ${data[prefix+'_acc']||'0'}`); });
-  const viab = data.viab_list ? JSON.parse(data.viab_list) : [];
+  const totalContas=(parseFloat(String(data.contas_amarela_acc||'0').replace(/\./g,'').replace(',','.'))||0)+(parseFloat(String(data.contas_verde_acc||'0').replace(/\./g,'').replace(',','.'))||0)+(parseFloat(String(data.contas_outros_acc||'0').replace(/\./g,'').replace(',','.'))||0);
+  lines.push(`Contas: ${Math.round(totalContas)||'0'} (Am:${data.contas_amarela_acc||'0'} Ve:${data.contas_verde_acc||'0'} Ou:${data.contas_outros_acc||'0'})`);
+  const seg=data.seguro_list?JSON.parse(data.seguro_list):[];
+  lines.push(`Seguros: ${seg.length} registros`);
+  const viab=data.viab_list?JSON.parse(data.viab_list):[];
   lines.push(`Viabilizados: ${viab.filter(v=>v.tipo==='prod').length} produção`);
-  const sp = data.safrapay_list ? JSON.parse(data.safrapay_list) : [];
+  const sp=data.safrapay_list?JSON.parse(data.safrapay_list):[];
   lines.push(`Safrapay: ${sp.filter(v=>v.tipo==='prod').length} produção`);
-  const cr = data.credito_list ? JSON.parse(data.credito_list) : [];
+  const cr=data.credito_list?JSON.parse(data.credito_list):[];
   lines.push(`Crédito: ${cr.filter(v=>v.tipo==='prod').length} produção`);
   return lines.join('\n');
 }
-
-// ══════════════════════════════════════════════════
-// WHATSAPP
-// ══════════════════════════════════════════════════
-function openWA(){
-  const d=today;
-  const ds=`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
-  el('modal-date').textContent=ds;
-
-  const gv=k=>{ const v=g(k); return v||'—'; };
-  const gc=id=>{ const e=el(id); return(e&&e.value&&e.value!=='—')?e.value:'—'; };
-  const inc=sec=>g('wa_'+sec);
-
-  let t=`*${GERENTE_NOME} — Produção ${ds}*\n`;
-  t+=`_Ag. Boa Viagem · Banco Safra_\n\n`;
-
-  if(inc('tac')){
-    t+=`*📊 TAC*\nHoje: ${gv('tac_dia')} | Ajuste: ${gv('tac_adj')} | Mês: ${gc('tac_mes')}\n`;
-    if(gv('tac_obs')!=='—') t+=`_${gv('tac_obs')}_\n`;
-    t+='\n';
-  }
-
-  if(inc('chemp')){
-    t+=`*🏦 CHEMP*\nSaldo Mês Anterior: ${gv('chemp_ant')}\nSaldo Dia Atual: ${gv('chemp_dia')}\nIncremento: ${gc('chemp_delta')}\nNovos Limites: ${gv('chemp_novos')}\n`;
-    if(gv('chemp_obs')!=='—') t+=`_${gv('chemp_obs')}_\n`;
-    t+='\n';
-  }
-
-  if(inc('giro')){
-    t+=`*🔄 GIRO DE CARTEIRA*\nHoje: ${gv('giro_dia')} | Mês: ${gc('giro_mes')}\n`;
-    if(gv('giro_obs')!=='—') t+=`_${gv('giro_obs')}_\n`;
-    t+='\n';
-  }
-
-  if(inc('ativos')){
-    t+=`*💰 ATIVOS*\n`;
-    AT_PROD.forEach(p=>{ t+=`${p} — Hoje: ${gv(`at_${slug(p)}_dia`)} | Mês: ${gc(`at_${slug(p)}_mes`)}\n`; });
-    t+=`Total — Hoje: ${gc('at_dia_total')} | Mês: ${gc('at_mes_total')}\n`;
-    if(gv('ativos_obs')!=='—') t+=`_${gv('ativos_obs')}_\n`;
-    t+='\n';
-  }
-
-  SIMPLES_CFG.forEach(({id,title,prefix})=>{
-    if(inc(id)){
-      t+=`*${title}*\nHoje: ${gv(prefix+'_dia')} | Mês: ${gc(prefix+'_mes')}\n`;
-      if(gv(prefix+'_obs')!=='—') t+=`_${gv(prefix+'_obs')}_\n`;
-      t+='\n';
-    }
-  });
-
-  if(inc('viab')){
-    const list=getViabList();
-    if(list.length>0){
-      const pipes=list.filter(x=>x.tipo==='pipe');
-      const prods=list.filter(x=>x.tipo==='prod');
-      t+=`*👥 VIABILIZADOS*\n`;
-      t+=`Pipe: ${pipes.length} | Produção: ${prods.length}\n`;
-      if(prods.length>0){
-        t+=`\n_Produções:_\n`;
-        prods.forEach(v=>{
-          t+=`• ${v.cliente||'—'}`;
-          if(v.viabiliza) t+=` (${v.viabiliza})`;
-          if(v.valor) t+=` — R$ ${v.valor}`;
-          if(v.statusCredito) t+=` — ${v.statusCredito}`;
-          if(v.data) t+=` — ${fmtDate(v.data)}`;
-          t+='\n';
-        });
-      }
-      if(pipes.length>0){
-        t+=`\n_Pipes:_\n`;
-        pipes.forEach(v=>{
-          t+=`• ${v.cliente||'—'}`;
-          if(v.viabiliza) t+=` (${v.viabiliza})`;
-          if(v.data) t+=` — prev. ${fmtDate(v.data)}`;
-          t+='\n';
-        });
-      }
-      t+='\n';
-    }
-  }
-
-  if(inc('safrapay')){
-    const list=getSafrapayList();
-    if(list.length>0){
-      const pipes=list.filter(x=>x.tipo==='pipe');
-      const prods=list.filter(x=>x.tipo==='prod');
-      t+=`*💳 SAFRAPAY*\n`;
-      t+=`Pipe: ${pipes.length} | Produção: ${prods.length}\n`;
-      if(prods.length>0){
-        t+=`\n_Produções:_\n`;
-        prods.forEach(v=>{
-          t+=`• ${v.cliente||'—'}`;
-          if(v.vop) t+=` — VOP: R$ ${v.vop}`;
-          if(v.arv==='sim') t+=` | ARV: R$ ${v.arvValor||'—'}`;
-          if(v.status) t+=` | ${fmtStatus(v.status)}`;
-          t+='\n';
-        });
-      }
-      if(pipes.length>0){
-        t+=`\n_Pipes:_\n`;
-        pipes.forEach(v=>{
-          t+=`• ${v.cliente||'—'}`;
-          if(v.vop) t+=` — VOP: R$ ${v.vop}`;
-          if(v.status) t+=` | ${fmtStatus(v.status)}`;
-          if(v.data) t+=` — prev. ${fmtDate(v.data)}`;
-          t+='\n';
-        });
-      }
-      t+='\n';
-    }
-  }
-
-  if(inc('credito')){
-    const list=getCreditoList();
-    if(list.length>0){
-      const pipes=list.filter(x=>x.tipo==='pipe');
-      const prods=list.filter(x=>x.tipo==='prod');
-      t+=`*💼 CRÉDITO*\n`;
-      t+=`Pipe: ${pipes.length} | Produção: ${prods.length}\n`;
-      if(prods.length>0){
-        t+=`\n_Produções:_\n`;
-        prods.forEach(v=>{
-          t+=`• ${v.cliente||'—'}`;
-          if(v.valor)   t+=` — R$ ${v.valor}`;
-          if(v.garantia) t+=` | Garantia: ${v.garantia}`;
-          if(v.seguro)  t+=` | Prestamista: R$ ${v.seguro}`;
-          if(v.status)  t+=` | ${fmtStatus(v.status)}`;
-          if(v.status==='outros'&&v.obsStatus) t+=` (${v.obsStatus})`;
-          if(v.data)    t+=` — ${fmtDate(v.data)}`;
-          t+='\n';
-        });
-      }
-      if(pipes.length>0){
-        t+=`\n_Pipes:_\n`;
-        pipes.forEach(v=>{
-          t+=`• ${v.cliente||'—'}`;
-          if(v.valor)   t+=` — R$ ${v.valor}`;
-          if(v.status)  t+=` | ${fmtStatus(v.status)}`;
-          if(v.status==='outros'&&v.obsStatus) t+=` (${v.obsStatus})`;
-          if(v.data)    t+=` — prev. ${fmtDate(v.data)}`;
-          t+='\n';
-        });
-      }
-      t+='\n';
-    }
-  }
-
-  el('waText').textContent=t.trimEnd();
-  el('modal').classList.add('open');
-}
-
-function fmtStatus(s){
-  const map={
-    analise_sgn:'Análise SGN',sgn_aprovado:'SGN aprovado',necessario_rebate:'Necessário rebate',
-    parado_especialista:'Parado c/ especialista',parado_gg:'Parado c/ GG',
-    em_implantacao:'Em implantação',ja_vopando:'Já vopando',
-    poc_analise:'POC em análise',poc_aprovada:'POC aprovada',
-    aguardando_doc:'Aguardando documentação',sgn_analise:'SGN em análise',
-    assinatura:'Em assinatura de contrato',enviado_liberacao:'Enviado para liberação',
-    outros:'Outros'
-  };
-  return map[s]||s;
-}
-
-// ══════════════════════════════════════════════════
-// CRÉDITO
-// ══════════════════════════════════════════════════
-function bCredito(){ renderCredito(); }
-
-function getCreditoList(){ return g('credito_list') ? JSON.parse(g('credito_list')) : []; }
-function saveCreditoList(list){ sv('credito_list', JSON.stringify(list)); }
-
-function renderCredito(){
-  const list = getCreditoList();
-  const pipes = list.filter(x=>x.tipo==='pipe').length;
-  const prods = list.filter(x=>x.tipo==='prod').length;
-  const today_str = toDateStr(today);
-
-  let alerts = '';
-  list.forEach(v=>{
-    if(!v.data || v.tipo!=='pipe') return;
-    const diff = daysDiff(v.data, today_str);
-    if(diff < 0)      alerts+=`<div class="pipe-alert">⚠️ ${v.cliente||'Cliente'} — data prevista vencida (${fmtDate(v.data)})</div>`;
-    else if(diff <= 3) alerts+=`<div class="pipe-alert warn">⏰ ${v.cliente||'Cliente'} — liberação em ${diff} dia(s) (${fmtDate(v.data)})</div>`;
-  });
-
-  let h=`<div class="card">
-    <div class="card-header blue">
-      <span class="card-title">CRÉDITO</span>
-      <span class="card-count">🔵 ${pipes} pipe · ✅ ${prods} prod</span>
-    </div>`;
-  if(alerts) h+=alerts;
-  if(list.length===0){
-    h+=`<div class="empty-state"><div class="empty-state-icon">💼</div>Nenhum cliente adicionado.</div>`;
-  } else {
-    list.forEach((v,i)=>{ h+=renderCreditoCard(v,i); });
-  }
-  h+=`</div>
-  <button class="btn-add" onclick="addCredito()">＋ Adicionar cliente</button>
-  ${waToggleUI('credito')}`;
-  el('sec-credito').innerHTML=h;
-}
-
-function renderCreditoCard(v,i){
-  const badge = v.tipo ? `<span class="pipe-badge ${v.tipo}">${v.tipo==='pipe'?'🔵 Pipe':'✅ Produção'}</span>` : '';
-
-  let dateHtml='';
-  if(v.tipo){
-    dateHtml=`<div class="form-row">
-      <div class="form-label">${v.tipo==='pipe'?'Data prevista':'Data de produção'}</div>
-      <input type="date" value="${v.data||''}" onchange="crSet(${i},'data',this.value)">
-    </div>`;
-  }
-
-  const isOutros = v.status==='outros';
-
-  return `<div class="cliente-card">
-    <div class="cliente-card-header">
-      <span class="cliente-card-title">Cliente ${i+1} ${badge}</span>
-      <button class="btn-remove" onclick="removeCredito(${i})">✕ Remover</button>
-    </div>
-    <div class="cliente-card-body">
-      <div class="form-row">
-        <div class="form-label required">Cliente</div>
-        <input type="text" value="${v.cliente||''}" placeholder="Nome do cliente" oninput="crSet(${i},'cliente',this.value)">
-      </div>
-      <div class="form-row">
-        <div class="form-label required">Tipo</div>
-        <div class="type-toggle">
-          <button class="type-btn pipe ${v.tipo==='pipe'?'active':''}" onclick="crSet(${i},'tipo','pipe');renderCredito()">🔵 Pipe</button>
-          <button class="type-btn prod ${v.tipo==='prod'?'active':''}" onclick="crSet(${i},'tipo','prod');renderCredito()">✅ Produção</button>
-        </div>
-      </div>
-      ${dateHtml}
-      <div class="form-row">
-        <div class="form-label">Valor</div>
-        <input type="text" value="${v.valor||''}" placeholder="0" class="mono"
-          oninput="crSet(${i},'valor',fmtVal(this.value));this.value=fmtVal(this.value)">
-      </div>
-      <div class="form-row">
-        <div class="form-label">Garantia</div>
-        <input type="text" value="${v.garantia||''}" placeholder="Descreva a garantia" oninput="crSet(${i},'garantia',this.value)">
-      </div>
-      <div class="form-row">
-        <div class="form-label">Valor Seguro Prestamista Líquido</div>
-        <input type="text" value="${v.seguro||''}" placeholder="0" class="mono"
-          oninput="crSet(${i},'seguro',fmtVal(this.value));this.value=fmtVal(this.value)">
-      </div>
-      <div class="form-row">
-        <div class="form-label required">Status</div>
-        <select onchange="crSet(${i},'status',this.value);renderCredito()">
-          <option value="">Selecione…</option>
-          <option value="poc_analise"        ${v.status==='poc_analise'        ?'selected':''}>POC em análise</option>
-          <option value="poc_aprovada"       ${v.status==='poc_aprovada'       ?'selected':''}>POC aprovada</option>
-          <option value="aguardando_doc"     ${v.status==='aguardando_doc'     ?'selected':''}>Aguardando documentação do cliente</option>
-          <option value="sgn_analise"        ${v.status==='sgn_analise'        ?'selected':''}>SGN em análise</option>
-          <option value="assinatura"         ${v.status==='assinatura'         ?'selected':''}>Em assinatura de contrato</option>
-          <option value="enviado_liberacao"  ${v.status==='enviado_liberacao'  ?'selected':''}>Enviado para liberação</option>
-          <option value="outros"             ${v.status==='outros'             ?'selected':''}>Outros</option>
-        </select>
-      </div>
-      ${isOutros ? `<div class="form-row">
-        <div class="form-label required">Descreva o status</div>
-        <input type="text" value="${v.obsStatus||''}" placeholder="Descreva…" oninput="crSet(${i},'obsStatus',this.value)">
-      </div>` : ''}
-    </div>
-  </div>`;
-}
-
-function addCredito(){
-  const list = getCreditoList();
-  list.push({cliente:'',tipo:'',data:'',valor:'',garantia:'',seguro:'',status:'',obsStatus:''});
-  saveCreditoList(list);
-  renderCredito();
-}
-
-function removeCredito(i){
-  const list = getCreditoList();
-  list.splice(i,1);
-  saveCreditoList(list);
-  renderCredito();
-  showToast('Cliente removido');
-}
-
-function crSet(i,field,val){
-  const list = getCreditoList();
-  if(list[i]) list[i][field]=val;
-  saveCreditoList(list);
-}
-
-function copyWA(){
-  const txt=el('waText').textContent;
-  navigator.clipboard.writeText(txt)
-    .then(()=>{ showToast('Copiado! Cole no WhatsApp ✓'); closeModal('modal'); })
-    .catch(()=>{
-      const ta=document.createElement('textarea'); ta.value=txt;
-      document.body.appendChild(ta); ta.select(); document.execCommand('copy');
-      document.body.removeChild(ta); showToast('Copiado! ✓'); closeModal('modal');
-    });
-}
-
 function closeModal(id){ el(id).classList.remove('open'); }
 
 // ══════════════════════════════════════════════════
@@ -1518,11 +1994,7 @@ function renderVals(){
   document.querySelectorAll('input:not([readonly]):not(.inv)').forEach(i=>{
     if(i.id && i.type!=='checkbox' && i.type!=='date') i.value=g(i.id)||'';
   });
-  document.querySelectorAll('input[type="checkbox"]').forEach(i=>{
-    if(i.id) i.checked=!!g(i.id);
-  });
 }
-
 function swTab(id,btn){
   document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
@@ -1531,45 +2003,351 @@ function swTab(id,btn){
 }
 
 // ══════════════════════════════════════════════════
-// DATE UTILS
-// ══════════════════════════════════════════════════
-function toDateStr(d){
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-function daysDiff(dateStr, todayStr){
-  const a=new Date(dateStr+'T00:00:00');
-  const b=new Date(todayStr+'T00:00:00');
-  return Math.round((a-b)/(1000*60*60*24));
-}
-function fmtDate(s){
-  if(!s) return '—';
-  const [y,m,d]=s.split('-');
-  return `${d}/${m}/${y}`;
-}
-
-// ══════════════════════════════════════════════════
 // AUTO RESET MENSAL
 // ══════════════════════════════════════════════════
 function checkMonthRollover(){
-  const lastKey = g('_last_month_key');
+  const lastKey=g('_last_month_key');
   if(lastKey && lastKey !== MONTH_KEY){
-    const viabFuturos = getViabList().filter(v=>v.tipo==='pipe' && v.data && v.data >= toDateStr(today));
-    const spFuturos   = getSafrapayList().filter(v=>v.tipo==='pipe' && v.data && v.data >= toDateStr(today));
-    const crFuturos   = getCreditoList().filter(v=>v.tipo==='pipe' && v.data && v.data >= toDateStr(today));
-    saveHistory();
-    const waKeys={};
-    Object.keys(WA_DEFAULTS).forEach(k=>{ waKeys['wa_'+k]=WA_DEFAULTS[k]; });
-    S={...waKeys};
-    sv('viab_list',    JSON.stringify(viabFuturos));
+    const today_str=toDateStr(today);
+    const viabFuturos=getViabList().filter(v=>v.tipo==='pipe'&&v.data&&v.data>=today_str);
+    const spFuturos=getSafrapayList().filter(v=>v.tipo==='pipe'&&v.data&&v.data>=today_str);
+    const crFuturos=getCreditoList().filter(v=>v.tipo==='pipe'&&v.data&&v.data>=today_str);
+    saveHistory(); S={};
+    sv('viab_list',JSON.stringify(viabFuturos));
     sv('safrapay_list',JSON.stringify(spFuturos));
-    sv('credito_list', JSON.stringify(crFuturos));
+    sv('credito_list',JSON.stringify(crFuturos));
     showToast(`Novo mês! ${viabFuturos.length+spFuturos.length+crFuturos.length} pipe(s) preservado(s)`);
   }
   sv('_last_month_key', MONTH_KEY);
 }
 
 // ══════════════════════════════════════════════════
-// INIT — executa imediatamente, sem esperar Firebase
+// INATIVIDADE
+// ══════════════════════════════════════════════════
+function checkInactivity(){
+  const lastUpd = g('dia_ultima_atualizacao');
+  if(!lastUpd) return;
+  const last = new Date(lastUpd);
+  const now = new Date();
+  // Contar dias úteis desde última atualização
+  let days = 0;
+  const cur = new Date(last);
+  cur.setHours(0,0,0,0);
+  const nowDay = new Date(now); nowDay.setHours(0,0,0,0);
+  while(cur < nowDay){ cur.setDate(cur.getDate()+1); if(isBusinessDay(cur)) days++; }
+  if(days >= 1){
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'inactivity-alert';
+    alertDiv.innerHTML = `<div class="inactivity-alert-icon">⚠️</div>
+      <div class="inactivity-alert-text">Você não atualizou sua produção há <strong>${days} dia(s) útil(eis)</strong>.<br>Lembre-se de registrar diariamente!</div>`;
+    el('app').insertBefore(alertDiv, el('app').firstChild);
+  }
+}
+
+// ══════════════════════════════════════════════════
+// GAMIFICAÇÃO
+// ══════════════════════════════════════════════════
+let LAST_RANK_POS = null;
+
+const MEDALS_CFG = [
+  { id:'primeiro',   icon:'🥇', name:'Líder do Ranking',    desc:'Primeiro lugar no TAC do mês',         check:()=> getMyRank()===1 },
+  { id:'meta_tac',   icon:'🎯', name:'Meta TAC Batida',      desc:'Atingiu 100% da meta de TAC',           check:()=>{ const m=pn('tac_meta'); return m&&getMes('tac')>=m; } },
+  { id:'meta_atv',   icon:'💰', name:'Meta Ativos Batida',   desc:'Atingiu 100% da meta de Ativos',        check:()=>{ const m=pn('ativos_meta'); return m&&AT_PROD.reduce((s,p)=>s+getMes(`at_${slug(p)}`),0)>=m; } },
+  { id:'streak3',    icon:'🔥', name:'3 dias seguidos',      desc:'Preencheu 3 dias consecutivos',         check:()=> getStreak()>=3 },
+  { id:'streak7',    icon:'⚡', name:'Semana perfeita',      desc:'7 dias consecutivos preenchidos',       check:()=> getStreak()>=7 },
+  { id:'top3',       icon:'🏆', name:'Top 3',                desc:'Está entre os 3 primeiros no TAC',      check:()=> getMyRank()<=3 },
+  { id:'crescimento',icon:'🚀', name:'Maior crescimento',    desc:'Maior crescimento de ontem para hoje',  check:()=> isMaiorCrescimento() },
+  { id:'safrapay1',  icon:'💳', name:'Safrapay Expert',      desc:'1 produção Safrapay no mês',            check:()=> getSafrapayList().filter(x=>x.tipo==='prod').length>=1 },
+  { id:'credito1',   icon:'💼', name:'Crédito Aprovado',     desc:'1 produção de crédito no mês',          check:()=> getCreditoList().filter(x=>x.tipo==='prod').length>=1 },
+  { id:'viab3',      icon:'⭐', name:'Viabilizador',         desc:'3 viabilizações no mês',                check:()=> getViabList().filter(x=>x.tipo==='prod').length>=3 },
+];
+
+function rankValOf(gid){
+  if(gid===GERENTE_ID) return getMes('tac');
+  const d=RANK_DATA[gid]; if(!d) return 0;
+  return (parseFloat(String(d.tac_acc||'0').replace(/\./g,'').replace(',','.'))||0)
+        +(parseFloat(String(d.tac_dia||'0').replace(/\./g,'').replace(',','.'))||0)
+        +(parseFloat(String(d.tac_adj||'0').replace(/\./g,'').replace(',','.'))||0);
+}
+function getRankingTAC(){ return MGR_IDS.map(gid=>({gid,val:rankValOf(gid)})).sort((a,b)=>b.val-a.val); }
+function getMyRank(){ const r=getRankingTAC(); const i=r.findIndex(x=>x.gid===GERENTE_ID); return i>=0?i+1:MGR_IDS.length; }
+function isMaiorCrescimento(){
+  const myDia=pn('tac_dia'); if(!myDia) return false;
+  return MGR_IDS.every(gid=>{ if(gid===GERENTE_ID) return true; const d=RANK_DATA[gid]; return myDia>=(d?parseFloat(String(d.tac_dia||'0').replace(/\./g,'').replace(',','.'))||0:0); });
+}
+function getStreak(){ const sd=g('streak_days'); return sd?JSON.parse(sd).length:0; }
+function updateStreak(){
+  const todayStr=toDateStr(today);
+  let days=g('streak_days')?JSON.parse(g('streak_days')):[];
+  if(!days.includes(todayStr)&&g('dia_concluido')){ days.push(todayStr); days=days.filter(d=>Math.abs((new Date(todayStr+'T00:00:00')-new Date(d+'T00:00:00'))/(86400000))<=30).sort(); sv('streak_days',JSON.stringify(days)); }
+  return days;
+}
+function checkMedals(){
+  const earned=g('medals')?JSON.parse(g('medals')):[];
+  let changed=false;
+  MEDALS_CFG.forEach(m=>{ if(!earned.includes(m.id)&&m.check()){ earned.push(m.id); changed=true; showMedalToast(m); } });
+  if(changed) sv('medals',JSON.stringify(earned));
+  return earned;
+}
+function showMedalToast(m){ const t=el('toast'); t.textContent=`${m.icon} Nova medalha: ${m.name}!`; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3500); }
+function checkRankUp(){ const rank=getMyRank(); if(LAST_RANK_POS!==null&&rank<LAST_RANK_POS){ const t=el('rankUpToast'); t.textContent=`⬆️ Você subiu para ${rank}º lugar! 🎉`; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),3000); } LAST_RANK_POS=rank; }
+function getMotiMsg(rank,gap){
+  if(rank===1) return '💪 Você está liderando! Mantenha o ritmo!';
+  if(rank===2) return `🔥 Só mais R$ ${fmt(gap)} para o 1º lugar. Vai lá!`;
+  if(rank===3) return `⚡ Top 3! Faltam R$ ${fmt(gap)} para liderar.`;
+  return `🚀 Você está em ${rank}º. R$ ${fmt(gap)} para o 1º lugar!`;
+}
+function checkPodium(){
+  const lastDay=g('_podium_shown_month'); if(lastDay===MONTH_KEY) return;
+  const d=new Date(today.getFullYear(),today.getMonth()+1,0);
+  if(today.getDate()===d.getDate()||(lastDay&&lastDay<MONTH_KEY)){
+    buildPodium(getRankingTAC()); sv('_podium_shown_month',MONTH_KEY);
+  }
+}
+function buildPodium(ranking){
+  const top3=ranking.slice(0,3); const order=[1,0,2];
+  const icons=['🥇','🥈','🥉']; const cls=['p1','p2','p3'];
+  let cols='';
+  order.forEach(idx=>{ if(!top3[idx]) return; const isMe=top3[idx].gid===GERENTE_ID; const label=isMe?'Você 🎉':`${idx+1}º lugar`;
+    cols+=`<div class="podium-col"><div class="podium-name">${label}</div><div class="podium-val">R$ ${fmt(top3[idx].val)}</div><div class="podium-block ${cls[idx]}">${icons[idx]}</div></div>`; });
+  el('podiumCols').innerHTML=cols; launchConfetti(); setTimeout(()=>el('podiumOverlay').classList.add('open'),800);
+}
+function launchConfetti(){
+  const wrap=el('confettiWrap'); wrap.innerHTML='';
+  const colors=['#FFD700','#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD'];
+  for(let i=0;i<60;i++){ const c=document.createElement('div'); const color=colors[Math.floor(Math.random()*colors.length)]; c.style.cssText=`position:absolute;width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;background:${color};left:${Math.random()*100}%;top:-10px;border-radius:${Math.random()>.5?'50%':'2px'};animation:confettiFall ${2+Math.random()*2}s ${Math.random()*1}s ease-in forwards;`; wrap.appendChild(c); }
+  setTimeout(()=>wrap.innerHTML='',4000);
+}
+
+// ══════════════════════════════════════════════════
+// LIMPAR REGISTROS DO MÓDULO
+// ══════════════════════════════════════════════════
+function openClearModal(modKey, modName, clearFn){
+  el('modalClearMsg').innerHTML = `Esta ação vai apagar todos os dados de <strong>${modName}</strong> do mês atual.<br><br><strong>Não poderá ser desfeita.</strong>`;
+  el('modalClearYes').onclick = () => {
+    clearFn();
+    closeClearModal();
+    showToast(`✅ Registros de ${modName} apagados`);
+  };
+  el('modalClear').classList.add('open');
+}
+function closeClearModal(){ el('modalClear').classList.remove('open'); }
+
+function clearModule(prefixOrKeys, listKey){
+  // Limpar campos numéricos
+  if(Array.isArray(prefixOrKeys)){
+    prefixOrKeys.forEach(k => { delete S[k]; });
+  } else if(prefixOrKeys){
+    // Limpar tudo que começa com o prefix
+    Object.keys(S).forEach(k => {
+      if(k.startsWith(prefixOrKeys + '_') && !k.endsWith('_meta')) delete S[k];
+    });
+  }
+  // Limpar lista (viab/safrapay/credito/seguro)
+  if(listKey) delete S[listKey];
+  saveS();
+  fbSync();
+  // Re-renderizar
+  bTAC(); bCHEMP(); bGiro(); bAtivos(); bContas();
+  SIMPLES_CFG.forEach(sim=>bSimple(sim));
+  bSeguro(); bViab(); bSafrapay(); bCredito();
+  recompute();
+}
+
+// ══════════════════════════════════════════════════
+// NOTIFICAÇÃO DE INATIVIDADE
+// ══════════════════════════════════════════════════
+function checkInactivity(){
+  const lastUpdate = g('dia_ultima_atualizacao');
+  if(!lastUpdate) return ''; // primeira vez, não alerta
+
+  const lastDate = new Date(lastUpdate);
+  const now = new Date();
+  const diffMs = now - lastDate;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  // Conta apenas dias úteis perdidos
+  let businessDaysSkipped = 0;
+  const d = new Date(lastDate);
+  d.setDate(d.getDate() + 1);
+  while(d <= now){
+    if(isBusinessDay(d)) businessDaysSkipped++;
+    d.setDate(d.getDate() + 1);
+  }
+
+  if(businessDaysSkipped < 2) return ''; // só alerta após 2+ dias úteis
+
+  const lastDay = `${String(lastDate.getDate()).padStart(2,'0')}/${String(lastDate.getMonth()+1).padStart(2,'0')}`;
+  return `<div class="inactivity-alert">
+    <span class="inactivity-icon">⚠️</span>
+    <div class="inactivity-text">
+      <strong>Sem atualizações há ${businessDaysSkipped} dias úteis!</strong>
+      Sua última atualização foi em ${lastDay}. Mantenha o registro diário para acompanhar suas metas e o ritmo de produção.
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════
+function bDash(){
+  try { renderDash(); } catch(e){ console.error('Erro Dashboard:', e); }
+}
+
+function renderDash(){
+  const ranking=getRankingTAC();
+  const myPos=ranking.findIndex(x=>x.gid===GERENTE_ID);
+  const myRank=myPos+1;
+  const myVal=rankValOf(GERENTE_ID);
+  const topVal=ranking[0]?.val||0;
+  const gap=topVal-myVal;
+  const streak=getStreak();
+  const earned=checkMedals();
+  const streakDays=g('streak_days')?JSON.parse(g('streak_days')):[];
+  const medalIcon=myRank===1?'🥇':myRank===2?'🥈':myRank===3?'🥉':'';
+
+  let h=`<div style="padding:0 14px">`;
+
+  // ── Notificação de Inatividade ──
+  const inactivityAlert = checkInactivity();
+  if(inactivityAlert) h += inactivityAlert;
+
+  // Hero
+  h+=`<div class="dash-hero">
+    ${medalIcon?`<span class="dash-medal">${medalIcon}</span>`:''}
+    <div class="dash-pos-label">Sua posição no Placar TAC</div>
+    <div class="dash-pos">${myRank}<span class="dash-pos-suffix">º</span></div>
+    <div class="dash-msg">${getMotiMsg(myRank, gap)}</div>
+    ${myRank>1?`<div class="dash-gap">📈 Faltam R$ ${fmt(gap)} para o 1º lugar</div>`:''}
+  </div>`;
+
+  // Rankings por produto
+  const rankMods = [
+    { title:'🏆 Placar TAC', fn: gid=>getGerVal(gid,'tac'), fmtFn: v=>`R$ ${fmt(v)||'0'}` },
+    { title:'🔄 Placar Giro de Carteira', fn: gid=>getGerVal(gid,'giro'), fmtFn: v=>Math.round(v)||'0' },
+    { title:'💰 Placar Ativos', fn: gid=>getGerVal(gid, AT_PROD.map(p=>`at_${slug(p)}`)), fmtFn: v=>`R$ ${fmt(v)||'0'}` },
+    { title:'🏦 Placar Contas', fn: gid=>{
+        if(gid==='_self') return (pn('contas_amarela_acc')+pn('contas_amarela_dia'))+(pn('contas_verde_acc')+pn('contas_verde_dia'))+(pn('contas_outros_acc')+pn('contas_outros_dia'));
+        const d=RANK_DATA[gid]; if(!d) return 0;
+        return (parseFloat(String(d.contas_amarela_acc||'0'))||0)+(parseFloat(String(d.contas_verde_acc||'0'))||0)+(parseFloat(String(d.contas_outros_acc||'0'))||0);
+      }, fmtFn: v=>`${Math.round(v)||'0'} contas` },
+    { title:'🛡️ Placar Seguro', fn: gid=>{
+        if(gid==='_self'){ const l=getSeguroList(); return l.reduce((s,v)=>s+parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0,0); }
+        const d=RANK_DATA[gid]; if(!d) return 0;
+        const l=d.seguro_list?JSON.parse(d.seguro_list):[];
+        return l.reduce((s,v)=>s+parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0,0);
+      }, fmtFn: v=>`R$ ${fmt(v)||'0'}` },
+    { title:'👥 Placar Viabilizados', fn: gid=>{
+        if(gid==='_self') return getViabList().filter(x=>x.tipo==='prod').length;
+        const d=RANK_DATA[gid]; if(!d) return 0;
+        const l=d.viab_list?JSON.parse(d.viab_list):[];
+        return l.filter(x=>x.tipo==='prod').length;
+      }, fmtFn: v=>`${v} prod` },
+    { title:'💳 Placar Safrapay (VOP)', fn: gid=>{
+        if(gid==='_self') return getSafrapayList().filter(x=>x.tipo==='prod').reduce((s,v)=>s+parseFloat(String(v.vop||'0').replace(/\./g,'').replace(',','.'))||0,0);
+        const d=RANK_DATA[gid]; if(!d) return 0;
+        const l=d.safrapay_list?JSON.parse(d.safrapay_list):[];
+        return l.filter(x=>x.tipo==='prod').reduce((s,v)=>s+parseFloat(String(v.vop||'0').replace(/\./g,'').replace(',','.'))||0,0);
+      }, fmtFn: v=>`R$ ${fmt(v)||'0'}` },
+    { title:'💼 Placar Crédito BS (valor)', fn: gid=>{
+        if(gid==='_self') return getCreditoList().filter(x=>x.tipo==='prod').reduce((s,v)=>s+parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0,0);
+        const d=RANK_DATA[gid]; if(!d) return 0;
+        const l=d.credito_list?JSON.parse(d.credito_list):[];
+        return l.filter(x=>x.tipo==='prod').reduce((s,v)=>s+parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0,0);
+      }, fmtFn: v=>`R$ ${fmt(v)||'0'}` },
+  ];
+
+  rankMods.forEach(mod=>{
+    const ranking = MGR_IDS.map(gid=>({gid, val: mod.fn(gid)})).sort((a,b)=>b.val-a.val);
+    h += buildRankingCard(mod.title, ranking, mod.fmtFn);
+  });
+
+  // Streak
+  const todayStr=toDateStr(today);
+  const last7=Array.from({length:7},(_,i)=>{ const d2=new Date(today); d2.setDate(d2.getDate()-6+i); return toDateStr(d2); });
+  h+=`<div class="streak-card">
+    <div class="streak-header"><span class="streak-title">🔥 Streak de Dias</span><span class="streak-count">${streak} dia${streak!==1?'s':''}</span></div>
+    <div class="streak-body"><span>🔥</span><span>${streak===0?'Marque o dia como concluído para iniciar!':streak<3?'Continue assim!':streak<7?'Você está em chamas! 🔥':'Máquina! ⚡'}</span></div>
+    <div class="streak-days">`;
+  last7.forEach(d2=>{ const ok=streakDays.includes(d2); const isToday=d2===todayStr; const dayN=new Date(d2+'T00:00:00').getDate(); const cls=isToday&&ok?'today-ok':ok?'ok':'miss'; h+=`<div class="streak-day ${cls}">${dayN}</div>`; });
+  h+=`</div></div>`;
+
+  // Medalhas
+  h+=`<div class="medals-card">
+    <div class="medals-header"><span class="card-title" style="color:#fff">🏅 Medalhas</span><span class="card-count">${earned.length}/${MEDALS_CFG.length}</span></div>
+    <div class="medals-grid">`;
+  MEDALS_CFG.forEach(m=>{ const has=earned.includes(m.id); h+=`<div class="medal-cell ${has?'':'locked'}"><div class="medal-icon">${m.icon}</div><div class="medal-name">${m.name}</div><div class="medal-desc">${m.desc}</div></div>`; });
+  h+=`</div></div></div>`;
+
+  el('sec-dash').innerHTML=h;
+  checkRankUp();
+}
+
+// ══════════════════════════════════════════════════
+// FIREBASE
+// ══════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey:"AIzaSyAeO08aZCU8t1P3wVzxx8CnhXzViGPWLAs",
+  authDomain:"safra-boa-viagem.firebaseapp.com",
+  databaseURL:"https://safra-boa-viagem-default-rtdb.firebaseio.com",
+  projectId:"safra-boa-viagem",
+  storageBucket:"safra-boa-viagem.firebasestorage.app",
+  messagingSenderId:"436843298790",
+  appId:"1:436843298790:web:1480b10539a1e27affa027"
+};
+
+let db = null;
+try { firebase.initializeApp(firebaseConfig); db=firebase.database(); } catch(e){ console.warn('Firebase indisponível:', e); }
+
+const GERENTE_PATH = `agencia/boa_viagem/${MONTH_KEY}/gerentes/${GERENTE_ID}`;
+const META_PATH    = `agencia/boa_viagem/${MONTH_KEY}/metas/${GERENTE_ID}`;
+const ALL_PATH     = `agencia/boa_viagem/${MONTH_KEY}/gerentes`;
+
+let fbSyncTimer=null;
+function fbSync(){
+  if(!db) return;
+  clearTimeout(fbSyncTimer);
+  fbSyncTimer=setTimeout(()=>{
+    const segTotal = getSeguroList().reduce((s,v)=>s+parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0,0);
+    const payload={
+      ...S,
+      _nome:GERENTE_NOME,
+      _ultima_atualizacao:new Date().toISOString(),
+      _mes:MONTH_KEY,
+      // Dados de contas para ranking GG
+      contas_amarela_total: pn('contas_amarela_acc')+pn('contas_amarela_dia'),
+      contas_verde_total:   pn('contas_verde_acc')  +pn('contas_verde_dia'),
+      contas_outros_total:  pn('contas_outros_acc') +pn('contas_outros_dia'),
+      seguro_total:         segTotal,
+    };
+    db.ref(GERENTE_PATH).set(payload).catch(e=>console.warn('Sync error:',e));
+  },800);
+}
+
+sv = function(k,v){ S[k]=v; saveS(); fbSync(); };
+
+if(db){
+  // Ouvir metas do GG
+  db.ref(META_PATH).on('value', snap=>{
+    const metas=snap.val(); if(!metas) return;
+    let changed=false;
+    Object.keys(metas).forEach(prefix=>{ const mk=prefix+'_meta'; if(S[mk]!==String(metas[prefix])){ S[mk]=String(metas[prefix]); changed=true; } });
+    if(changed){ saveS(); buildAll(); renderVals(); recompute(); }
+  });
+
+  // Ouvir todos para ranking
+  db.ref(ALL_PATH).on('value', snap=>{
+    const val=snap.val();
+    if(val) MGR_IDS.forEach(gid=>{ if(val[gid]&&gid!==GERENTE_ID) RANK_DATA[gid]=val[gid]; });
+    updateStreak(); renderDash(); checkMedals(); checkPodium();
+  });
+
+  fbSync();
+}
+window._appInit = ()=>{}; if(window._fbReady) {};
+
+// ══════════════════════════════════════════════════
+// INIT
 // ══════════════════════════════════════════════════
 ;(function(){
   const days=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -1577,393 +2355,20 @@ function checkMonthRollover(){
   el('dateBadge').textContent=`${days[today.getDay()]}, ${today.getDate()} ${mths[today.getMonth()]}`;
 })();
 
-
-// ══════════════════════════════════════════════════
-// GAMIFICAÇÃO — STATE & HELPERS
-// ══════════════════════════════════════════════════
-let RANK_DATA = {};
-let LAST_RANK_POS = null;
-const MGR_IDS = ['bruno','camyla','julio','kaio','roberta','sergio','thais','wheldson'];
-
-// ══════════════════════════════════════════════════
-// FIREBASE — conecta depois que app já está visível
-// ══════════════════════════════════════════════════
-const firebaseConfig = {
-  apiKey: "AIzaSyAeO08aZCU8t1P3wVzxx8CnhXzViGPWLAs",
-  authDomain: "safra-boa-viagem.firebaseapp.com",
-  databaseURL: "https://safra-boa-viagem-default-rtdb.firebaseio.com",
-  projectId: "safra-boa-viagem",
-  storageBucket: "safra-boa-viagem.firebasestorage.app",
-  messagingSenderId: "436843298790",
-  appId: "1:436843298790:web:1480b10539a1e27affa027"
-};
-
-let db = null;
-
-const GERENTE_PATH = `agencia/boa_viagem/${MONTH_KEY}/gerentes/${GERENTE_ID}`;
-const META_PATH    = `agencia/boa_viagem/${MONTH_KEY}/metas/${GERENTE_ID}`;
-const ALL_PATH     = `agencia/boa_viagem/${MONTH_KEY}/gerentes`;
-
-// Sobrescreve sv para sincronizar com Firebase após cada salvamento
-sv = function(k,v){
-  S[k]=v; saveS(); fbSync();
-};
-
-let fbSyncTimer = null;
-function fbSync(){
-  if(!db) return;
-  clearTimeout(fbSyncTimer);
-  fbSyncTimer = setTimeout(()=>{
-    const payload = {
-      ...S,
-      _nome: GERENTE_NOME,
-      _ultima_atualizacao: new Date().toISOString(),
-      _mes: MONTH_KEY
-    };
-    db.ref(GERENTE_PATH).set(payload)
-      .then(()=> console.log('Sync OK'))
-      .catch(e=> console.warn('Sync error:', e));
-  }, 800);
-}
-
-function _initFirebase(){
-  try {
-    if(!firebase) return;
-    firebase.initializeApp(firebaseConfig);
-    db = firebase.database();
-    console.log('Firebase conectado ✅');
-
-    // Ouvir metas do GG
-    db.ref(META_PATH).on('value', snap => {
-      const metas = snap.val();
-      if(!metas) return;
-      let changed = false;
-      Object.keys(metas).forEach(prefix => {
-        const metaKey = prefix+'_meta';
-        if(S[metaKey] !== String(metas[prefix])){ S[metaKey]=String(metas[prefix]); changed=true; }
-      });
-      if(changed){
-        saveS();
-        bTAC(); bGiro(); bAtivos();
-        SIMPLES_CFG.forEach(sim=>bSimple(sim));
-        recompute();
-      }
-    });
-
-    // Ouvir todos os gerentes para ranking
-    db.ref(ALL_PATH).on('value', snap => {
-      const val = snap.val();
-      if(val) MGR_IDS.forEach(gid=>{ if(val[gid] && gid!==GERENTE_ID) RANK_DATA[gid]=val[gid]; });
-      updateStreak(); renderDash(); checkMedals(); checkPodium();
-    });
-
-    // Enviar dados imediatamente
-    fbSync();
-
-  } catch(e){ console.warn('Firebase não disponível:', e); }
-}
-
-// Registra callback — será chamado quando SDK carregar
-window._appInit = _initFirebase;
-// Se SDK já carregou antes deste script rodar, chama direto
-if(window._fbReady) _initFirebase();
-
-const MEDALS_CFG = [
-  { id:'primeiro',   icon:'🥇', name:'Líder do Ranking',    desc:'Primeiro lugar no TAC do mês',         check: ()=> getMyRank('tac') === 1 },
-  { id:'meta_tac',   icon:'🎯', name:'Meta TAC Batida',      desc:'Atingiu 100% da meta de TAC',           check: ()=> { const m=pn('tac_meta'); return m && getMes('tac')>=m; } },
-  { id:'meta_atv',   icon:'💰', name:'Meta Ativos Batida',   desc:'Atingiu 100% da meta de Ativos',        check: ()=> { const m=pn('ativos_meta'); return m && getAtivosMes()>=m; } },
-  { id:'streak3',    icon:'🔥', name:'3 dias seguidos',      desc:'Preencheu 3 dias consecutivos',         check: ()=> getStreak() >= 3 },
-  { id:'streak7',    icon:'⚡', name:'Semana perfeita',      desc:'7 dias consecutivos preenchidos',       check: ()=> getStreak() >= 7 },
-  { id:'top3',       icon:'🏆', name:'Top 3',                desc:'Está entre os 3 primeiros no TAC',      check: ()=> getMyRank('tac') <= 3 },
-  { id:'crescimento',icon:'🚀', name:'Maior crescimento',    desc:'Maior crescimento de ontem para hoje',  check: ()=> isMaiorCrescimento() },
-  { id:'safrapay1',  icon:'💳', name:'Safrapay Expert',      desc:'1 produção Safrapay no mês',            check: ()=> getSafrapayProds() >= 1 },
-  { id:'credito1',   icon:'💼', name:'Crédito Aprovado',     desc:'1 produção de crédito no mês',          check: ()=> getCreditoProds() >= 1 },
-  { id:'viab3',      icon:'⭐', name:'Viabilizador',         desc:'3 viabilizações no mês',                check: ()=> getViabProds() >= 3 },
-];
-
-function getAtivosMes(){
-  return AT_PROD.reduce((s,p)=>s+getMes(`at_${slug(p)}`),0);
-}
-function getSafrapayProds(){
-  const raw=g('safrapay_list'); return raw?JSON.parse(raw).filter(x=>x.tipo==='prod').length:0;
-}
-function getCreditoProds(){
-  const raw=g('credito_list'); return raw?JSON.parse(raw).filter(x=>x.tipo==='prod').length:0;
-}
-function getViabProds(){
-  const raw=g('viab_list'); return raw?JSON.parse(raw).filter(x=>x.tipo==='prod').length:0;
-}
-
-// Valor de TAC de um gerente no ranking (usando dados Firebase)
-function rankValOf(gid){
-  if(gid===GERENTE_ID) return getMes('tac');
-  const d=RANK_DATA[gid];
-  if(!d) return 0;
-  const acc=parseFloat(String(d.tac_acc||'0').replace(/\./g,'').replace(',','.'))||0;
-  const dia=parseFloat(String(d.tac_dia||'0').replace(/\./g,'').replace(',','.'))||0;
-  const adj=parseFloat(String(d.tac_adj||'0').replace(/\./g,'').replace(',','.'))||0;
-  return acc+dia+adj;
-}
-
-function getRankingTAC(){
-  return MGR_IDS.map(gid=>({gid,val:rankValOf(gid)})).sort((a,b)=>b.val-a.val);
-}
-
-function getMyRank(mod){
-  const r=getRankingTAC();
-  const idx=r.findIndex(x=>x.gid===GERENTE_ID);
-  return idx>=0?idx+1:MGR_IDS.length;
-}
-
-function isMaiorCrescimento(){
-  const myDia=pn('tac_dia'); if(!myDia) return false;
-  return MGR_IDS.every(gid=>{
-    if(gid===GERENTE_ID) return true;
-    const d=RANK_DATA[gid];
-    const oDia=d?parseFloat(String(d.tac_dia||'0').replace(/\./g,'').replace(',','.'))||0:0;
-    return myDia>=oDia;
-  });
-}
-
-// ── Streak ──
-function getStreak(){
-  const streakDays = g('streak_days');
-  return streakDays ? JSON.parse(streakDays).length : 0;
-}
-
-function updateStreak(){
-  const todayStr = toDateStr(today);
-  let days = g('streak_days') ? JSON.parse(g('streak_days')) : [];
-  if(!days.includes(todayStr) && g('dia_concluido')){
-    days.push(todayStr);
-    // manter apenas os últimos 30 dias
-    days = days.filter(d=> daysDiff(todayStr,d) <= 30).sort();
-    sv('streak_days', JSON.stringify(days));
-  }
-  return days;
-}
-
-// ── Medalhas ──
-function checkMedals(){
-  const earned = g('medals') ? JSON.parse(g('medals')) : [];
-  let changed = false;
-  MEDALS_CFG.forEach(m=>{
-    if(!earned.includes(m.id) && m.check()){
-      earned.push(m.id);
-      changed = true;
-      showMedalToast(m);
-    }
-  });
-  if(changed) sv('medals', JSON.stringify(earned));
-  return earned;
-}
-
-function showMedalToast(m){
-  const t=el('toast');
-  t.textContent=`${m.icon} Nova medalha: ${m.name}!`;
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),3500);
-}
-
-// ── Rank-up toast ──
-function checkRankUp(){
-  const rank = getMyRank('tac');
-  if(LAST_RANK_POS !== null && rank < LAST_RANK_POS){
-    const t=el('rankUpToast');
-    t.textContent=`⬆️ Você subiu para ${rank}º lugar! 🎉`;
-    t.classList.add('show');
-    setTimeout(()=>t.classList.remove('show'),3000);
-  }
-  LAST_RANK_POS = rank;
-}
-
-// ── Mensagem motivacional ──
-function getMotiMsg(rank, gap){
-  const myVal = rankValOf(GERENTE_ID);
-  if(rank===1) return '💪 Você está liderando! Mantenha o ritmo!';
-  if(rank===2) return `🔥 Só mais R$ ${fmt(gap)} para o 1º lugar. Vai lá!`;
-  if(rank===3) return `⚡ Top 3! Faltam R$ ${fmt(gap)} para liderar.`;
-  return `🚀 Você está em ${rank}º. R$ ${fmt(gap)} para o 1º lugar!`;
-}
-
-// ── Pódio do mês ──
-function checkPodium(){
-  const lastDay = g('_podium_shown_month');
-  if(lastDay === MONTH_KEY) return;
-  // Mostrar pódio no último dia do mês ou se é o primeiro acesso do mês novo
-  const d = new Date(today.getFullYear(), today.getMonth()+1, 0); // último dia
-  if(today.getDate() === d.getDate() || (lastDay && lastDay < MONTH_KEY)){
-    const ranking = getRankingTAC();
-    buildPodium(ranking);
-    sv('_podium_shown_month', MONTH_KEY);
-  }
-}
-
-function buildPodium(ranking){
-  const top3 = ranking.slice(0,3);
-  const order = [1,0,2]; // pódio: 2º, 1º, 3º visualmente
-  const icons = ['🥇','🥈','🥉'];
-  const cls   = ['p1','p2','p3'];
-  const heights=['p1','p2','p3'];
-
-  let cols='';
-  order.forEach(idx=>{
-    if(!top3[idx]) return;
-    const isMe = top3[idx].gid === GERENTE_ID;
-    const label = isMe ? 'Você 🎉' : `${idx+1}º lugar`;
-    cols+=`<div class="podium-col">
-      <div class="podium-name">${label}</div>
-      <div class="podium-val">R$ ${fmt(top3[idx].val)}</div>
-      <div class="podium-block ${cls[idx]}">${icons[idx]}</div>
-    </div>`;
-  });
-  el('podiumCols').innerHTML=cols;
-  launchConfetti();
-  setTimeout(()=>el('podiumOverlay').classList.add('open'),800);
-}
-
-function launchConfetti(){
-  const wrap=el('confettiWrap');
-  wrap.innerHTML='';
-  const colors=['#FFD700','#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD'];
-  for(let i=0;i<60;i++){
-    const c=document.createElement('div');
-    const color=colors[Math.floor(Math.random()*colors.length)];
-    c.style.cssText=`position:absolute;width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;background:${color};left:${Math.random()*100}%;top:-10px;border-radius:${Math.random()>0.5?'50%':'2px'};animation:confettiFall ${2+Math.random()*2}s ${Math.random()*1}s ease-in forwards;`;
-    wrap.appendChild(c);
-  }
-  setTimeout(()=>wrap.innerHTML='',4000);
-}
-
-// ══════════════════════════════════════════════════
-// DASHBOARD DO GERENTE
-// ══════════════════════════════════════════════════
-function bDash(){
-  try {
-    renderDash();
-  } catch(e) {
-    console.error('Erro no Dashboard:', e);
-    el('sec-dash').innerHTML = `<div style="padding:20px;color:red;font-family:monospace;font-size:12px">
-      <strong>Erro no Dashboard:</strong><br>${e.message}<br><br>
-      <small>${e.stack}</small>
-    </div>`;
-  }
-}
-
-function renderDash(){
-  const ranking = getRankingTAC();
-  const myPos   = ranking.findIndex(x=>x.gid===GERENTE_ID);
-  const myRank  = myPos+1;
-  const myVal   = rankValOf(GERENTE_ID);
-  const topVal  = ranking[0]?.val||0;
-  const gap     = topVal - myVal;
-  const streak  = getStreak();
-  const earned  = checkMedals();
-  const streakDays = g('streak_days') ? JSON.parse(g('streak_days')) : [];
-
-  // Hero de posição
-  const medalIcon = myRank===1?'🥇':myRank===2?'🥈':myRank===3?'🥉':'';
-  const suffix    = myRank===1?'º':myRank===2?'º':myRank===3?'º':'º';
-  const motiMsg   = getMotiMsg(myRank, gap);
-
-  let h=`<div class="section-inner" style="padding:0 14px">`;
-
-  // Hero card
-  h+=`<div class="dash-hero">
-    ${medalIcon?`<span class="dash-medal">${medalIcon}</span>`:''}
-    <div class="dash-pos-label">Sua posição no ranking TAC</div>
-    <div class="dash-pos">${myRank}<span class="dash-pos-suffix">${suffix}</span></div>
-    <div class="dash-msg">${motiMsg}</div>
-    ${myRank>1?`<div class="dash-gap">📈 Faltam R$ ${fmt(gap)} para o 1º lugar</div>`:''}
-  </div>`;
-
-  // Ranking anônimo — TAC
-  h+=`<div class="card" style="margin-bottom:12px">
-    <div class="card-header"><span class="card-title">🏆 Ranking TAC do Mês</span></div>`;
-  const maxVal = topVal||1;
-  ranking.forEach((r,i)=>{
-    const isMe = r.gid===GERENTE_ID;
-    const posCls = i===0?'p1':i===1?'p2':i===2?'p3':isMe?'pme':'';
-    const pct = Math.round((r.val/maxVal)*100);
-    h+=`<div class="rank-anon ${isMe?'me':''}">
-      <span class="rank-anon-pos ${posCls}">${i+1}º</span>
-      <span class="rank-anon-label ${isMe?'me-label':''}">${isMe?'Você 👈':'Colega'}</span>
-      <div class="rank-anon-bar-wrap"><div class="rank-anon-bar ${isMe?'me-bar':''}" style="width:${pct}%"></div></div>
-      <span class="rank-anon-val ${isMe?'me-val':''}">R$ ${fmt(r.val)}</span>
-    </div>`;
-  });
-  h+=`</div>`;
-
-  // Streak
-  const todayStr = toDateStr(today);
-  const last7 = Array.from({length:7},(_, i)=>{
-    const d2=new Date(today); d2.setDate(d2.getDate()-6+i);
-    return toDateStr(d2);
-  });
-  h+=`<div class="streak-card">
-    <div class="streak-header">
-      <span class="streak-title">🔥 Streak de Dias</span>
-      <span class="streak-count">${streak} dia${streak!==1?'s':''}</span>
-    </div>
-    <div class="streak-body">
-      <span class="streak-flame">🔥</span>
-      <span class="streak-text">${streak===0?'Marque o dia como concluído para iniciar sua sequência!':streak<3?`${streak} dia${streak>1?'s':''} seguido${streak>1?'s':''}! Continue assim!`:streak<7?`${streak} dias! Você está pegando fogo! 🔥`:`${streak} dias! Você é uma máquina! ⚡`}</span>
-    </div>
-    <div class="streak-days">`;
-  last7.forEach(d2=>{
-    const ok=streakDays.includes(d2);
-    const isToday=d2===todayStr;
-    const dayN=new Date(d2+'T00:00:00').getDate();
-    const cls=isToday&&ok?'today-ok':ok?'ok':'miss';
-    h+=`<div class="streak-day ${cls}">${dayN}</div>`;
-  });
-  h+=`</div></div>`;
-
-  // Medalhas
-  h+=`<div class="medals-card">
-    <div class="medals-header">
-      <span class="card-title" style="color:#fff">🏅 Medalhas</span>
-      <span class="card-count">${earned.length}/${MEDALS_CFG.length}</span>
-    </div>
-    <div class="medals-grid">`;
-  MEDALS_CFG.forEach(m=>{
-    const has=earned.includes(m.id);
-    h+=`<div class="medal-cell ${has?'':'locked'}">
-      <div class="medal-icon">${m.icon}</div>
-      <div class="medal-name">${m.name}</div>
-      <div class="medal-desc">${m.desc}</div>
-    </div>`;
-  });
-  h+=`</div></div>`;
-
-  h+=`</div>`; // section-inner
-  el('sec-dash').innerHTML=h;
-  checkRankUp();
-}
-
 loadS();
 checkMonthRollover();
+checkAutoDayClose();
 buildAll();
 renderVals();
 recompute();
 updateStatusPill();
 
-// ── Indicador de scroll nas tabs ──
+// Scroll hint tabs
 (function(){
-  const tabsEl   = el('tabs');
-  const wrapper  = el('tabsWrapper');
-  function updateScrollHint(){
-    const atStart = tabsEl.scrollLeft <= 4;
-    const atEnd   = tabsEl.scrollLeft >= tabsEl.scrollWidth - tabsEl.clientWidth - 4;
-    wrapper.classList.toggle('scroll-start', atStart);
-    wrapper.classList.toggle('scroll-end',   atEnd);
-    wrapper.classList.toggle('scroll-mid',  !atStart);
-  }
-  tabsEl.addEventListener('scroll', updateScrollHint, {passive:true});
-  setTimeout(updateScrollHint, 100);
+  const tabsEl=el('tabs'), wrapper=el('tabsWrapper');
+  function upd(){ const s=tabsEl.scrollLeft,e=tabsEl.scrollWidth-tabsEl.clientWidth; wrapper.classList.toggle('scroll-start',s<=4); wrapper.classList.toggle('scroll-end',s>=e-4); wrapper.classList.toggle('scroll-mid',s>4); }
+  tabsEl.addEventListener('scroll',upd,{passive:true}); setTimeout(upd,100);
 })();
-
-
 </script>
 </body>
 </html>

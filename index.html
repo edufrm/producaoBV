@@ -186,6 +186,29 @@ input.meta-inp:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,
 .legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text3)}
 .dot{width:7px;height:7px;border-radius:50%}
 .dot.g{background:var(--green)}
+/* ── DIÁRIO ── */
+.diario-day { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:12px; overflow:hidden; box-shadow:var(--shadow); }
+.diario-day-header { padding:10px 14px; background:var(--accent); display:flex; justify-content:space-between; align-items:center; }
+.diario-day-date { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:#fff; }
+.diario-day-badge { font-size:10px; color:var(--gold-light); background:rgba(255,255,255,0.1); padding:2px 8px; border-radius:10px; }
+.diario-entry { padding:12px 14px; font-size:13px; color:var(--text); line-height:1.6; white-space:pre-wrap; border-bottom:1px solid var(--border); }
+.diario-entry:last-child { border-bottom:none; }
+.diario-input-area { padding:12px 14px; }
+.diario-textarea { width:100%; min-height:100px; padding:10px 12px; border:1px solid var(--border); border-radius:8px; font-family:'IBM Plex Sans',sans-serif; font-size:13px; color:var(--text); background:var(--surface2); resize:vertical; line-height:1.5; }
+.diario-textarea:focus { outline:none; border-color:var(--accent); background:#fff; }
+.diario-btns { display:flex; gap:8px; margin-top:8px; }
+.diario-btn-mic { padding:8px 14px; background:var(--red-bg); color:var(--red); border:1px solid rgba(192,57,43,0.2); border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:4px; }
+.diario-btn-mic.recording { background:var(--red); color:#fff; animation:pulse-rec 1s ease-in-out infinite; }
+@keyframes pulse-rec { 0%,100%{opacity:1} 50%{opacity:0.6} }
+.diario-btn-save { flex:1; padding:8px; background:var(--accent); color:#fff; border:none; border-radius:8px; font-size:12px; font-weight:600; cursor:pointer; }
+.resumo-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:12px; overflow:hidden; box-shadow:var(--shadow); }
+.resumo-header { padding:12px 14px; background:linear-gradient(135deg,var(--accent),#2d5c42); display:flex; justify-content:space-between; align-items:center; }
+.resumo-title { font-family:'Syne',sans-serif; font-size:14px; font-weight:800; color:#fff; }
+.resumo-body { padding:14px; font-size:13px; line-height:1.7; color:var(--text); white-space:pre-wrap; }
+.resumo-copy-btn { margin:0 14px 14px; padding:10px; background:var(--green-bg); color:var(--green); border:1px solid rgba(30,107,62,0.2); border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; width:calc(100% - 28px); text-align:center; }
+.hist-resumo-item { padding:10px 14px; border-bottom:1px solid var(--border); cursor:pointer; }
+.hist-resumo-item:last-child { border-bottom:none; }
+.hist-resumo-item:hover { background:var(--surface2); }
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -258,6 +281,29 @@ const today    = new Date();
 const MONTH_KEY= `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
 const BASE     = `agencia/boa_viagem/${MONTH_KEY}`;
 
+// Dias úteis (feriados nacionais + Recife + bancários)
+const HOLIDAYS = new Set([
+  `${today.getFullYear()}-01-01`,`${today.getFullYear()}-04-21`,
+  `${today.getFullYear()}-05-01`,`${today.getFullYear()}-09-07`,
+  `${today.getFullYear()}-10-12`,`${today.getFullYear()}-11-02`,
+  `${today.getFullYear()}-11-15`,`${today.getFullYear()}-11-20`,
+  `${today.getFullYear()}-12-25`,
+  `${today.getFullYear()}-03-04`,`${today.getFullYear()}-03-05`, // Carnaval
+  `${today.getFullYear()}-04-18`, // Sexta Santa
+  `${today.getFullYear()}-06-19`, // Corpus Christi (aprox)
+  `${today.getFullYear()}-06-24`, // São João Recife
+]);
+function isBusinessDay(d){
+  const dow=d.getDay(); if(dow===0||dow===6) return false;
+  const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return !HOLIDAYS.has(k);
+}
+function businessDaysInMonth(year,month){
+  const days=[]; const last=new Date(year,month+1,0).getDate();
+  for(let d=1;d<=last;d++){ const dt=new Date(year,month,d); if(isBusinessDay(dt)) days.push(d); }
+  return days;
+}
+
 const MGR = ['bruno','camyla','julio','kaio','roberta','sergio','thais','wheldson'];
 const NAMES = {bruno:'Bruno',camyla:'Camyla',julio:'Júlio',kaio:'Kaio',
                roberta:'Roberta',sergio:'Sérgio',thais:'Thaís',wheldson:'Wheldson'};
@@ -280,6 +326,7 @@ const TABS_CFG = [
   {id:'safrapay', l:'Safrapay'},
   {id:'credito',  l:'Crédito'},
   {id:'metas',    l:'🎯 Metas'},
+  {id:'diario',   l:'📝 Diário'},
 ];
 
 // WA include defaults
@@ -400,71 +447,396 @@ function getSafrapayVop(gid){
 // ══════════════════════════════════════════════════
 // DASHBOARD
 // ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
+// DASHBOARD AVANÇADO GG
+// ══════════════════════════════════════════════════
+
+// Estado dos filtros
+let DASH_MODE = 'gerente';       // 'gerente' | 'ranking'
+let DASH_GERENTES = [...MGR];    // todos por padrão
+let DASH_PRODUTOS = ['tac'];     // produto(s) selecionados
+let DASH_AI_LOADING = false;
+
+const PRODUTOS_CFG = [
+  { id:'tac',       lbl:'TAC',              fmt_: fmtR, valFn: gid=>getMes(gid,'tac'), metaKey:'tac' },
+  { id:'giro',      lbl:'Giro de Carteira', fmt_: v=>`${Math.round(v)||0}`, valFn: gid=>getMes(gid,'giro'), metaKey:'giro' },
+  { id:'ativos',    lbl:'Ativos',           fmt_: fmtR, valFn: gid=>{ let t=0; AT.forEach(p=>t+=getMes(gid,`at_${slug(p)}`)); return t; }, metaKey:'ativos' },
+  { id:'contas',    lbl:'Contas',           fmt_: v=>`${Math.round(v)||0}`, valFn: gid=>pnd(gid,'contas_amarela_acc')+pnd(gid,'contas_verde_acc')+pnd(gid,'contas_outros_acc'), metaKey:'contas' },
+  { id:'consorcio', lbl:'Consórcio',        fmt_: fmtR, valFn: gid=>getMes(gid,'consorcio'), metaKey:'consorcio' },
+  { id:'collarkin', lbl:'Collarkin',        fmt_: fmtR, valFn: gid=>getMes(gid,'collarkin'), metaKey:'collarkin' },
+  { id:'captacao',  lbl:'Captação',         fmt_: fmtR, valFn: gid=>getMes(gid,'captacao'), metaKey:'captacao' },
+  { id:'seguro',    lbl:'Seguro',           fmt_: fmtR, valFn: gid=>{ const l=DATA[gid]?.seguro_list?JSON.parse(DATA[gid].seguro_list):[]; return l.reduce((s,v)=>s+pnRaw(v.valor),0); }, metaKey:'seguro' },
+  { id:'viab',      lbl:'Viabilizados',     fmt_: v=>`${v} prod`, valFn: gid=>getProds(gid,'viab_list').prods.length, metaKey:'viab' },
+  { id:'safrapay',  lbl:'Safrapay VOP',     fmt_: fmtR, valFn: gid=>getSafrapayVop(gid), metaKey:'safrapay_vop' },
+  { id:'credito',   lbl:'Crédito BS',       fmt_: fmtR, valFn: gid=>getCreditoValor(gid), metaKey:'credito' },
+];
+
+function getRealizado(gid, prodId){
+  const p = PRODUTOS_CFG.find(x=>x.id===prodId);
+  return p ? p.valFn(gid) : 0;
+}
+function getMeta(gid, prodId){
+  const p = PRODUTOS_CFG.find(x=>x.id===prodId);
+  if(!p) return 0;
+  return METAS[gid]?.[p.metaKey] || 0;
+}
+function getPct(real, meta){ return meta>0 ? Math.min((real/meta)*100,999) : 0; }
+function getSemaforoColor(pct){
+  if(pct>=80) return 'var(--green)';
+  if(pct>=50) return 'var(--orange)';
+  return 'var(--red)';
+}
+function getSemaforoBg(pct){
+  if(pct>=80) return 'var(--green-bg)';
+  if(pct>=50) return 'var(--orange-bg)';
+  return 'var(--red-bg)';
+}
+function getSemaforoEmoji(pct){
+  if(pct>=100) return '🏆';
+  if(pct>=80) return '🟢';
+  if(pct>=50) return '🟡';
+  return '🔴';
+}
+
+// Dias úteis
+function getDiasUteisPassados(){
+  const allDays = businessDaysInMonth(today.getFullYear(), today.getMonth());
+  return allDays.filter(d=>d<=today.getDate()).length;
+}
+function getTotalDiasUteis(){
+  return businessDaysInMonth(today.getFullYear(), today.getMonth()).length;
+}
+function getProjecao(real, meta){
+  const du = getDiasUteisPassados();
+  const tot = getTotalDiasUteis();
+  if(!du || !tot || !meta) return null;
+  const proj = (real/du)*tot;
+  return proj;
+}
+
 function rDash(){
-  // Status do dia
-  let h=`<div class="card">
-    <div class="card-header gold"><span class="card-title">STATUS DO DIA</span></div>
-    <div class="status-grid">`;
-  MGR.forEach(gid=>{
-    const d=DATA[gid]; const st=gerStatus(gid);
-    const ts=d?._ultima_atualizacao;
+  let h = `<div style="padding:0 14px">`;
+
+  // ── FILTROS ──
+  h += buildDashFilters();
+
+  if(DASH_MODE === 'gerente'){
+    h += buildDashGerente();
+  } else {
+    h += buildDashRanking();
+  }
+
+  h += `</div>`;
+  el('sec-dash').innerHTML = h;
+}
+
+function buildDashFilters(){
+  const modeGer = DASH_MODE==='gerente';
+  let h = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)">
+    <!-- Toggle de modo -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)">
+      <button onclick="setDashMode('gerente')" style="padding:10px;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:all .2s;background:${modeGer?'var(--accent)':'var(--surface)'};color:${modeGer?'#fff':'var(--text2)'}" title="Visão por gerente">👤 Por Gerente</button>
+      <button onclick="setDashMode('ranking')" style="padding:10px;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:all .2s;background:${!modeGer?'var(--accent)':'var(--surface)'};color:${!modeGer?'#fff':'var(--text2)'}" title="Visão de ranking por produto">🏆 Ranking</button>
+    </div>`;
+
+  if(DASH_MODE === 'gerente'){
+    // Filtro de gerentes
+    h += `<div style="padding:10px 14px">
+      <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Gerentes</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+        <button onclick="setDashGerentes('all')" style="padding:4px 10px;border-radius:20px;border:1px solid var(--border);font-size:11px;font-weight:600;cursor:pointer;background:${DASH_GERENTES.length===MGR.length?'var(--accent)':'var(--surface)'};color:${DASH_GERENTES.length===MGR.length?'#fff':'var(--text2)'}">Todos</button>
+        ${MGR.map(gid=>`<button onclick="toggleDashGerente('${gid}')" style="padding:4px 10px;border-radius:20px;border:1px solid var(--border);font-size:11px;font-weight:600;cursor:pointer;background:${DASH_GERENTES.includes(gid)?'var(--accent)':'var(--surface)'};color:${DASH_GERENTES.includes(gid)?'#fff':'var(--text2)'}">${NAMES[gid]}</button>`).join('')}
+      </div>
+      <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Produtos</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <button onclick="setDashProdutos('all')" style="padding:4px 10px;border-radius:20px;border:1px solid var(--border);font-size:11px;font-weight:600;cursor:pointer;background:${DASH_PRODUTOS.length===PRODUTOS_CFG.length?'var(--accent)':'var(--surface)'};color:${DASH_PRODUTOS.length===PRODUTOS_CFG.length?'#fff':'var(--text2)'}">Todos</button>
+        ${PRODUTOS_CFG.map(p=>`<button onclick="toggleDashProduto('${p.id}')" style="padding:4px 10px;border-radius:20px;border:1px solid var(--border);font-size:11px;font-weight:600;cursor:pointer;background:${DASH_PRODUTOS.includes(p.id)?'var(--accent)':'var(--surface)'};color:${DASH_PRODUTOS.includes(p.id)?'#fff':'var(--text2)'}">${p.lbl}</button>`).join('')}
+      </div>
+    </div>`;
+  } else {
+    // Filtro de produtos para ranking
+    h += `<div style="padding:10px 14px">
+      <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Produtos para o Ranking</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        <button onclick="setDashProdutos('all')" style="padding:4px 10px;border-radius:20px;border:1px solid var(--border);font-size:11px;font-weight:600;cursor:pointer;background:${DASH_PRODUTOS.length===PRODUTOS_CFG.length?'var(--accent)':'var(--surface)'};color:${DASH_PRODUTOS.length===PRODUTOS_CFG.length?'#fff':'var(--text2)'}">Todos</button>
+        ${PRODUTOS_CFG.map(p=>`<button onclick="toggleDashProduto('${p.id}')" style="padding:4px 10px;border-radius:20px;border:1px solid var(--border);font-size:11px;font-weight:600;cursor:pointer;background:${DASH_PRODUTOS.includes(p.id)?'var(--accent)':'var(--surface)'};color:${DASH_PRODUTOS.includes(p.id)?'#fff':'var(--text2)'}">${p.lbl}</button>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  h += `</div>`;
+  return h;
+}
+
+// ── Controles de filtro ──
+function setDashMode(mode){ DASH_MODE=mode; rDash(); }
+function setDashGerentes(v){ DASH_GERENTES = v==='all' ? [...MGR] : [v]; rDash(); }
+function toggleDashGerente(gid){
+  if(DASH_GERENTES.includes(gid)){
+    if(DASH_GERENTES.length===1) return; // ao menos 1
+    DASH_GERENTES = DASH_GERENTES.filter(x=>x!==gid);
+  } else { DASH_GERENTES.push(gid); }
+  rDash();
+}
+function setDashProdutos(v){ DASH_PRODUTOS = v==='all' ? PRODUTOS_CFG.map(p=>p.id) : [v]; rDash(); }
+function toggleDashProduto(pid){
+  if(DASH_PRODUTOS.includes(pid)){
+    if(DASH_PRODUTOS.length===1) return;
+    DASH_PRODUTOS = DASH_PRODUTOS.filter(x=>x!==pid);
+  } else { DASH_PRODUTOS.push(pid); }
+  rDash();
+}
+
+// ── Visão por Gerente ──
+function buildDashGerente(){
+  const duPass = getDiasUteisPassados();
+  const duTot  = getTotalDiasUteis();
+  let h = '';
+
+  // Alertas globais
+  const alertas = buildAlertasGlobais();
+  if(alertas) h += alertas;
+
+  DASH_GERENTES.forEach(gid=>{
+    const prods = DASH_PRODUTOS.map(pid=>PRODUTOS_CFG.find(p=>p.id===pid)).filter(Boolean);
+    const st = gerStatus(gid);
+    const ts = DATA[gid]?._ultima_atualizacao;
     let timeStr='—';
-    if(ts){ const dt=new Date(ts); timeStr=`${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')} · ${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}`; }
-    h+=`<div class="sc"><div class="sc-name">${NAMES[gid]}</div><div class="sc-time">Atualizado: ${timeStr}</div><span class="sc-badge ${st.cls}">${st.lbl}</span></div>`;
-  });
-  h+=`</div></div>`;
+    if(ts){ const dt=new Date(ts); timeStr=`${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`; }
 
-  // Consolidado rápido
-  let tacT=0,giroT=0,ativT=0,viabT=0,spQtd=0,spVop=0,crValor=0;
-  MGR.forEach(gid=>{
-    tacT+=getMes(gid,'tac'); giroT+=getMes(gid,'giro');
-    AT.forEach(p=>{ ativT+=getMes(gid,`at_${slug(p)}`); });
-    viabT+=getProds(gid,'viab_list').prods.length;
-    spQtd+=getProds(gid,'safrapay_list').prods.length;
-    spVop+=getSafrapayVop(gid);
-    crValor+=getCreditoValor(gid);
+    h += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow)">
+      <!-- Header do gerente -->
+      <div style="background:var(--accent);padding:12px 14px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:#fff">${NAMES[gid]}</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px">Atualizado: ${timeStr}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="sc-badge ${st.cls}">${st.lbl}</span>
+          <a href="gerente_${gid}.html" target="_blank" style="font-size:10px;color:var(--gold-light);text-decoration:none;background:rgba(255,255,255,0.1);padding:4px 8px;border-radius:12px;border:1px solid rgba(255,255,255,0.2)" title="Abrir app do gerente">🔗 App</a>
+        </div>
+      </div>`;
+
+    // Cards de produto com barra horizontal
+    prods.forEach(p=>{
+      const real = p.valFn(gid);
+      const meta = getMeta(gid, p.id);
+      const pct  = getPct(real, meta);
+      const gap  = meta > 0 ? Math.max(meta-real,0) : null;
+      const proj = getProjecao(real, meta);
+      const color = getSemaforoColor(pct);
+      const bg    = getSemaforoBg(pct);
+      const emoji = getSemaforoEmoji(pct);
+
+      h += `<div style="padding:12px 14px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:11px;font-weight:700;color:var(--text2)">${emoji} ${p.lbl}</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:800;color:var(--accent)">${p.fmt_(real)}</span>
+        </div>`;
+
+      if(meta>0){
+        h += `<div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:6px">
+          <div style="height:100%;width:${Math.min(pct,100)}%;background:${color};border-radius:3px;transition:width .5s"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3)">
+          <span>Meta: ${p.fmt_(meta)} · <strong style="color:${color}">${pct.toFixed(1)}%</strong></span>
+          ${gap>0 ? `<span style="color:var(--orange)">GAP: ${p.fmt_(gap)}</span>` : `<span style="color:var(--green);font-weight:700">✅ Meta!</span>`}
+        </div>`;
+        if(proj!==null){
+          const projPct = meta>0?(proj/meta*100):0;
+          const projColor = projPct>=100?'var(--green)':projPct>=80?'var(--orange)':'var(--red)';
+          h += `<div style="margin-top:4px;font-size:10px;color:var(--text3)">📈 Projeção: <strong style="color:${projColor}">${p.fmt_(proj)}</strong> (${projPct.toFixed(0)}% da meta)</div>`;
+        }
+      } else {
+        h += `<div style="font-size:10px;color:var(--text3);font-style:italic">⏳ Sem meta definida</div>`;
+      }
+
+      h += `</div>`;
+    });
+
+    // Gráfico de barras horizontal (SVG inline)
+    if(prods.length > 1){
+      h += buildBarChart(gid, prods);
+    }
+
+    // Botão de análise IA
+    h += `<div style="padding:10px 14px">
+      <button onclick="gerarAnaliseIA('${gid}')" style="width:100%;padding:9px;background:var(--purple-bg);color:var(--purple);border:1px solid rgba(91,45,142,0.2);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer" title="Gerar análise com IA">🤖 Gerar Análise com IA</button>
+      <div id="ia_${gid}" style="margin-top:8px;font-size:12px;line-height:1.6;color:var(--text2)"></div>
+    </div>
+
+    </div>`;
   });
-  h+=`<div class="card">
-    <div class="card-header light"><span class="card-title">CONSOLIDADO DO MÊS</span></div>
-    <div class="row"><span class="lbl m">TAC Total</span><span class="val total">${fmtR(tacT)}</span></div>
-    <div class="row"><span class="lbl m">Giro Total</span><span class="val total">${Math.round(giroT)||'—'}</span></div>
-    <div class="row"><span class="lbl m">Ativos Total</span><span class="val total">${fmtR(ativT)}</span></div>
-    <div class="row"><span class="lbl m">Viabilizados (prod)</span><span class="val total">${viabT}</span></div>
-    <div class="row"><span class="lbl m">Safrapay — ${spQtd} prod</span><span class="val total">${fmtR(spVop)}</span></div>
-    <div class="row tr"><span class="lbl t">Crédito (valor prod)</span><span class="val total">${fmtR(crValor)}</span></div>
+
+  return h;
+}
+
+// ── Gráfico de barras SVG horizontal ──
+function buildBarChart(gid, prods){
+  const W=320, barH=20, gap=8, padL=90, padR=60, padTop=10;
+  const H = padTop + prods.length*(barH+gap);
+  const maxPct = 100;
+
+  let svg = `<div style="padding:12px 14px;border-top:1px solid var(--border);overflow-x:auto">
+    <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">% Atingimento por Produto</div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px">`;
+
+  prods.forEach((p,i)=>{
+    const real = p.valFn(gid);
+    const meta = getMeta(gid, p.id);
+    const pct  = Math.min(getPct(real,meta),100);
+    const color= getSemaforoColor(pct);
+    const y    = padTop + i*(barH+gap);
+    const barW = Math.round(((W-padL-padR)/100)*pct);
+
+    svg += `<text x="${padL-4}" y="${y+barH*0.72}" text-anchor="end" font-size="9" fill="#6b6560" font-family="IBM Plex Sans">${p.lbl.substring(0,12)}</text>`;
+    svg += `<rect x="${padL}" y="${y}" width="${W-padL-padR}" height="${barH}" rx="4" fill="#e2ddd6"/>`;
+    svg += `<rect x="${padL}" y="${y}" width="${barW||2}" height="${barH}" rx="4" fill="${color}"/>`;
+    svg += `<text x="${padL+barW+4}" y="${y+barH*0.72}" font-size="9" fill="${color}" font-weight="700" font-family="IBM Plex Mono">${pct.toFixed(0)}%</text>`;
+  });
+
+  svg += `</svg></div>`;
+  return svg;
+}
+
+// ── Alertas globais ──
+function buildAlertasGlobais(){
+  const alertas = [];
+  const duPass = getDiasUteisPassados();
+  const duTot  = getTotalDiasUteis();
+
+  DASH_GERENTES.forEach(gid=>{
+    // Sem atualização há 1+ dia útil
+    const st = gerStatus(gid);
+    if(st.cls==='badge-off') alertas.push({ tipo:'danger', msg:`⚠️ <strong>${NAMES[gid]}</strong> está offline — sem atualização` });
+
+    // Abaixo do ritmo em TAC
+    const real = getMes(gid,'tac');
+    const meta = getMeta(gid,'tac');
+    if(meta && duPass && duTot){
+      const ritmoEsp = (meta/duTot)*duPass;
+      if(real < ritmoEsp*0.7) alertas.push({ tipo:'warn', msg:`📉 <strong>${NAMES[gid]}</strong> está abaixo do ritmo em TAC (${((real/ritmoEsp)*100).toFixed(0)}% do esperado)` });
+    }
+  });
+
+  if(!alertas.length) return '';
+  return `<div style="margin-bottom:12px">
+    ${alertas.map(a=>`<div style="background:${a.tipo==='danger'?'var(--red-bg)':'var(--orange-bg)'};border:1px solid ${a.tipo==='danger'?'rgba(192,57,43,0.2)':'rgba(196,107,0,0.2)'};border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:12px;color:var(--text)">${a.msg}</div>`).join('')}
   </div>`;
+}
 
-  // Rankings
-  const rankModules = [
-    {lbl:'TAC',             fn:gid=>getMes(gid,'tac'),                                          fmt_:fmtR},
-    {lbl:'Giro',            fn:gid=>getMes(gid,'giro'),                                         fmt_:v=>Math.round(v)||'—'},
-    {lbl:'Ativos',          fn:gid=>{ let t=0; AT.forEach(p=>t+=getMes(gid,`at_${slug(p)}`)); return t; }, fmt_:fmtR},
-    ...SIMPLES.map(s=>({lbl:s.t, fn:gid=>getMes(gid,s.id), fmt_:fmtR})),
-    {lbl:'Viabilizados',    fn:gid=>getProds(gid,'viab_list').prods.length,                    fmt_:v=>`${v} prod`},
-    {lbl:'Safrapay (VOP)',  fn:gid=>getSafrapayVop(gid),                                        fmt_:fmtR},
-    {lbl:'Crédito (valor)', fn:gid=>getCreditoValor(gid),                                       fmt_:fmtR},
-  ];
+// ── Visão de Ranking ──
+function buildDashRanking(){
+  let h = '';
+  const prods = DASH_PRODUTOS.map(pid=>PRODUTOS_CFG.find(p=>p.id===pid)).filter(Boolean);
 
-  rankModules.forEach(mod=>{
-    const ranking = MGR.map(gid=>({nome:NAMES[gid],val:mod.fn(gid)})).sort((a,b)=>b.val-a.val);
-    const maxVal = ranking[0]?.val||1;
-    h+=`<div class="card">
-      <div class="card-header light"><span class="card-title">🏆 Ranking — ${mod.lbl}</span></div>`;
+  prods.forEach(p=>{
+    const ranking = MGR.map(gid=>({
+      gid, nome:NAMES[gid],
+      val: p.valFn(gid),
+      meta: getMeta(gid,p.id),
+    })).sort((a,b)=>b.val-a.val);
+
+    const maxVal = ranking[0]?.val || 1;
+
+    h += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow)">
+      <div style="background:var(--accent);padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:#fff">🏆 ${p.lbl}</span>
+        <span style="font-size:10px;color:rgba(255,255,255,0.5)">${getDiasUteisPassados()}/${getTotalDiasUteis()} dias úteis</span>
+      </div>`;
+
     ranking.forEach((r,i)=>{
-      const posCls=i===0?'p1':i===1?'p2':i===2?'p3':'';
-      const pct=Math.round((r.val/maxVal)*100);
-      h+=`<div class="rank-item">
-        <span class="rank-pos ${posCls}">${i+1}º</span>
-        <span class="rank-name">${r.nome}</span>
-        <div class="rank-bar-wrap"><div class="rank-bar" style="width:${pct}%"></div></div>
-        <span class="rank-val">${mod.fmt_(r.val)}</span>
+      const pct    = getPct(r.val,r.meta);
+      const color  = getSemaforoColor(pct);
+      const barPct = maxVal>0?Math.round((r.val/maxVal)*100):0;
+      const medal  = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+      const gap    = r.meta>0?Math.max(r.meta-r.val,0):null;
+
+      h += `<div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px">
+        <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;width:28px;flex-shrink:0;color:${i===0?'#FFD700':i===1?'#C0C0C0':i===2?'#CD7F32':'var(--text3)'}">${medal||`${i+1}º`}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <span style="font-size:12px;font-weight:700">${r.nome}</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--accent)">${p.fmt_(r.val)}</span>
+          </div>
+          <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:4px">
+            <div style="height:100%;width:${barPct}%;background:${color};border-radius:3px"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3)">
+            ${r.meta>0
+              ? `<span>${pct.toFixed(1)}% da meta (${p.fmt_(r.meta)})</span>${gap>0?`<span style="color:var(--orange)">GAP: ${p.fmt_(gap)}</span>`:`<span style="color:var(--green)">✅</span>`}`
+              : `<span style="font-style:italic">Sem meta</span>`}
+          </div>
+        </div>
       </div>`;
     });
-    h+=`</div>`;
+
+    // Total do produto
+    const total = ranking.reduce((s,r)=>s+r.val,0);
+    const totalMeta = ranking.reduce((s,r)=>s+r.meta,0);
+    const totalPct = getPct(total,totalMeta);
+    h += `<div style="padding:8px 14px;background:var(--surface2);display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:11px;font-weight:700;color:var(--text2)">Total Agência</span>
+      <div style="text-align:right">
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:800;color:var(--accent)">${p.fmt_(total)}</div>
+        ${totalMeta>0?`<div style="font-size:10px;color:${getSemaforoColor(totalPct)};font-weight:700">${totalPct.toFixed(1)}% da meta</div>`:''}
+      </div>
+    </div>
+    </div>`;
   });
 
-  el('sec-dash').innerHTML=h;
+  return h;
 }
+
+// ── Análise IA ──
+async function gerarAnaliseIA(gid){
+  const div = el(`ia_${gid}`);
+  if(!div) return;
+  div.innerHTML = `<div style="color:var(--purple);font-style:italic">🤖 Analisando dados...</div>`;
+
+  const prods = DASH_PRODUTOS.map(pid=>PRODUTOS_CFG.find(p=>p.id===pid)).filter(Boolean);
+  const duPass = getDiasUteisPassados();
+  const duTot  = getTotalDiasUteis();
+
+  // Montar contexto para a IA
+  const linhas = prods.map(p=>{
+    const real = p.valFn(gid);
+    const meta = getMeta(gid, p.id);
+    const pct  = getPct(real,meta);
+    const proj = getProjecao(real,meta);
+    return `${p.lbl}: realizado=${p.fmt_(real)}, meta=${meta?p.fmt_(meta):'sem meta'}, atingimento=${meta?pct.toFixed(1)+'%':'—'}, projeção=${proj?p.fmt_(proj):'—'}`;
+  }).join('\n');
+
+  const prompt = `Você é um consultor especialista em gestão comercial bancária. Analise os dados de produção do gerente ${NAMES[gid]} referentes ao mês atual no Banco Safra, Agência Boa Viagem.
+
+Dados (${duPass} de ${duTot} dias úteis passados):
+${linhas}
+
+Escreva uma análise executiva em português, com:
+1. Avaliação geral do desempenho (2 frases)
+2. Pontos de atenção ou alertas (máx 2)
+3. Uma frase motivacional reflexiva e profunda que provoque reflexão sobre a performance
+
+Seja direto, específico e use os números. Máximo 150 palavras.`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 400,
+        messages: [{ role:'user', content: prompt }]
+      })
+    });
+    const data = await resp.json();
+    const texto = data.content?.[0]?.text || 'Não foi possível gerar análise.';
+    div.innerHTML = `<div style="background:var(--purple-bg);border:1px solid rgba(91,45,142,0.15);border-radius:8px;padding:12px;font-size:12px;line-height:1.6;color:var(--text);white-space:pre-wrap">${texto}</div>`;
+  } catch(e){
+    div.innerHTML = `<div style="color:var(--red);font-size:11px">Erro ao conectar com IA: ${e.message}</div>`;
+  }
+}
+
 
 // ══════════════════════════════════════════════════
 // TAC
@@ -955,7 +1327,382 @@ function buildExcel(){
 function renderAll(){
   rDash(); rTAC(); rCHEMP(); rGiro(); rAtivos();
   SIMPLES.forEach(s=>rSimples(s));
-  rViab(); rSafrapay(); rCredito(); rMetas();
+  rViab(); rSafrapay(); rCredito(); rMetas(); rDiario();
+}
+
+// ══════════════════════════════════════════════════
+// DIÁRIO EXECUTIVO
+// ══════════════════════════════════════════════════
+const DIARIO_KEY    = 'gg_diario_v1';
+const RESUMOS_KEY   = 'gg_resumos_v1';
+let   MIC_ACTIVE    = false;
+let   MIC_RECOGNIZER = null;
+
+function getDiario(){ try{ return JSON.parse(localStorage.getItem(DIARIO_KEY)||'{}'); }catch(e){ return {}; } }
+function saveDiario(d){ try{ localStorage.setItem(DIARIO_KEY, JSON.stringify(d)); }catch(e){} }
+function getResumos(){ try{ return JSON.parse(localStorage.getItem(RESUMOS_KEY)||'[]'); }catch(e){ return []; } }
+function saveResumos(r){ try{ localStorage.setItem(RESUMOS_KEY, JSON.stringify(r)); }catch(e){} }
+
+function toDateStrGG(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function fmtDiarioDate(ds){
+  const d = new Date(ds+'T00:00:00');
+  const dias = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  return `${dias[d.getDay()]}, ${d.getDate()} de ${meses[d.getMonth()]}`;
+}
+
+function getWeekDates(){
+  // Retorna as datas da semana atual (seg a hoje)
+  const d = new Date(today);
+  const dow = d.getDay(); // 0=dom
+  const mondayOffset = dow === 0 ? -6 : 1 - dow;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + mondayOffset);
+  const dates = [];
+  for(let i=0; i<5; i++){
+    const dt = new Date(monday);
+    dt.setDate(monday.getDate() + i);
+    if(dt <= today) dates.push(toDateStrGG(dt));
+  }
+  return dates;
+}
+
+function getDadosSemanais(){
+  // Consolida dados de produção da semana atual
+  const lines = [];
+  const weekDates = getWeekDates();
+  const startDate = weekDates[0];
+  const endDate   = weekDates[weekDates.length-1];
+
+  lines.push(`Período: ${fmtDiarioDate(startDate)} a ${fmtDiarioDate(endDate)}`);
+  lines.push(`Dias úteis analisados: ${weekDates.length}`);
+  lines.push('');
+  lines.push('=== PRODUÇÃO DA SEMANA ===');
+
+  // TAC
+  const tacTotal = MGR.reduce((s,gid)=>s+getMes(gid,'tac'),0);
+  const tacMeta  = MGR.reduce((s,gid)=>s+(METAS[gid]?.tac||0),0);
+  lines.push(`TAC: ${fmtR(tacTotal)} (meta agência: ${fmtR(tacMeta)})`);
+
+  // Por gerente — TAC
+  MGR.forEach(gid=>{
+    const real = getMes(gid,'tac');
+    const meta = METAS[gid]?.tac||0;
+    const pct  = meta>0?(real/meta*100).toFixed(0)+'%':'sem meta';
+    lines.push(`  ${NAMES[gid]}: ${fmtR(real)} — ${pct}`);
+  });
+  lines.push('');
+
+  // Outros produtos resumidos
+  const giroT = MGR.reduce((s,gid)=>s+getMes(gid,'giro'),0);
+  lines.push(`Giro de Carteira: ${Math.round(giroT)} operações`);
+
+  const viabT = MGR.reduce((s,gid)=>s+getProds(gid,'viab_list').prods.length,0);
+  lines.push(`Viabilizados: ${viabT} produções`);
+
+  const spVop = MGR.reduce((s,gid)=>s+getSafrapayVop(gid),0);
+  lines.push(`Safrapay VOP: ${fmtR(spVop)}`);
+
+  const crVal = MGR.reduce((s,gid)=>s+getCreditoValor(gid),0);
+  lines.push(`Crédito BS: ${fmtR(crVal)}`);
+
+  // Status de disciplina
+  lines.push('');
+  lines.push('=== DISCIPLINA ===');
+  const offline = MGR.filter(gid=>gerStatus(gid).cls==='badge-off').map(gid=>NAMES[gid]);
+  if(offline.length) lines.push(`Offline: ${offline.join(', ')}`);
+  else lines.push('Todos atualizando regularmente ✅');
+
+  return lines.join('\n');
+}
+
+function rDiario(){
+  const diario = getDiario();
+  const todayStr = toDateStrGG(today);
+  const weekDates = getWeekDates();
+  const resumos = getResumos();
+
+  let h = `<div style="padding:0 14px">`;
+
+  // ── Card de entrada do dia ──
+  const entradaHoje = diario[todayStr] || '';
+  h += `<div class="diario-day">
+    <div class="diario-day-header">
+      <span class="diario-day-date">📝 ${fmtDiarioDate(todayStr)}</span>
+      <span class="diario-day-badge">Hoje</span>
+    </div>
+    <div class="diario-input-area">
+      <textarea class="diario-textarea" id="diario_hoje" placeholder="O que aconteceu hoje? Destaque produções, dificuldades, conversas importantes, reuniões, pontos de atenção...
+
+Pode falar também — clique no 🎤 microfone.">${entradaHoje}</textarea>
+      <div class="diario-btns">
+        <button class="diario-btn-mic" id="btn_mic" onclick="toggleMic()" title="Falar por microfone (Speech-to-Text)">🎤 Falar</button>
+        <button class="diario-btn-save" onclick="salvarEntradaDiario()" title="Salvar entrada de hoje">💾 Salvar entrada</button>
+      </div>
+    </div>
+  </div>`;
+
+  // ── Botão de gerar resumo ──
+  const isQuintaOuSexta = today.getDay()===4 || today.getDay()===5;
+  h += `<div style="background:${isQuintaOuSexta?'var(--green-bg)':'var(--surface2)'};border:1px solid ${isQuintaOuSexta?'rgba(30,107,62,0.2)':'var(--border)'};border-radius:var(--radius);padding:14px;margin-bottom:12px">
+    <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">
+      ${isQuintaOuSexta?'✅ É quinta ou sexta — hora de gerar o resumo!':'📅 O resumo da semana fica disponível na quinta e sexta'}
+    </div>
+    <button onclick="gerarResumoSemana()" style="width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer" title="Gerar e-mail da semana com IA">✉️ Gerar Resumo da Semana com IA</button>
+  </div>`;
+
+  // ── Resultado do resumo ──
+  h += `<div id="resumo_resultado"></div>`;
+
+  // ── Entradas da semana ──
+  const entradasSemana = weekDates.filter(d=>d!==todayStr && diario[d]);
+  if(entradasSemana.length){
+    h += `<div class="diario-day" style="margin-bottom:12px">
+      <div class="diario-day-header">
+        <span class="diario-day-date">📅 Esta Semana</span>
+        <span class="diario-day-badge">${entradasSemana.length} dia(s)</span>
+      </div>`;
+    entradasSemana.reverse().forEach(ds=>{
+      h += `<div style="padding:10px 14px;border-bottom:1px solid var(--border)">
+        <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px">${fmtDiarioDate(ds)}</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap">${diario[ds]}</div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button onclick="editarEntrada('${ds}')" style="font-size:10px;padding:4px 10px;background:var(--blue-bg);color:var(--blue);border:1px solid rgba(26,74,122,0.2);border-radius:6px;cursor:pointer" title="Editar esta entrada">✏️ Editar</button>
+          <button onclick="removerEntrada('${ds}')" style="font-size:10px;padding:4px 10px;background:var(--red-bg);color:var(--red);border:1px solid rgba(192,57,43,0.2);border-radius:6px;cursor:pointer" title="Remover esta entrada">🗑️ Remover</button>
+        </div>
+      </div>`;
+    });
+    h += `</div>`;
+  }
+
+  // ── Histórico de resumos anteriores ──
+  if(resumos.length){
+    h += `<div class="resumo-card">
+      <div class="resumo-header">
+        <span class="resumo-title">📚 Resumos Anteriores</span>
+        <span style="font-size:10px;color:rgba(255,255,255,0.5)">${resumos.length} resumo(s)</span>
+      </div>`;
+    resumos.slice().reverse().forEach((r,i)=>{
+      const idx = resumos.length - 1 - i;
+      h += `<div class="hist-resumo-item" onclick="verResumoAnterior(${idx})">
+        <div style="font-size:12px;font-weight:700;color:var(--accent)">${r.semana}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px">Gerado em ${r.gerado} · clique para ver</div>
+      </div>`;
+    });
+    h += `</div>`;
+  }
+
+  h += `</div>`;
+  el('sec-diario').innerHTML = h;
+}
+
+function salvarEntradaDiario(){
+  const texto = el('diario_hoje')?.value?.trim();
+  if(!texto){ showToast('⚠️ Digite algo antes de salvar'); return; }
+  const diario = getDiario();
+  const todayStr = toDateStrGG(today);
+  diario[todayStr] = texto;
+  saveDiario(diario);
+  showToast('✅ Entrada salva!');
+  rDiario();
+}
+
+function editarEntrada(ds){
+  const diario = getDiario();
+  const texto = prompt(`Editar entrada de ${fmtDiarioDate(ds)}:`, diario[ds]||'');
+  if(texto===null) return;
+  diario[ds] = texto.trim();
+  saveDiario(diario);
+  showToast('✅ Entrada atualizada!');
+  rDiario();
+}
+
+function removerEntrada(ds){
+  if(!confirm(`Remover entrada de ${fmtDiarioDate(ds)}?`)) return;
+  const diario = getDiario();
+  delete diario[ds];
+  saveDiario(diario);
+  showToast('Removido ✓');
+  rDiario();
+}
+
+function verResumoAnterior(idx){
+  const resumos = getResumos();
+  const r = resumos[idx];
+  if(!r) return;
+  const div = el('resumo_resultado');
+  if(!div) return;
+  div.innerHTML = buildResumoCard(r.semana, r.texto, false);
+  div.scrollIntoView({behavior:'smooth'});
+}
+
+function buildResumoCard(semana, texto, isNovo){
+  return `<div class="resumo-card">
+    <div class="resumo-header">
+      <span class="resumo-title">✉️ Resumo — ${semana}</span>
+      ${isNovo?'<span style="font-size:10px;color:var(--gold-light);background:rgba(255,255,255,0.1);padding:2px 8px;border-radius:10px">Novo</span>':''}
+    </div>
+    <div class="resumo-body" id="resumo_texto_copy">${texto}</div>
+    <button class="resumo-copy-btn" onclick="copiarResumo()" title="Copiar texto para área de transferência">📋 Copiar texto para colar no e-mail</button>
+  </div>`;
+}
+
+function copiarResumo(){
+  const div = el('resumo_texto_copy');
+  if(!div) return;
+  navigator.clipboard.writeText(div.textContent).then(()=>{
+    showToast('📋 Copiado! Cole no seu e-mail corporativo.');
+  }).catch(()=>{
+    // Fallback
+    const sel = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(div);
+    sel.removeAllRanges();
+    sel.addRange(range);
+    document.execCommand('copy');
+    sel.removeAllRanges();
+    showToast('📋 Copiado!');
+  });
+}
+
+async function gerarResumoSemana(){
+  const div = el('resumo_resultado');
+  if(!div) return;
+
+  // Salvar entrada de hoje se tiver algo digitado
+  const textoHoje = el('diario_hoje')?.value?.trim();
+  if(textoHoje){
+    const diario = getDiario();
+    diario[toDateStrGG(today)] = textoHoje;
+    saveDiario(diario);
+  }
+
+  div.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;margin-bottom:12px">
+    <div style="font-size:24px;margin-bottom:8px">🤖</div>
+    <div style="font-size:13px;color:var(--text2)">Gerando resumo da semana com IA...<br><span style="font-size:11px;color:var(--text3)">Combinando seu diário com os dados de produção</span></div>
+  </div>`;
+
+  // Coletar diário da semana
+  const diario = getDiario();
+  const weekDates = getWeekDates();
+  const entradasTexto = weekDates.map(ds=>{
+    const entry = diario[ds];
+    return entry ? `${fmtDiarioDate(ds)}:\n${entry}` : `${fmtDiarioDate(ds)}: (sem registro)`;
+  }).join('\n\n');
+
+  // Dados de produção
+  const dadosProd = getDadosSemanais();
+
+  // Mês/ano atual
+  const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const periodoLabel = `semana de ${fmtDiarioDate(weekDates[0])} a ${fmtDiarioDate(weekDates[weekDates.length-1])}`;
+
+  const prompt = `Você é um assistente executivo especializado em gestão bancária. Você vai redigir um e-mail de resumo semanal para a gestora de Eduardo, Gerente Geral da Agência Boa Viagem do Banco Safra.
+
+PERFIL DO E-MAIL:
+- Tom: profissional, otimista mas realista (sem positividade tóxica)
+- Estrutura: por tópicos de produtos
+- Inclua highlights da semana, produções realizadas e pontos de atenção reais
+- Use os números reais dos dados de produção
+- Termine com uma perspectiva para a próxima semana
+
+DIÁRIO DA SEMANA (notas do Eduardo):
+${entradasTexto}
+
+DADOS REAIS DE PRODUÇÃO DO SISTEMA:
+${dadosProd}
+
+Escreva o e-mail completo, formatado, pronto para ser enviado. Comece com "Olá [nome da gestora]," (Eduardo vai preencher o nome). Use emojis com moderação, apenas onde for natural. Máximo 400 palavras.`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:800,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data = await resp.json();
+    const texto = data.content?.[0]?.text || 'Não foi possível gerar o resumo.';
+
+    // Salvar no histórico
+    const resumos = getResumos();
+    const now = new Date();
+    const gerado = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    resumos.push({ semana: periodoLabel, texto, gerado });
+    if(resumos.length>20) resumos.splice(0,resumos.length-20);
+    saveResumos(resumos);
+
+    div.innerHTML = buildResumoCard(periodoLabel, texto, true);
+    div.scrollIntoView({behavior:'smooth'});
+
+  } catch(e){
+    div.innerHTML = `<div style="background:var(--red-bg);border:1px solid rgba(192,57,43,0.2);border-radius:var(--radius);padding:14px;font-size:12px;color:var(--red)">❌ Erro ao gerar resumo: ${e.message}</div>`;
+  }
+}
+
+// ── Speech to Text ──
+function toggleMic(){
+  if(MIC_ACTIVE){
+    stopMic();
+  } else {
+    startMic();
+  }
+}
+
+function startMic(){
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){
+    showToast('⚠️ Seu navegador não suporta reconhecimento de voz. Use Chrome.');
+    return;
+  }
+  MIC_RECOGNIZER = new SR();
+  MIC_RECOGNIZER.lang = 'pt-BR';
+  MIC_RECOGNIZER.continuous = true;
+  MIC_RECOGNIZER.interimResults = true;
+
+  const btn = el('btn_mic');
+  const textarea = el('diario_hoje');
+  let baseText = textarea?.value || '';
+  let interim = '';
+
+  MIC_RECOGNIZER.onstart = ()=>{
+    MIC_ACTIVE = true;
+    if(btn){ btn.classList.add('recording'); btn.textContent='⏹ Parar'; }
+    showToast('🎤 Gravando... fale agora');
+  };
+
+  MIC_RECOGNIZER.onresult = (e)=>{
+    interim = '';
+    let final = '';
+    for(let i=e.resultIndex; i<e.results.length; i++){
+      if(e.results[i].isFinal){ final += e.results[i][0].transcript + ' '; }
+      else { interim += e.results[i][0].transcript; }
+    }
+    if(final){ baseText += (baseText ? ' ' : '') + final.trim(); }
+    if(textarea) textarea.value = baseText + (interim ? ' ' + interim : '');
+  };
+
+  MIC_RECOGNIZER.onerror = (e)=>{
+    showToast('⚠️ Erro no microfone: ' + e.error);
+    stopMic();
+  };
+
+  MIC_RECOGNIZER.onend = ()=>{
+    if(MIC_ACTIVE) MIC_RECOGNIZER.start(); // reinicia para gravação contínua
+  };
+
+  MIC_RECOGNIZER.start();
+}
+
+function stopMic(){
+  MIC_ACTIVE = false;
+  if(MIC_RECOGNIZER){ MIC_RECOGNIZER.stop(); MIC_RECOGNIZER = null; }
+  const btn = el('btn_mic');
+  if(btn){ btn.classList.remove('recording'); btn.textContent='🎤 Falar'; }
+  showToast('⏹ Gravação encerrada');
 }
 
 // ══════════════════════════════════════════════════
