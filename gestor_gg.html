@@ -958,19 +958,39 @@ function renderAll(){
 // ══════════════════════════════════════════════════
 // FIREBASE
 // ══════════════════════════════════════════════════
+console.log('=== INICIANDO FIREBASE ===');
+console.log('db está definido?', !!db);
+console.log('BASE path:', BASE);
+console.log('Path completo gerentes:', `${BASE}/gerentes`);
+
 if(db){
+  console.log('✅ Tentando conectar listener gerentes...');
   db.ref(`${BASE}/gerentes`).on('value', snap=>{
     const val=snap.val();
-    if(val) MGR.forEach(gid=>{ if(val[gid]) DATA[gid]=val[gid]; });
+    console.log('📥 Snapshot recebido:', val);
+    console.log('Tipo:', typeof val, 'Keys:', val?Object.keys(val):'null');
+    if(val){
+      MGR.forEach(gid=>{
+        if(val[gid]){
+          DATA[gid]=val[gid];
+          console.log(`✅ ${gid} carregado:`, val[gid]._nome);
+        }
+      });
+    }
     el('syncPill').textContent='🟢 Online';
     el('syncPill').classList.add('on');
     renderAll();
+  }, err => {
+    console.error('❌ Erro no listener:', err);
+    el('syncPill').textContent='❌ Erro';
   });
   db.ref(`${BASE}/metas`).on('value', snap=>{
     const val=snap.val();
+    console.log('📥 Metas:', val);
     if(val){ METAS=val; renderAll(); }
   });
 } else {
+  console.error('❌ db é null - Firebase não conectou');
   el('syncPill').textContent='📴 Offline';
 }
 
