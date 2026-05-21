@@ -545,6 +545,25 @@ let DASH_GERENTES = [...MGR];    // todos por padrão
 let DASH_PRODUTOS = ['tac'];     // produto(s) selecionados
 let DASH_AI_LOADING = false;
 
+// Helper: calcula produção final de seguro de um gerente (inclui extra do Firebase)
+function calcSeguroGer(gid){
+  let prod=0, canc=0, aCanc=0, chemp=0;
+  if(gid===undefined||gid===null) return 0;
+  const d = DATA[gid];
+  if(!d) return 0;
+  const list = d.seguro_list ? JSON.parse(d.seguro_list) : [];
+  prod = list.reduce((s,v)=>s+(parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0),0);
+  if(d.seguro_extra){
+    try{
+      const ex = JSON.parse(d.seguro_extra);
+      canc  = parseFloat(String(ex.cancelados||'0').replace(/\./g,'').replace(',','.'))||0;
+      aCanc = parseFloat(String(ex.a_cancelar||'0').replace(/\./g,'').replace(',','.'))||0;
+      chemp = parseFloat(String(ex.chemp||'0').replace(/\./g,'').replace(',','.'))||0;
+    }catch(e){}
+  }
+  return prod - canc - aCanc + chemp;
+}
+
 const PRODUTOS_CFG = [
   { id:'tac',       lbl:'TAC',              fmt_: fmtR, valFn: gid=>getMes(gid,'tac'), metaKey:'tac' },
   { id:'chemp',     lbl:'CHEMP',            fmt_: fmtR, valFn: gid=>pnd(gid,'chemp_dia'), metaKey:'chemp',
@@ -579,7 +598,49 @@ const PRODUTOS_CFG = [
   { id:'consorcio', lbl:'Consórcio',        fmt_: fmtR, valFn: gid=>getMes(gid,'consorcio'), metaKey:'consorcio' },
   { id:'collarkin', lbl:'Collarkin',        fmt_: fmtR, valFn: gid=>getMes(gid,'collarkin'), metaKey:'collarkin' },
   { id:'captacao',  lbl:'Captação',         fmt_: fmtR, valFn: gid=>getMes(gid,'captacao'), metaKey:'captacao' },
-  { id:'seguro',    lbl:'Seguro',           fmt_: fmtR, valFn: gid=>{ const l=DATA[gid]?.seguro_list?JSON.parse(DATA[gid].seguro_list):[]; return l.reduce((s,v)=>s+pnRaw(v.valor),0); }, metaKey:'seguro' },
+  { id:'seguro',    lbl:'Seguro',           fmt_: fmtR, valFn: gid=>calcSeguroGer(gid), metaKey:'seguro',
+    customCard: (gid)=>{
+      const d = DATA[gid];
+      const list = d?.seguro_list ? JSON.parse(d.seguro_list) : [];
+      const prod = list.reduce((s,v)=>s+(parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0),0);
+      let canc=0, aCanc=0, chemp=0;
+      if(d?.seguro_extra){ try{ const ex=JSON.parse(d.seguro_extra); canc=parseFloat(String(ex.cancelados||'0').replace(/\./g,'').replace(',','.'))||0; aCanc=parseFloat(String(ex.a_cancelar||'0').replace(/\./g,'').replace(',','.'))||0; chemp=parseFloat(String(ex.chemp||'0').replace(/\./g,'').replace(',','.'))||0; }catch(e){} }
+      const final = prod - canc - aCanc + chemp;
+      const meta  = getMeta(gid,'seguro');
+      const pct   = meta>0 ? Math.min((final/meta)*100,100) : 0;
+      const cor   = pct>=100?'var(--green)':pct>=70?'var(--orange)':'var(--red)';
+      const temDados = prod>0||canc>0||aCanc>0||chemp>0;
+      return `<div style="padding:10px 14px;border-bottom:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${temDados?'8':'0'}px">
+          <span style="font-size:11px;font-weight:700;color:var(--text2)">🛡️ Seguro</span>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:800;color:var(--accent)">${fmtR(final)||'—'}</span>
+        </div>
+        ${temDados?`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:${meta?'6':'0'}px">
+          <div style="background:var(--green-bg);border-radius:6px;padding:5px 6px;text-align:center">
+            <div style="font-size:8px;color:var(--text3);margin-bottom:2px">Prod.</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:var(--green)">${fmtR(prod)||'—'}</div>
+          </div>
+          <div style="background:var(--blue-bg);border-radius:6px;padding:5px 6px;text-align:center">
+            <div style="font-size:8px;color:var(--text3);margin-bottom:2px">CHEMP</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:var(--blue)">${chemp?fmtR(chemp):'—'}</div>
+          </div>
+          <div style="background:var(--red-bg);border-radius:6px;padding:5px 6px;text-align:center">
+            <div style="font-size:8px;color:var(--text3);margin-bottom:2px">Canc.</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:var(--red)">${canc?'−'+fmtR(canc):'—'}</div>
+          </div>
+          <div style="background:var(--orange-bg);border-radius:6px;padding:5px 6px;text-align:center">
+            <div style="font-size:8px;color:var(--text3);margin-bottom:2px">A Canc.</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:700;color:var(--orange)">${aCanc?'−'+fmtR(aCanc):'—'}</div>
+          </div>
+        </div>`:''}
+        ${meta?`<div style="height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:3px"><div style="height:100%;width:${pct}%;background:${cor};border-radius:2px"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3)">
+          <span style="color:${cor};font-weight:700">${pct.toFixed(0)}% meta</span>
+          ${final<meta?`<span>GAP: ${fmtR(meta-final)}</span>`:`<span style="color:var(--green);font-weight:700">✅ Meta!</span>`}
+        </div>`:''}
+      </div>`;
+    }
+  },
   { id:'viab',      lbl:'Viabilizados',     fmt_: v=>`${v} prod`, valFn: gid=>getProds(gid,'viab_list').prods.length, metaKey:'viab' },
   { id:'safrapay',  lbl:'Safrapay VOP',     fmt_: fmtR, valFn: gid=>getSafrapayVop(gid), metaKey:'safrapay_vop' },
   { id:'credito',   lbl:'Crédito BS',       fmt_: fmtR, valFn: gid=>getCreditoValor(gid), metaKey:'credito' },
@@ -1874,11 +1935,17 @@ function rHojeGG(){
     </div>`;
 
   const prodsCons = [
-    { lbl:'TAC',         val:MGR.reduce((s,g)=>s+getMes(g,'tac'),0),          fmt_:v=>`R$ ${fmtR(v)}` },
-    { lbl:'Giro',        val:MGR.reduce((s,g)=>s+getMes(g,'giro'),0),         fmt_:v=>`${Math.round(v)}` },
-    { lbl:'Viabilizados',val:MGR.reduce((s,g)=>s+getProds(g,'viab_list').prods.length,0), fmt_:v=>`${v} prod` },
-    { lbl:'Safrapay VOP',val:MGR.reduce((s,g)=>s+getSafrapayVop(g),0),        fmt_:v=>`R$ ${fmtR(v)}` },
-    { lbl:'Crédito BS',  val:MGR.reduce((s,g)=>s+getCreditoValor(g),0),       fmt_:v=>`R$ ${fmtR(v)}` },
+    { lbl:'TAC',          val:MGR.reduce((s,g)=>s+getMes(g,'tac'),0),          fmt_:v=>`R$ ${fmtR(v)}` },
+    { lbl:'Giro',         val:MGR.reduce((s,g)=>s+getMes(g,'giro'),0),         fmt_:v=>`${Math.round(v)}` },
+    { lbl:'Ativos',       val:MGR.reduce((s,g)=>{ let t=0; AT.forEach(p=>t+=getMes(g,`at_${slug(p)}`)); return s+t; },0), fmt_:v=>`R$ ${fmtR(v)}` },
+    { lbl:'Contas',       val:MGR.reduce((s,g)=>s+pnd(g,'contas_amarela_acc')+pnd(g,'contas_verde_acc')+pnd(g,'contas_outros_acc'),0), fmt_:v=>`${Math.round(v)}` },
+    { lbl:'Consórcio',    val:MGR.reduce((s,g)=>s+getMes(g,'consorcio'),0),    fmt_:v=>`R$ ${fmtR(v)}` },
+    { lbl:'Collarkin',    val:MGR.reduce((s,g)=>s+getMes(g,'collarkin'),0),    fmt_:v=>`R$ ${fmtR(v)}` },
+    { lbl:'Captação',     val:MGR.reduce((s,g)=>s+getMes(g,'captacao'),0),     fmt_:v=>`R$ ${fmtR(v)}` },
+    { lbl:'Seguro',       val:MGR.reduce((s,g)=>s+calcSeguroGer(g),0), fmt_:v=>`R$ ${fmtR(v)}` },
+    { lbl:'Viabilizados', val:MGR.reduce((s,g)=>s+getProds(g,'viab_list').prods.length,0), fmt_:v=>`${v} prod` },
+    { lbl:'Safrapay VOP', val:MGR.reduce((s,g)=>s+getSafrapayVop(g),0),        fmt_:v=>`R$ ${fmtR(v)}` },
+    { lbl:'Crédito BS',   val:MGR.reduce((s,g)=>s+getCreditoValor(g),0),       fmt_:v=>`R$ ${fmtR(v)}` },
   ];
   prodsCons.forEach(p=>{
     h += `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-bottom:1px solid var(--border)">

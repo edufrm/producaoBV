@@ -1241,35 +1241,109 @@ function bSimple({id,title,prefix}){
 }
 
 // ══════════════════════════════════════════════════
-// SEGURO — reformulado
+// SEGURO — reformulado com cancelados, a cancelar e CHEMP
 // ══════════════════════════════════════════════════
 function getSeguroList(){ return g('seguro_list') ? JSON.parse(g('seguro_list')) : []; }
 function saveSeguroList(list){ sv('seguro_list', JSON.stringify(list)); }
+function getSeguroExtra(){ try{ return JSON.parse(g('seguro_extra')||'{}'); }catch(e){ return {}; } }
+function saveSeguroExtra(o){ sv('seguro_extra', JSON.stringify(o)); }
 
 const SEGURO_TIPOS = [
   'Seguro Prestamista','Seguro Vida Individual','Seguro Patrimonial',
   'Seguro Capital Global','Seguro Residencial','Seguro Perda de Receita'
 ];
 
+function pnRawSeg(v){ return parseFloat(String(v||'0').replace(/\./g,'').replace(',','.'))||0; }
+
+function calcSeguro(){
+  const list  = getSeguroList();
+  const extra = getSeguroExtra();
+  const prod  = list.reduce((s,v)=>s+pnRawSeg(v.valor),0);
+  const canc  = pnRawSeg(extra.cancelados);
+  const aCanc = pnRawSeg(extra.a_cancelar);
+  const chemp = pnRawSeg(extra.chemp);
+  const final = prod - canc - aCanc + chemp;
+  return { prod, canc, aCanc, chemp, final };
+}
+
 function bSeguro(){ renderSeguro(); }
 
 function renderSeguro(){
   const list = getSeguroList();
-  const totalValor = list.reduce((s,v)=>s+parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0, 0);
+  const extra = getSeguroExtra();
   const metaVal = pn('seguro_meta');
   const editingIdx = g('seguro_editing')!=='' ? parseInt(g('seguro_editing')) : -1;
+  const { prod, canc, aCanc, chemp, final } = calcSeguro();
 
-  let h = `<div class="card">
-    <div class="card-header"><span class="card-title">SEGURO</span><span class="card-count">${list.length} registro(s)</span></div>`;
+  let h = '<div class="card">';
 
+  // Resumo consolidado
+  h += `<div style="padding:14px">
+    <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">🛡️ Seguro — Resumo</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      <div style="background:var(--green-bg);border:1px solid rgba(30,107,62,0.15);border-radius:8px;padding:10px 12px">
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Produção</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;color:var(--green)">R$ ${fmt(prod)}</div>
+      </div>
+      <div style="background:var(--blue-bg);border:1px solid rgba(26,74,122,0.15);border-radius:8px;padding:10px 12px">
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Seguro CHEMP</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;color:var(--blue)">R$ ${fmt(chemp)}</div>
+      </div>
+      <div style="background:var(--red-bg);border:1px solid rgba(192,57,43,0.15);border-radius:8px;padding:10px 12px">
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Cancelados</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;color:var(--red)">− R$ ${fmt(canc)}</div>
+      </div>
+      <div style="background:var(--orange-bg);border:1px solid rgba(196,107,0,0.15);border-radius:8px;padding:10px 12px">
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">A Cancelar</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;color:var(--orange)">− R$ ${fmt(aCanc)}</div>
+      </div>
+    </div>
+    <div style="background:var(--accent);border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.7)">PRODUÇÃO FINAL</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:800;color:#fff">R$ ${fmt(final)}</div>
+    </div>
+    <div style="font-size:9px;color:var(--text3);margin-top:6px;text-align:center">Produção + CHEMP − Cancelados − A Cancelar</div>
+  </div>`;
+  h += '</div>';
+
+  // Ajustes
+  h += `<div class="card">
+    <div class="card-header light"><span class="card-title">⚙️ Ajustes</span></div>
+    <div style="padding:12px 14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:4px">Cancelados (R$)</div>
+          <input type="text" id="seg_cancelados" value="${extra.cancelados||''}" class="mono"
+            placeholder="0" oninput="this.value=fmtVal(this.value.replace(/-/g,''))"
+            style="width:100%;padding:8px;border:1px solid rgba(192,57,43,0.3);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:13px;background:var(--red-bg);color:var(--red)">
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--orange);margin-bottom:4px">A Cancelar (R$)</div>
+          <input type="text" id="seg_a_cancelar" value="${extra.a_cancelar||''}" class="mono"
+            placeholder="0" oninput="this.value=fmtVal(this.value.replace(/-/g,''))"
+            style="width:100%;padding:8px;border:1px solid rgba(196,107,0,0.3);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:13px;background:var(--orange-bg);color:var(--orange)">
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--blue);margin-bottom:4px">CHEMP (R$)</div>
+          <input type="text" id="seg_chemp" value="${extra.chemp||''}" class="mono"
+            placeholder="0" oninput="this.value=fmtVal(this.value.replace(/-/g,''))"
+            style="width:100%;padding:8px;border:1px solid rgba(26,74,122,0.3);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:13px;background:var(--blue-bg);color:var(--blue)">
+        </div>
+      </div>
+      <button onclick="salvarSeguroExtra()" style="width:100%;margin-top:10px;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">💾 Salvar Ajustes</button>
+    </div>
+  </div>`;
+
+  // Lista de produções
+  h += `<div class="card">
+    <div class="card-header"><span class="card-title">📋 Produções</span><span class="card-count">${list.length} registro(s)</span></div>`;
   if(list.length === 0){
-    h += `<div class="empty-state"><div class="empty-state-icon">🛡️</div>Nenhum seguro registrado.</div>`;
+    h += '<div class="empty-state"><div class="empty-state-icon">🛡️</div>Nenhum seguro registrado.</div>';
   } else {
     list.forEach((v,i)=>{
       if(editingIdx === i){
-        // Modo edição — formulário inline
         h += `<div style="padding:12px 14px;background:var(--surface2);border-bottom:1px solid var(--border)">
-          <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Editar Seguro</div>
+          <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:8px">Editar</div>
           <div class="form-row"><div class="form-label required">Tipo</div>
             <select id="seguro_edit_tipo_${i}">
               <option value="">Selecione…</option>
@@ -1285,7 +1359,6 @@ function renderSeguro(){
           </div>
         </div>`;
       } else {
-        // Modo normal — linha compacta
         const icon = v.tipo?.includes('Prestamista')?'🔒':v.tipo?.includes('Vida')?'❤️':v.tipo?.includes('Patrimonial')?'🏢':v.tipo?.includes('Capital')?'💼':v.tipo?.includes('Residencial')?'🏠':v.tipo?.includes('Receita')?'📊':'🛡️';
         h += `<div style="display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);gap:10px">
           <span style="font-size:20px">${icon}</span>
@@ -1294,101 +1367,72 @@ function renderSeguro(){
             <div style="font-size:10px;color:var(--text3)">${v.data ? fmtDate(v.data) : '—'}</div>
           </div>
           <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--accent)">R$ ${fmtVal(String(v.valor||'0'))}</div>
-          <button onclick="editSeguro(${i})" title="Editar" style="background:var(--blue-bg);color:var(--blue);border:none;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:12px">✏️</button>
-          <button onclick="removeSeguro(${i})" title="Excluir" style="background:var(--red-bg);color:var(--red);border:none;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:12px">🗑️</button>
+          <button onclick="editSeguro(${i})" style="background:var(--blue-bg);color:var(--blue);border:none;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:12px">✏️</button>
+          <button onclick="removeSeguro(${i})" style="background:var(--red-bg);color:var(--red);border:none;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:12px">🗑️</button>
         </div>`;
       }
     });
-    h += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface2)">
-      <span style="font-size:12px;font-weight:700;color:var(--text2)">Total</span>
-      <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;color:var(--green)">R$ ${fmt(totalValor)}</span>
+    h += `<div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--surface2)">
+      <span style="font-size:12px;font-weight:700;color:var(--text2)">Subtotal Produções</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:800;color:var(--green)">R$ ${fmt(prod)}</span>
     </div>`;
   }
-  h += `</div>`;
+  h += '</div>';
 
-  // Form novo seguro
+  // Form novo
   h += `<div class="card">
-    <div class="card-header light"><span class="card-title">+ Registrar Seguro</span></div>
+    <div class="card-header light"><span class="card-title">+ Registrar Produção</span></div>
     <div style="padding:12px 14px">
-      <div class="form-row">
-        <div class="form-label required">Tipo de Seguro</div>
-        <select id="seguro_new_tipo" title="Selecione o tipo de seguro">
+      <div class="form-row"><div class="form-label required">Tipo de Seguro</div>
+        <select id="seguro_new_tipo">
           <option value="">Selecione…</option>
           ${SEGURO_TIPOS.map(t=>`<option value="${t}">${t}</option>`).join('')}
-        </select>
-      </div>
-      <div class="form-row" style="margin-top:8px">
-        <div class="form-label required">Valor (R$)</div>
-        <input type="text" id="seguro_new_valor" placeholder="0" class="mono" oninput="this.value=fmtVal(this.value)">
-      </div>
-      <div class="form-row" style="margin-top:8px">
-        <div class="form-label required">Data</div>
-        <input type="date" id="seguro_new_data" value="${toDateStr(today)}">
-      </div>
-      <button style="width:100%;margin-top:10px;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" onclick="addSeguro()">+ Adicionar Seguro</button>
+        </select></div>
+      <div class="form-row" style="margin-top:8px"><div class="form-label required">Valor (R$)</div>
+        <input type="text" id="seguro_new_valor" placeholder="0" class="mono" oninput="this.value=fmtVal(this.value)"></div>
+      <div class="form-row" style="margin-top:8px"><div class="form-label required">Data</div>
+        <input type="date" id="seguro_new_data" value="${toDateStr(today)}"></div>
+      <button style="width:100%;margin-top:10px;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" onclick="addSeguro()">+ Adicionar</button>
     </div>
   </div>`;
 
+  // Meta
   if(metaVal){
-    const pctS = Math.min((totalValor/metaVal)*100,100);
-    const gapS = Math.max(metaVal-totalValor,0);
+    const pctS = Math.min((final/metaVal)*100,100);
+    const gapS = Math.max(metaVal-final,0);
     h += `<div class="card"><div class="meta-section" style="border:none">
       <div class="meta-row"><span class="meta-lbl">🎯 Meta do mês</span><span class="meta-pct">${pctS.toFixed(1)}%</span></div>
       <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px">R$ ${fmt(metaVal)}</div>
-      <div class="progress-bar"><div class="progress-fill ${totalValor>=metaVal?'over':totalValor/metaVal<0.5?'warn':''}" style="width:${pctS}%"></div></div>
-      ${gapS>0?`<div style="margin-top:6px;font-size:11px;color:var(--text2)">📊 GAP: <strong style="color:var(--orange)">R$ ${fmt(gapS)}</strong></div>`:`<div style="margin-top:6px;font-size:11px;color:var(--green);font-weight:700">✅ Meta atingida!</div>`}
-    </div>${ritmoBlock('seguro', totalValor)}</div>`;
+      <div class="progress-bar"><div class="progress-fill ${final>=metaVal?'over':final/metaVal<0.5?'warn':''}" style="width:${pctS}%"></div></div>
+      ${gapS>0?`<div style="margin-top:6px;font-size:11px;color:var(--text2)">📊 GAP: <strong style="color:var(--orange)">R$ ${fmt(gapS)}</strong></div>`:'<div style="margin-top:6px;font-size:11px;color:var(--green);font-weight:700">✅ Meta atingida!</div>'}
+    </div>${ritmoBlock('seguro', final)}</div>`;
   }
 
   h += obsBlock('seguro');
-  h += `<button class="section-clear-btn" onclick="openClearModal('seguro','Seguros',()=>clearModule('seguro','seguro_list'))" title="Apagar todos os registros de Seguros do mês">🗑️ Limpar registros de Seguros</button>`;
+  h += `<button class="section-clear-btn" onclick="openClearModal('seguro','Seguros',()=>{ clearModule('seguro','seguro_list'); sv('seguro_extra','{}'); renderSeguro(); })">🗑️ Limpar Seguros</button>`;
   el('sec-seguro').innerHTML = h;
 }
 
+function salvarSeguroExtra(){
+  saveSeguroExtra({ cancelados:el('seg_cancelados')?.value||'', a_cancelar:el('seg_a_cancelar')?.value||'', chemp:el('seg_chemp')?.value||'' });
+  renderSeguro(); showToast('✅ Ajustes salvos!');
+}
+
 function addSeguro(){
-  const tipo = el('seguro_new_tipo')?.value;
-  const valor = el('seguro_new_valor')?.value;
-  const data = el('seguro_new_data')?.value;
-  if(!tipo){ showToast('⚠️ Selecione o tipo de seguro'); return; }
+  const tipo=el('seguro_new_tipo')?.value, valor=el('seguro_new_valor')?.value, data=el('seguro_new_data')?.value;
+  if(!tipo){ showToast('⚠️ Selecione o tipo'); return; }
   if(!valor){ showToast('⚠️ Informe o valor'); return; }
-  const list = getSeguroList();
-  list.push({ tipo, valor, data: data || toDateStr(today), ts: new Date().toISOString() });
-  saveSeguroList(list);
-  renderSeguro();
-  showToast('Seguro adicionado ✓');
+  const list=getSeguroList(); list.push({tipo,valor,data:data||toDateStr(today),ts:new Date().toISOString()});
+  saveSeguroList(list); renderSeguro(); showToast('Seguro adicionado ✓');
 }
 
-function removeSeguro(i){
-  if(!confirm(`Remover este registro de seguro?`)) return;
-  const list = getSeguroList();
-  list.splice(i,1);
-  saveSeguroList(list);
-  sv('seguro_editing','');
-  renderSeguro();
-  showToast('Removido ✓');
-}
-
-function editSeguro(i){
-  sv('seguro_editing', String(i));
-  renderSeguro();
-}
-
-function cancelSeguroEdit(){
-  sv('seguro_editing', '');
-  renderSeguro();
-}
-
+function removeSeguro(i){ if(!confirm('Remover?')) return; const list=getSeguroList(); list.splice(i,1); saveSeguroList(list); sv('seguro_editing',''); renderSeguro(); showToast('Removido ✓'); }
+function editSeguro(i){ sv('seguro_editing',String(i)); renderSeguro(); }
+function cancelSeguroEdit(){ sv('seguro_editing',''); renderSeguro(); }
 function saveSeguroEdit(i){
-  const tipo  = el(`seguro_edit_tipo_${i}`)?.value;
-  const valor = el(`seguro_edit_valor_${i}`)?.value;
-  const data  = el(`seguro_edit_data_${i}`)?.value;
-  if(!tipo || !valor){ showToast('Preencha tipo e valor','w'); return; }
-  const list = getSeguroList();
-  list[i] = { ...list[i], tipo, valor, data };
-  saveSeguroList(list);
-  sv('seguro_editing','');
-  renderSeguro();
-  showToast('Seguro atualizado ✓');
+  const tipo=el(`seguro_edit_tipo_${i}`)?.value, valor=el(`seguro_edit_valor_${i}`)?.value, data=el(`seguro_edit_data_${i}`)?.value;
+  if(!tipo||!valor){ showToast('Preencha tipo e valor'); return; }
+  const list=getSeguroList(); list[i]={...list[i],tipo,valor,data}; saveSeguroList(list); sv('seguro_editing',''); renderSeguro(); showToast('Atualizado ✓');
 }
 
 // ══════════════════════════════════════════════════
@@ -3137,11 +3181,11 @@ function fbSync(){
       _nome:GERENTE_NOME,
       _ultima_atualizacao:new Date().toISOString(),
       _mes:MONTH_KEY,
-      // Dados de contas para ranking GG
       contas_amarela_total: pn('contas_amarela_acc')+pn('contas_amarela_dia'),
       contas_verde_total:   pn('contas_verde_acc')  +pn('contas_verde_dia'),
       contas_outros_total:  pn('contas_outros_acc') +pn('contas_outros_dia'),
       seguro_total:         segTotal,
+      seguro_extra:         g('seguro_extra')||'{}',
     };
     db.ref(GERENTE_PATH).set(payload).catch(e=>console.warn('Sync error:',e));
   },800);
