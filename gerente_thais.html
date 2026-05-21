@@ -2720,18 +2720,45 @@ function renderHoje(){
     h += `</div>`;
   }
 
-  // Meta diária sugerida
+  // Meta diária sugerida — todos os produtos com meta em aberto
   const du = businessDaysUntilToday(), dt2 = totalBusinessDaysMonth();
   const rest = dt2 - du;
   if(rest > 0){
-    const tacMeta = pn('tac_meta'), tacReal = getMes('tac');
-    if(tacMeta && tacReal < tacMeta){
-      const faltaDia = (tacMeta - tacReal) / rest;
-      h += `<div style="background:var(--blue-bg);border:1px solid rgba(26,74,122,0.15);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px">
-        <div style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">🎯 Meta diária sugerida — TAC</div>
-        <div style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:800;color:var(--blue)">R$ ${fmt(faltaDia)}</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:2px">por dia útil nos próximos ${rest} dia${rest>1?'s':''} para bater a meta</div>
-      </div>`;
+    const prodsMeta = [
+      { lbl:'TAC',          real:getMes('tac'),   meta:pn('tac_meta'),   fmt_:v=>`R$ ${fmt(v)}` },
+      { lbl:'Giro',         real:getMes('giro'),  meta:pn('giro_meta'),  fmt_:v=>`${Math.round(v)}` },
+      { lbl:'Consórcio',    real:getMes('consorcio'), meta:pn('consorcio_meta'), fmt_:v=>`R$ ${fmt(v)}` },
+      { lbl:'Collarkin',    real:getMes('collarkin'), meta:pn('collarkin_meta'), fmt_:v=>`R$ ${fmt(v)}` },
+      { lbl:'Captação',     real:getMes('captacao'),  meta:pn('captacao_meta'),  fmt_:v=>`R$ ${fmt(v)}` },
+      { lbl:'Seguro',       real:getSeguroList().reduce((s,v)=>s+pnRaw(v.valor),0), meta:pn('seguro_meta'), fmt_:v=>`R$ ${fmt(v)}` },
+      { lbl:'Viabilizados', real:getViabList().filter(x=>x.tipo==='prod').length, meta:pn('viab_meta'), fmt_:v=>`${v} prod` },
+      { lbl:'Safrapay VOP', real:getSafrapayList().filter(x=>x.tipo==='prod').reduce((s,v)=>s+pnRaw(v.vop),0), meta:pn('safrapay_vop_meta'), fmt_:v=>`R$ ${fmt(v)}` },
+      { lbl:'Crédito BS',   real:getCreditoList().filter(x=>x.tipo==='prod').reduce((s,v)=>s+pnRaw(v.valor),0), meta:pn('credito_meta'), fmt_:v=>`R$ ${fmt(v)}` },
+    ].filter(m=>m.meta>0 && m.real<m.meta);
+
+    if(prodsMeta.length){
+      h += `<div class="hoje-section">
+        <div class="hoje-section-header">
+          <span class="hoje-section-title">🎯 Meta Diária Sugerida</span>
+          <span style="font-size:10px;color:var(--text3)">${rest} dia${rest>1?'s':''} úteis restantes</span>
+        </div>`;
+      prodsMeta.forEach(m=>{
+        const falta = m.meta - m.real;
+        const faltaDia = falta / rest;
+        const pct = Math.min((m.real/m.meta)*100,100);
+        const cor = pct>=70?'var(--orange)':'var(--red)';
+        h += `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-size:12px;font-weight:600;color:var(--text)">${m.lbl}</div>
+            <div style="font-size:10px;color:var(--text3)">falta ${m.fmt_(falta)} no total</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;color:var(--blue)">${m.fmt_(faltaDia)}</div>
+            <div style="font-size:9px;color:var(--text3)">por dia útil</div>
+          </div>
+        </div>`;
+      });
+      h += `</div>`;
     }
   }
 

@@ -29,6 +29,12 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .sync-pill{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap;background:rgba(196,107,0,.25);color:#ffc97a;border:1px solid rgba(196,107,0,.3);transition:all .3s}
 .modal-overlay.open { display:flex !important; }
 #audit_trigger:hover { opacity:1 !important; }
+/* ── ABA HOJE GG ── */
+.hoje-gg-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)}
+.hoje-gg-header{padding:10px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);background:var(--surface2)}
+.hoje-gg-title{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px}
+.hoje-gg-frase{background:linear-gradient(135deg,var(--accent),#2d5c42);padding:16px;text-align:center;border-radius:var(--radius);margin-bottom:12px}
+.badge-novo-gg{display:inline-block;width:8px;height:8px;background:var(--red);border-radius:50%;margin-left:4px;vertical-align:middle;animation:pulse-rec 1.5s ease-in-out infinite}
 
 /* ── SECRETÁRIA GG ── */
 .sec-chat{display:flex;flex-direction:column;height:calc(100vh - 160px);min-height:400px}
@@ -405,6 +411,7 @@ const SIMPLES = [{id:'contas',t:'CONTAS'},{id:'consorcio',t:'CONSÓRCIO'},
                  {id:'collarkin',t:'COLLARKIN'},{id:'captacao',t:'CAPTAÇÃO'},{id:'seguro',t:'SEGURO'}];
 
 const TABS_CFG = [
+  {id:'hoje',       l:'☀️ Hoje'},
   {id:'dash',       l:'📊 Dashboard'},
   {id:'metas',      l:'🎯 Metas'},
   {id:'secretaria', l:'🤖 SecretárIA'},
@@ -1447,7 +1454,7 @@ function buildExcel(){
 // RENDER ALL
 // ══════════════════════════════════════════════════
 function renderAll(){
-  rDash(); rMetas(); rSecretariaGG();
+  rHojeGG(); rDash(); rMetas(); rSecretariaGG();
 }
 
 // ══════════════════════════════════════════════════
@@ -1785,7 +1792,182 @@ function startGGMic(){
 function stopGGMic(){ GG_MIC_ON=false; if(GG_MIC_REC){GG_MIC_REC.stop();GG_MIC_REC=null;} const btn=el('gg_mic_btn'); if(btn){btn.classList.remove('rec');btn.textContent='🎤';} showToast('⏹ Gravação encerrada'); }
 
 // ══════════════════════════════════════════════════
-// AUDITORIA DISCRETA
+// ABA HOJE — GG
+// ══════════════════════════════════════════════════
+const FRASES_GG = [
+  { texto:"Liderar é servir. Sua equipe performa quando você performa.", autor:"" },
+  { texto:"O GG que acompanha de perto cria equipes que entregam longe.", autor:"" },
+  { texto:"Gestão sem dados é achismo. Gestão com dados é estratégia.", autor:"" },
+  { texto:"O seu time reflete a sua liderança. Cuide do ambiente, cuide dos resultados.", autor:"" },
+  { texto:"Grandes líderes não criam seguidores — criam novos líderes.", autor:"Tom Peters" },
+  { texto:"A reunião mais importante do dia é a que você tem com seus próprios números.", autor:"" },
+  { texto:"Disciplina coletiva começa com disciplina individual. Dê o exemplo.", autor:"" },
+  { texto:"Feedback dado hoje vale mais do que cobrança feita amanhã.", autor:"" },
+  { texto:"Uma equipe alinhada supera qualquer meta. Um time desalinhado não supera nenhuma.", autor:"" },
+  { texto:"O melhor investimento que um líder faz é no desenvolvimento da sua equipe.", autor:"" },
+  { texto:"Quem acompanha os indicadores diariamente raramente é surpreendido no final do mês.", autor:"" },
+  { texto:"Proximidade com a equipe não é microgestão. É liderança presente.", autor:"" },
+  { texto:"Resultados são consequência de comportamentos. Gerencie os comportamentos.", autor:"" },
+  { texto:"A meta é um compromisso coletivo. Cada gerente é parte do resultado da agência.", autor:"" },
+  { texto:"Reconheça quem performa. Corrija quem está em risco. Faça isso todo dia.", autor:"" },
+];
+
+function getFraseGGHoje(){
+  const dayOfYear = Math.floor((today - new Date(today.getFullYear(),0,0))/(1000*60*60*24));
+  return FRASES_GG[dayOfYear % FRASES_GG.length];
+}
+
+function rHojeGG(){
+  const dias = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+  const dataFmt = `${dias[today.getDay()]}, ${today.getDate()} de ${meses[today.getMonth()]}`;
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const du = getDiasUteisPassados(), dt = getTotalDiasUteis(), rest = dt - du;
+  const frase = getFraseGGHoje();
+
+  // Agenda e lembretes do GG
+  const agenda = getGGAgenda().filter(a=>a.data===todayStr).sort((a,b)=>(a.hora||'').localeCompare(b.hora||''));
+  const lembs  = getGGLemb().filter(l=>!l.feito);
+  const notas  = getGGNotas();
+  const notaHoje = notas[todayStr] || '';
+
+  let h = `<div style="padding:14px 14px 0">`;
+
+  // Cabeçalho
+  h += `<div style="text-align:center;margin-bottom:14px">
+    <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent)">${dataFmt}</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:2px">${du} de ${dt} dias úteis — ${rest} restante${rest!==1?'s':''}</div>
+  </div>`;
+
+  // Frase do dia
+  h += `<div class="hoje-gg-frase">
+    <div style="font-size:13px;color:rgba(255,255,255,0.9);line-height:1.6;font-style:italic">"${frase.texto}"</div>
+    ${frase.autor?`<div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:6px">— ${frase.autor}</div>`:''}
+  </div>`;
+
+  // ── Disciplina da equipe ──
+  h += `<div class="hoje-gg-section">
+    <div class="hoje-gg-header">
+      <span class="hoje-gg-title">👥 Disciplina da Equipe Hoje</span>
+    </div>`;
+  MGR.forEach(gid=>{
+    const st = gerStatus(gid);
+    const online = st.cls==='badge-on';
+    const tac = getMes(gid,'tac');
+    const tacM = METAS[gid]?.tac||0;
+    const pct = tacM>0?(tac/tacM*100).toFixed(0)+'%':'sem meta';
+    h += `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border)">
+      <div style="width:8px;height:8px;border-radius:50%;background:${online?'var(--green)':'var(--red)'};flex-shrink:0"></div>
+      <div style="flex:1;font-size:12px;font-weight:600;color:var(--text)">${NAMES[gid]}</div>
+      <div style="font-size:10px;color:var(--text3)">TAC: <strong style="color:var(--accent)">${fmtR(tac)||'R$ 0'}</strong> ${tacM?`(${pct})`:''}
+      </div>
+      <a href="gerente_${gid}.html" target="_blank" style="font-size:10px;color:var(--gold);text-decoration:none;background:var(--surface2);padding:3px 8px;border-radius:10px;border:1px solid var(--border)">App</a>
+    </div>`;
+  });
+  h += `</div>`;
+
+  // ── Consolidado rápido da agência ──
+  h += `<div class="hoje-gg-section">
+    <div class="hoje-gg-header">
+      <span class="hoje-gg-title">📊 Consolidado da Agência</span>
+      <span style="font-size:10px;color:var(--text3)">${du}/${dt} dias úteis</span>
+    </div>`;
+
+  const prodsCons = [
+    { lbl:'TAC',         val:MGR.reduce((s,g)=>s+getMes(g,'tac'),0),          fmt_:v=>`R$ ${fmtR(v)}` },
+    { lbl:'Giro',        val:MGR.reduce((s,g)=>s+getMes(g,'giro'),0),         fmt_:v=>`${Math.round(v)}` },
+    { lbl:'Viabilizados',val:MGR.reduce((s,g)=>s+getProds(g,'viab_list').prods.length,0), fmt_:v=>`${v} prod` },
+    { lbl:'Safrapay VOP',val:MGR.reduce((s,g)=>s+getSafrapayVop(g),0),        fmt_:v=>`R$ ${fmtR(v)}` },
+    { lbl:'Crédito BS',  val:MGR.reduce((s,g)=>s+getCreditoValor(g),0),       fmt_:v=>`R$ ${fmtR(v)}` },
+  ];
+  prodsCons.forEach(p=>{
+    h += `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-bottom:1px solid var(--border)">
+      <span style="font-size:12px;color:var(--text2)">${p.lbl}</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--accent)">${p.fmt_(p.val)}</span>
+    </div>`;
+  });
+  h += `</div>`;
+
+  // ── Agenda do GG ──
+  h += `<div class="hoje-gg-section">
+    <div class="hoje-gg-header">
+      <span class="hoje-gg-title">📅 Minha Agenda de Hoje</span>
+      <span style="font-size:10px;color:var(--text3)">${agenda.length} item(s)</span>
+    </div>`;
+  if(!agenda.length){
+    h += `<div style="padding:14px;text-align:center;font-size:12px;color:var(--text3)">Nenhum compromisso para hoje.</div>`;
+  } else {
+    agenda.forEach((a,i)=>{
+      h += `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">
+        <span style="font-size:18px">🕐</span>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:600">${a.titulo}</div>
+          ${a.hora?`<div style="font-size:10px;color:var(--text3)">⏰ ${a.hora}${a.descricao?' · '+a.descricao:''}</div>`:''}
+        </div>
+        <button onclick="removerGGAgenda(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px">✕</button>
+      </div>`;
+    });
+  }
+  h += `</div>`;
+
+  // ── Lembretes ──
+  if(lembs.length){
+    h += `<div class="hoje-gg-section">
+      <div class="hoje-gg-header">
+        <span class="hoje-gg-title">⏰ Lembretes</span>
+        <span style="font-size:10px;color:var(--orange)">${lembs.length} pendente(s)</span>
+      </div>`;
+    lembs.forEach((l,i)=>{
+      h += `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">
+        <span style="font-size:16px">📌</span>
+        <div style="flex:1;font-size:12px">${l.texto}</div>
+        <button onclick="marcarFeitoGG(${i})" style="background:var(--green);color:#fff;border:none;border-radius:6px;padding:4px 8px;font-size:10px;cursor:pointer">✓</button>
+      </div>`;
+    });
+    h += `</div>`;
+  }
+
+  // ── Nota do dia ──
+  h += `<div class="hoje-gg-section">
+    <div class="hoje-gg-header"><span class="hoje-gg-title">📋 Nota do Dia</span></div>
+    <div style="padding:12px 14px">
+      <textarea id="gg_nota_hoje_tab" placeholder="O que aconteceu hoje? Reuniões, decisões, pontos de atenção…"
+        style="width:100%;min-height:80px;padding:10px;border:1px solid var(--border);border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface2);resize:vertical;line-height:1.5;outline:none"
+        oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'">${notaHoje}</textarea>
+      <button onclick="salvarNotaGGTab()" style="width:100%;margin-top:8px;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">💾 Salvar Nota</button>
+    </div>
+  </div>`;
+
+  // ── Meta diária sugerida da agência ──
+  if(rest > 0){
+    const tacTotal = MGR.reduce((s,g)=>s+getMes(g,'tac'),0);
+    const tacMetas = MGR.reduce((s,g)=>s+(METAS[g]?.tac||0),0);
+    const faltaAgencia = Math.max(tacMetas - tacTotal, 0);
+    if(faltaAgencia > 0){
+      h += `<div style="background:var(--blue-bg);border:1px solid rgba(26,74,122,0.15);border-radius:var(--radius);padding:12px 14px;margin-bottom:12px">
+        <div style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">🎯 Ritmo necessário — TAC Agência</div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:800;color:var(--blue)">R$ ${fmtR(faltaAgencia/rest)}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:2px">por dia útil nos próximos ${rest} dia${rest>1?'s':''} para a agência bater a meta de TAC</div>
+      </div>`;
+    }
+  }
+
+  h += `</div>`;
+  el('sec-hoje').innerHTML = h;
+  // Focar textarea se tiver nota
+  const ta = el('gg_nota_hoje_tab');
+  if(ta){ ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; }
+}
+
+function salvarNotaGGTab(){
+  const texto = el('gg_nota_hoje_tab')?.value?.trim();
+  if(!texto){ showToast('⚠️ Digite algo antes de salvar'); return; }
+  const notas = getGGNotas();
+  const todayStr = toDateStrGG(today);
+  notas[todayStr] = texto;
+  saveGGNotas(notas);
+  showToast('✅ Nota salva!');
+}
 // ══════════════════════════════════════════════════
 let _auditLongPressTimer = null;
 
