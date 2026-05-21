@@ -1232,6 +1232,7 @@ function renderSeguro(){
   const list = getSeguroList();
   const totalValor = list.reduce((s,v)=>s+parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0, 0);
   const metaVal = pn('seguro_meta');
+  const editingIdx = g('seguro_editing')!=='' ? parseInt(g('seguro_editing')) : -1;
 
   let h = `<div class="card">
     <div class="card-header"><span class="card-title">SEGURO</span><span class="card-count">${list.length} registro(s)</span></div>`;
@@ -1240,38 +1241,44 @@ function renderSeguro(){
     h += `<div class="empty-state"><div class="empty-state-icon">🛡️</div>Nenhum seguro registrado.</div>`;
   } else {
     list.forEach((v,i)=>{
-      const editing = g('seguro_editing') == i;
-      if(editing){
-        h += `<div class="seguro-item" style="flex-direction:column;gap:8px;padding:12px 14px;background:var(--surface2)">
+      if(editingIdx === i){
+        // Modo edição — formulário inline
+        h += `<div style="padding:12px 14px;background:var(--surface2);border-bottom:1px solid var(--border)">
+          <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Editar Seguro</div>
           <div class="form-row"><div class="form-label required">Tipo</div>
-            <select id="seguro_edit_tipo_${i}" title="Tipo de seguro">
+            <select id="seguro_edit_tipo_${i}">
               <option value="">Selecione…</option>
               ${SEGURO_TIPOS.map(t=>`<option value="${t}" ${v.tipo===t?'selected':''}>${t}</option>`).join('')}
             </select></div>
-          <div class="form-row"><div class="form-label required">Valor (R$)</div>
-            <input type="text" id="seguro_edit_valor_${i}" value="${v.valor||''}" class="mono" oninput="this.value=fmtVal(this.value)" title="Valor do seguro"></div>
-          <div class="form-row"><div class="form-label">Data</div>
-            <input type="date" id="seguro_edit_data_${i}" value="${v.data||toDateStr(today)}" title="Data do seguro"></div>
-          <div style="display:flex;gap:8px;margin-top:4px">
-            <button style="flex:1;padding:8px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer" onclick="saveSeguroEdit(${i})" title="Salvar edição">✅ Salvar</button>
-            <button style="padding:8px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:12px;cursor:pointer" onclick="cancelSeguroEdit()" title="Cancelar edição">✕ Cancelar</button>
+          <div class="form-row" style="margin-top:8px"><div class="form-label required">Valor (R$)</div>
+            <input type="text" id="seguro_edit_valor_${i}" value="${v.valor||''}" class="mono" oninput="this.value=fmtVal(this.value)"></div>
+          <div class="form-row" style="margin-top:8px"><div class="form-label">Data</div>
+            <input type="date" id="seguro_edit_data_${i}" value="${v.data||toDateStr(today)}"></div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <button style="flex:1;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer" onclick="saveSeguroEdit(${i})">✅ Salvar</button>
+            <button style="flex:1;padding:9px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:12px;cursor:pointer" onclick="cancelSeguroEdit()">✕ Cancelar</button>
           </div>
         </div>`;
       } else {
-        h += `<div class="seguro-item">
-          <div style="flex:1">
-            <div class="seguro-tipo">${v.tipo||'—'}</div>
-            <div class="seguro-data">${v.data ? fmtDate(v.data) : '—'}</div>
+        // Modo normal — linha compacta
+        const icon = v.tipo?.includes('Prestamista')?'🔒':v.tipo?.includes('Vida')?'❤️':v.tipo?.includes('Patrimonial')?'🏢':v.tipo?.includes('Capital')?'💼':v.tipo?.includes('Residencial')?'🏠':v.tipo?.includes('Receita')?'📊':'🛡️';
+        h += `<div style="display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);gap:10px">
+          <span style="font-size:20px">${icon}</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12px;font-weight:600;color:var(--text)">${v.tipo||'—'}</div>
+            <div style="font-size:10px;color:var(--text3)">${v.data ? fmtDate(v.data) : '—'}</div>
           </div>
-          <div class="seguro-val">R$ ${fmtVal(String(v.valor||'0'))}</div>
-          <button class="btn-remove-sm" onclick="editSeguro(${i})" title="Editar este seguro" style="background:var(--blue-bg);color:var(--blue);margin-right:4px">✏️</button>
-          <button class="btn-remove-sm" onclick="removeSeguro(${i})" title="Remover registro">✕</button>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--accent)">R$ ${fmtVal(String(v.valor||'0'))}</div>
+          <button onclick="editSeguro(${i})" title="Editar" style="background:var(--blue-bg);color:var(--blue);border:none;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:12px">✏️</button>
+          <button onclick="removeSeguro(${i})" title="Excluir" style="background:var(--red-bg);color:var(--red);border:none;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:12px">🗑️</button>
         </div>`;
       }
     });
-    h += `<div class="row tr"><span class="lbl t">Total de Seguros</span><span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--green);padding:4px 14px">R$ ${fmt(totalValor)}</span></div>`;
+    h += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--surface2)">
+      <span style="font-size:12px;font-weight:700;color:var(--text2)">Total</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;color:var(--green)">R$ ${fmt(totalValor)}</span>
+    </div>`;
   }
-
   h += `</div>`;
 
   // Form novo seguro
@@ -1285,26 +1292,27 @@ function renderSeguro(){
           ${SEGURO_TIPOS.map(t=>`<option value="${t}">${t}</option>`).join('')}
         </select>
       </div>
-      <div class="form-row">
+      <div class="form-row" style="margin-top:8px">
         <div class="form-label required">Valor (R$)</div>
-        <input type="text" id="seguro_new_valor" placeholder="0" class="mono" oninput="this.value=fmtVal(this.value)" title="Valor do prêmio do seguro">
+        <input type="text" id="seguro_new_valor" placeholder="0" class="mono" oninput="this.value=fmtVal(this.value)">
       </div>
-      <div class="form-row">
-        <div class="form-label">Data</div>
-        <input type="date" id="seguro_new_data" value="${toDateStr(today)}" title="Data do registro">
+      <div class="form-row" style="margin-top:8px">
+        <div class="form-label required">Data</div>
+        <input type="date" id="seguro_new_data" value="${toDateStr(today)}">
       </div>
-      <button style="width:100%;margin-top:8px;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer" onclick="addSeguro()" title="Adicionar seguro à lista">+ Adicionar Seguro</button>
+      <button style="width:100%;margin-top:10px;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" onclick="addSeguro()">+ Adicionar Seguro</button>
     </div>
   </div>`;
 
   if(metaVal){
+    const pctS = Math.min((totalValor/metaVal)*100,100);
+    const gapS = Math.max(metaVal-totalValor,0);
     h += `<div class="card"><div class="meta-section" style="border:none">
-      <div class="meta-row"><span class="meta-lbl">🎯 Meta do mês</span><span class="meta-pct" id="seguro_meta_pct_ext">${((totalValor/metaVal)*100).toFixed(1)}%</span></div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px">${fmt(metaVal)}</div>
-      <div class="progress-bar"><div class="progress-fill ${totalValor>=metaVal?'over':totalValor/metaVal<0.5?'warn':''}" style="width:${Math.min((totalValor/metaVal)*100,100)}%"></div></div>
-    </div>
-    ${ritmoBlock('seguro', totalValor)}
-    </div>`;
+      <div class="meta-row"><span class="meta-lbl">🎯 Meta do mês</span><span class="meta-pct">${pctS.toFixed(1)}%</span></div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px">R$ ${fmt(metaVal)}</div>
+      <div class="progress-bar"><div class="progress-fill ${totalValor>=metaVal?'over':totalValor/metaVal<0.5?'warn':''}" style="width:${pctS}%"></div></div>
+      ${gapS>0?`<div style="margin-top:6px;font-size:11px;color:var(--text2)">📊 GAP: <strong style="color:var(--orange)">R$ ${fmt(gapS)}</strong></div>`:`<div style="margin-top:6px;font-size:11px;color:var(--green);font-weight:700">✅ Meta atingida!</div>`}
+    </div>${ritmoBlock('seguro', totalValor)}</div>`;
   }
 
   h += obsBlock('seguro');
@@ -1341,7 +1349,7 @@ function editSeguro(i){
 }
 
 function cancelSeguroEdit(){
-  sv('seguro_editing','');
+  sv('seguro_editing', '');
   renderSeguro();
 }
 
@@ -2534,9 +2542,10 @@ Captacao: {"action":"inserir_producao","modulo":"captacao","valor":"50000"}
 REGRAS:
 - Seja direta, prática e motivadora. Tom profissional mas próximo.
 - Compare colegas sempre de forma anônima.
-- Para inserção, SEMPRE confirme os dados antes do JSON.
+- Para inserção, SEMPRE pergunte a data em que a produção foi realizada (não assuma hoje).
+- Confirme todos os dados antes de retornar o JSON.
 - O JSON deve estar em bloco separado do texto normal.
-- FORMATAÇÃO: use **negrito** para destaques, listas com - para itens, títulos curtos em negrito. Evite ## excessivos. Respostas limpas e organizadas visualmente.
+- FORMATAÇÃO: use **negrito** para destaques, listas com - para itens. Evite ## excessivos. Respostas limpas e organizadas visualmente.
 
 DADOS ATUAIS DO GERENTE:
 ${buildSecContext()}`;
