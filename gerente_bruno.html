@@ -367,7 +367,10 @@ select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 .agenda-item { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin:4px 0; font-size:12px; }
 .agenda-item-time { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--gold); font-weight:700; }
 .lembrete-item { background:var(--orange-bg); border:1px solid rgba(196,107,0,0.2); border-radius:8px; padding:8px 12px; margin:4px 0; font-size:12px; color:var(--orange); }
-/* ── ABA HOJE ── */
+/* ── VERSÃO E TIMESTAMPS ── */
+.mod-ts { font-size:9px; color:rgba(255,255,255,0.4); font-style:italic; }
+.mod-ts.light { color:var(--text3); }
+.version-badge { font-size:9px; color:var(--text3); font-family:'IBM Plex Mono',monospace; }
 .hoje-section { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:12px; overflow:hidden; box-shadow:var(--shadow); }
 .hoje-section-header { padding:10px 14px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); }
 .hoje-section-title { font-family:'Syne',sans-serif; font-size:12px; font-weight:700; color:var(--accent); text-transform:uppercase; letter-spacing:1px; }
@@ -443,6 +446,7 @@ select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
     <div class="mhandle"></div>
     <div class="mheader">
       <span class="mtitle">📅 Histórico Mensal</span>
+      <button onclick="closeModal('modalHist')" style="background:rgba(255,255,255,0.15);border:none;color:#fff;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer">← Mês Atual</button>
       <span style="font-size:11px;color:var(--text3)">meses anteriores</span>
     </div>
     <div class="mbody" id="histBody"></div>
@@ -483,8 +487,9 @@ select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
   </div>
 </div>
 
-<div class="bottom-bar">
+<div class="bottom-bar" style="justify-content:space-between;align-items:center">
   <button class="btn btn-hist" onclick="openHist()" title="Ver histórico de meses anteriores">📂 Histórico</button>
+  <span class="version-badge" title="Versão do aplicativo">v2.5.0</span>
 </div>
 
 <script>
@@ -502,18 +507,19 @@ const MONTH_KEY = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(
 const AT_PROD    = ['BS','ARV','Desconto','Outros'];
 const TABS_CFG   = [
   {id:'hoje',       l:'☀️ Hoje'},
-  {id:'tac',        l:'TAC'},
-  {id:'chemp',      l:'CHEMP'},
-  {id:'giro',       l:'Giro de Carteira'},
   {id:'ativos',     l:'Ativos'},
+  {id:'chemp',      l:'CHEMP'},
   {id:'contas',     l:'Contas'},
-  {id:'consorcio',  l:'Consórcio'},
-  {id:'collarkin',  l:'Collarkin'},
-  {id:'captacao',   l:'Captação'},
-  {id:'seguro',     l:'Seguro'},
-  {id:'viab',       l:'Viabiliz.'},
-  {id:'safrapay',   l:'Safrapay'},
   {id:'credito',    l:'Crédito BS'},
+  {id:'giro',       l:'Giro de Carteira'},
+  {id:'safrapay',   l:'Safrapay'},
+  {id:'seguro',     l:'Seguro'},
+  {id:'tac',        l:'TAC'},
+  {id:'viab',       l:'Viabiliz.'},
+  {id:'_sep',       l:'···'},
+  {id:'captacao',   l:'Captação'},
+  {id:'collarkin',  l:'Collarkin'},
+  {id:'consorcio',  l:'Consórcio'},
   {id:'dash',       l:'📊 Dashboard'},
   {id:'secretaria', l:'🤖 SecretárIA'},
 ];
@@ -581,7 +587,45 @@ async function callAnthropicAPI(system, messages, maxTokens=1000){
 }
 
 // ══════════════════════════════════════════════════
-// FERIADOS RECIFE + BANCÁRIOS
+// VERSÃO
+// ══════════════════════════════════════════════════
+const APP_VERSION = 'v2.5.0';
+
+// ══════════════════════════════════════════════════
+// TIMESTAMPS POR MÓDULO
+// ══════════════════════════════════════════════════
+const TS_KEY = SK + '_mod_ts';
+function getModTS(){ try{ return JSON.parse(localStorage.getItem(TS_KEY)||'{}'); }catch(e){ return {}; } }
+function saveModTS(mod){
+  const ts = getModTS();
+  ts[mod] = new Date().toISOString();
+  localStorage.setItem(TS_KEY, JSON.stringify(ts));
+}
+function fmtModTS(mod){
+  const ts = getModTS()[mod];
+  if(!ts) return '';
+  const d = new Date(ts);
+  const hoje = new Date();
+  const mesmodia = d.toDateString() === hoje.toDateString();
+  if(mesmodia){
+    return `Hoje ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  }
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+// Mapa de chaves → módulo
+const MOD_KEY_MAP = {
+  tac_list:'tac',
+  chemp_dia:'chemp', chemp_ant:'chemp',
+  giro_dia:'giro', giro_acc:'giro',
+  at_bs_prod:'ativos', at_arv_prod:'ativos', at_bs_liq:'ativos', at_arv_liq:'ativos',
+  contas_amarela_dia:'contas', contas_verde_dia:'contas', contas_outros_dia:'contas',
+  consorcio_dia:'consorcio', consorcio_acc:'consorcio',
+  collarkin_dia:'collarkin', collarkin_acc:'collarkin',
+  captacao_dia:'captacao', captacao_acc:'captacao',
+  seguro_list:'seguro', seguro_extra:'seguro',
+  viab_list:'viab', safrapay_list:'safrapay', credito_list:'credito',
+};
 // ══════════════════════════════════════════════════
 function buildHolidays(year){
   // Páscoa (algoritmo de Butcher)
@@ -691,7 +735,7 @@ function pnRaw(v){
 }
 function fmt(n){ return n ? n.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:2}) : ''; }
 function fmtVal(v){ const d=v.replace(/\D/g,''); if(!d) return ''; return parseInt(d,10).toLocaleString('pt-BR'); }
-function getMes(base){ return pn(base+'_acc') + pn(base+'_dia') + pn(base+'_adj'); }
+function getMes(base){ if(base==='tac') return getTACTotal(); return pn(base+'_acc') + pn(base+'_dia') + pn(base+'_adj'); }
 function setC(id,v){ const e=el(id); if(e) e.value=v||''; }
 function showToast(msg){ const t=el('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2400); }
 
@@ -710,9 +754,9 @@ function fmtStatus(s){
 // ══════════════════════════════════════════════════
 // INPUT HANDLERS
 // ══════════════════════════════════════════════════
-function oI(k,v){ sv(k,v); recompute(); }
-function oIVal(k,elRef){ const f=fmtVal(elRef.value); elRef.value=f; sv(k,f); recompute(); }
-function oISel(k,v){ sv(k,v); recompute(); }
+function oI(k,v){ sv(k,v); if(MOD_KEY_MAP[k]) saveModTS(MOD_KEY_MAP[k]); recompute(); }
+function oIVal(k,elRef){ const f=fmtVal(elRef.value); elRef.value=f; sv(k,f); if(MOD_KEY_MAP[k]) saveModTS(MOD_KEY_MAP[k]); recompute(); }
+function oISel(k,v){ sv(k,v); if(MOD_KEY_MAP[k]) saveModTS(MOD_KEY_MAP[k]); recompute(); }
 
 // ══════════════════════════════════════════════════
 // RITMO E META DIÁRIA
@@ -867,14 +911,58 @@ function lgd(){
 }
 function obsBlock(prefix){
   const key=prefix+'_obs', val=g(key)||'';
-  return `<button class="obs-toggle" onclick="toggleObs('${prefix}')" title="Adicionar observação livre">
-    ✏️ <span id="${prefix}_obs_lbl">Observação${val?': '+val.substring(0,30)+(val.length>30?'…':''):''}</span>
-  </button>
-  <div class="obs-body ${val?'open':''}" id="${prefix}_obs_body">
-    <textarea id="${key}" placeholder="Observação livre…" oninput="oI('${key}',this.value)">${val}</textarea>
+  const hasVal = val.trim().length > 0;
+  return `<div style="margin-top:4px">
+    <button class="obs-toggle" onclick="toggleObs('${prefix}')" title="Observação">
+      ✏️ <span id="${prefix}_obs_lbl">${hasVal?'Observação':'Adicionar observação'}</span>
+    </button>
+    ${hasVal?`<div class="obs-preview" id="${prefix}_obs_preview" style="background:var(--surface2);border:1px solid var(--border);border-radius:0 0 8px 8px;padding:8px 12px;font-size:12px;color:var(--text2);line-height:1.5;white-space:pre-wrap;cursor:pointer" onclick="toggleObs('${prefix}')">${val.replace(/</g,'&lt;')}</div>`:''}
+    <div class="obs-body ${hasVal?'':'open'}" id="${prefix}_obs_body" ${hasVal?'style="display:none"':''}>
+      <textarea id="${key}" placeholder="Observação livre…" oninput="oI('${key}',this.value);atualizarObsPreview('${prefix}')">${val}</textarea>
+    </div>
   </div>`;
 }
-function toggleObs(prefix){ el(prefix+'_obs_body').classList.toggle('open'); }
+function toggleObs(prefix){
+  const body = el(prefix+'_obs_body');
+  const preview = el(prefix+'_obs_preview');
+  if(!body) return;
+  const isHidden = body.style.display==='none' || !body.style.display;
+  body.style.display = isHidden ? 'block' : 'none';
+  if(preview) preview.style.display = isHidden ? 'none' : 'block';
+  if(isHidden){
+    // Scroll automático para o campo no mobile
+    setTimeout(()=>{
+      const ta = el(prefix+'_obs');
+      if(ta){
+        ta.scrollIntoView({behavior:'smooth', block:'center'});
+        ta.focus();
+      }
+    }, 100);
+  }
+}
+function atualizarObsPreview(prefix){
+  const key = prefix+'_obs';
+  const val = el(key)?.value||'';
+  let preview = el(prefix+'_obs_preview');
+  if(val.trim()){
+    if(!preview){
+      // Criar preview dinamicamente
+      const btn = document.querySelector(`button[onclick="toggleObs('${prefix}')"]`);
+      if(btn){
+        const div = document.createElement('div');
+        div.id = prefix+'_obs_preview';
+        div.className = 'obs-preview';
+        div.style.cssText = 'background:var(--surface2);border:1px solid var(--border);border-radius:0 0 8px 8px;padding:8px 12px;font-size:12px;color:var(--text2);line-height:1.5;white-space:pre-wrap;cursor:pointer;display:none';
+        div.onclick = ()=>toggleObs(prefix);
+        btn.parentNode.insertBefore(div, btn.nextSibling?.nextSibling || btn.nextSibling);
+        preview = div;
+      }
+    }
+    if(preview){ preview.textContent = val; }
+  } else if(preview){
+    preview.textContent = '';
+  }
+}
 function metaBlock(prefix){
   const metaVal = pn(prefix+'_meta');
   const hasMeta = !!metaVal;
@@ -1022,7 +1110,9 @@ function buildRankingCard(title, rankingArr, fmtFn){
 function buildAll(){
   el('gerenteName').textContent = GERENTE_NOME;
   el('tabs').innerHTML = TABS_CFG.map((t,i)=>
-    `<button class="tab ${i===0?'active':''}" onclick="swTab('${t.id}',this)">${t.l}</button>`
+    t.id==='_sep'
+      ? `<span style="color:var(--text3);opacity:0.35;font-size:11px;display:flex;align-items:center;padding:0 3px;flex-shrink:0;pointer-events:none">│</span>`
+      : `<button class="tab ${i===0?'active':''}" onclick="swTab('${t.id}',this)">${t.l}</button>`
   ).join('');
   el('app').innerHTML = TABS_CFG.map((t,i)=>
     `<div class="section ${i===0?'active':''}" id="sec-${t.id}"></div>`
@@ -1036,23 +1126,162 @@ function buildAll(){
 }
 
 // ── TAC ──
-function bTAC(){
-  const mesVal = getMes('tac');
-  const hist = renderDailyHist('tac_dia', v => `R$ ${fmtVal(String(v))}`);
-  let h=`<div class="card">
-    <div class="card-header"><span class="card-title">TAC</span></div>
-    ${lgd()}<div class="card-body">`;
-  h+=mkRow('Hoje / Mês', duoVal('tac'), false, true);
-  h+=`</div>${metaBlock('tac')}${ritmoBlock('tac', mesVal)}${hist}${obsBlock('tac')}</div>`;
-  h+=`<button class="btn-ajuste" onclick="openAjuste('tac','TAC')" title="Lançar ajuste para data específica">✏️ Lançar Ajuste</button>`;
-  h+=`<button class="section-clear-btn" onclick="openClearModal('tac','TAC',()=>clearModule('tac'))" title="Apagar todos os registros de TAC do mês">🗑️ Limpar registros de TAC</button>`;
-  el('sec-tac').innerHTML=h;
+// Helper: gera tag de timestamp para card-headers
+function tsTag(mod, light=false){
+  const ts = fmtModTS(mod);
+  if(!ts) return '';
+  return `<span class="mod-ts${light?' light':''}" title="Última atualização deste módulo">🕐 ${ts}</span>`;
 }
+
+function bTAC(){
+  const list = getTACList();
+  const total = list.reduce((s,v)=>s+(parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0),0);
+  const metaVal = pn('tac_meta');
+  const editingIdx = g('tac_editing')!=='' ? parseInt(g('tac_editing')) : -1;
+  const du = businessDaysUntilToday(), dt = totalBusinessDaysMonth();
+
+  let h = `<div class="card">
+    <div class="card-header"><span class="card-title">TAC</span>${tsTag('tac')}
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;color:var(--green)">R$ ${fmt(total)||'—'}</span>
+    </div>`;
+
+  if(!list.length){
+    h += `<div class="empty-state"><div class="empty-state-icon">💰</div>Nenhuma TAC registrada este mês.</div>`;
+  } else {
+    // Ordenar por data
+    const sorted = [...list].map((v,i)=>({...v,_i:i})).sort((a,b)=>b.data.localeCompare(a.data));
+    sorted.forEach(v=>{
+      const i = v._i;
+      if(editingIdx === i){
+        h += `<div style="padding:12px 14px;background:var(--surface2);border-bottom:1px solid var(--border)">
+          <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:8px">✏️ Editar TAC</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <div>
+              <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Valor (R$) *</div>
+              <input type="text" id="tac_edit_valor_${i}" value="${v.valor||''}" class="mono"
+                style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px"
+                oninput="this.value=fmtVal(this.value)">
+            </div>
+            <div>
+              <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Data *</div>
+              <input type="date" id="tac_edit_data_${i}" value="${v.data||toDateStr(today)}"
+                style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+            </div>
+          </div>
+          <div style="margin-bottom:8px">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Cliente (opcional)</div>
+            <input type="text" id="tac_edit_cliente_${i}" value="${v.cliente||''}" placeholder="Nome do cliente"
+              style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+          </div>
+          <div style="display:flex;gap:8px">
+            <button style="flex:1;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer" onclick="saveTACEdit(${i})">✅ Salvar</button>
+            <button style="flex:1;padding:9px;background:var(--surface);border:1px solid var(--border);border-radius:8px;font-size:12px;cursor:pointer" onclick="cancelTACEdit()">✕ Cancelar</button>
+          </div>
+        </div>`;
+      } else {
+        h += `<div style="display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);gap:10px">
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div style="font-size:12px;font-weight:700;color:var(--text)">${v.cliente||'TAC'}</div>
+                <div style="font-size:10px;color:var(--text3)">${v.data?fmtDate(v.data):'—'}</div>
+              </div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;color:var(--accent)">R$ ${fmtVal(String(v.valor||'0'))}</div>
+            </div>
+          </div>
+          <button onclick="editTAC(${i})" style="background:var(--blue-bg);color:var(--blue);border:none;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:12px">✏️</button>
+          <button onclick="removeTAC(${i})" style="background:var(--red-bg);color:var(--red);border:none;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:12px">🗑️</button>
+        </div>`;
+      }
+    });
+    h += `<div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--surface2)">
+      <span style="font-size:12px;font-weight:700;color:var(--text2)">Total do Mês</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;color:var(--green)">R$ ${fmt(total)}</span>
+    </div>`;
+  }
+  h += `</div>`;
+
+  // Form novo lançamento
+  h += `<div class="card">
+    <div class="card-header light"><span class="card-title">+ Registrar TAC</span></div>
+    <div style="padding:12px 14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Valor (R$) *</div>
+          <input type="text" id="tac_new_valor" placeholder="0" class="mono"
+            style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px"
+            oninput="this.value=fmtVal(this.value)">
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Data *</div>
+          <input type="date" id="tac_new_data" value="${toDateStr(today)}"
+            style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+        </div>
+      </div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Cliente (opcional)</div>
+        <input type="text" id="tac_new_cliente" placeholder="Nome do cliente"
+          style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+      </div>
+      <button style="width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer" onclick="addTAC()">+ Registrar TAC</button>
+    </div>
+  </div>`;
+
+  if(metaVal){
+    const pct = Math.min((total/metaVal)*100,100);
+    const gap = metaVal - total;
+    const cor = pct>=100?'var(--green)':pct>=70?'var(--orange)':'var(--red)';
+    const rest = dt - du;
+    h += `<div class="card"><div class="meta-section" style="border:none">
+      <div class="meta-row"><span class="meta-lbl">🎯 Meta TAC</span><span class="meta-pct" style="color:${cor}">${pct.toFixed(1)}%</span></div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px">R$ ${fmt(metaVal)}</div>
+      <div class="progress-bar"><div class="progress-fill ${pct>=100?'over':pct<50?'warn':''}" style="width:${pct}%"></div></div>
+      ${gap>0
+        ? `<div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px">
+             <span style="color:var(--orange);font-weight:700">📊 GAP: R$ ${fmt(gap)}</span>
+             ${rest>0?`<span style="color:var(--text3)">R$ ${fmt(gap/rest)}/dia útil</span>`:''}
+           </div>`
+        : `<div style="margin-top:6px;font-size:11px;color:var(--green);font-weight:700">✅ Meta atingida! Save: R$ ${fmt(-gap)}</div>`}
+    </div></div>`;
+  }
+
+  h += obsBlock('tac');
+  h += `<button class="section-clear-btn" onclick="openClearModal('tac','TAC',()=>{ sv('tac_list','[]'); sv('tac_editing',''); recompute(); bTAC(); })">🗑️ Limpar TAC</button>`;
+  el('sec-tac').innerHTML = h;
+}
+
+function getTACList(){ try{ return JSON.parse(g('tac_list')||'[]'); }catch(e){ return []; } }
+function saveTACList(l){ sv('tac_list',JSON.stringify(l)); saveModTS('tac'); }
+function getTACTotal(){ return getTACList().reduce((s,v)=>s+(parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0),0); }
+
+function addTAC(){
+  const valor = el('tac_new_valor')?.value?.trim();
+  const data  = el('tac_new_data')?.value;
+  const cliente = el('tac_new_cliente')?.value?.trim();
+  if(!valor){ showToast('⚠️ Informe o valor da TAC'); return; }
+  if(!data) { showToast('⚠️ Informe a data da liberação'); return; }
+  const list = getTACList();
+  list.push({valor, data, cliente:cliente||'', ts:new Date().toISOString()});
+  saveTACList(list);
+  recompute(); bTAC();
+  showToast('✅ TAC registrada!');
+}
+function removeTAC(i){ if(!confirm('Remover este lançamento de TAC?')) return; const l=getTACList(); l.splice(i,1); saveTACList(l); recompute(); bTAC(); showToast('Removido ✓'); }
+function editTAC(i){ sv('tac_editing',String(i)); bTAC(); }
+function cancelTACEdit(){ sv('tac_editing',''); bTAC(); }
+function saveTACEdit(i){
+  const valor = el(`tac_edit_valor_${i}`)?.value?.trim();
+  const data  = el(`tac_edit_data_${i}`)?.value;
+  const cliente = el(`tac_edit_cliente_${i}`)?.value?.trim();
+  if(!valor||!data){ showToast('Preencha valor e data'); return; }
+  const l=getTACList(); l[i]={...l[i],valor,data,cliente:cliente||''}; saveTACList(l); sv('tac_editing',''); recompute(); bTAC(); showToast('TAC atualizada ✓');
+}
+
 
 // ── CHEMP ──
 function bCHEMP(){
   el('sec-chemp').innerHTML=`<div class="card">
-    <div class="card-header"><span class="card-title">CHEMP</span></div>
+    <div class="card-header"><span class="card-title">CHEMP</span>${tsTag('chemp')}</div>
     <div class="chemp-grid">
       <div class="cc"><div class="cc-lbl">Saldo Mês Anterior</div>
         <input id="chemp_ant" type="text" value="${g('chemp_ant')}" oninput="oIVal('chemp_ant',this)" title="Saldo do mês anterior"></div>
@@ -1073,7 +1302,7 @@ function bGiro(){
   const mesVal = getMes('giro');
   const hist = renderDailyHist('giro_dia', v => String(v));
   let h=`<div class="card">
-    <div class="card-header"><span class="card-title">GIRO DE CARTEIRA</span><span class="card-subtitle">quantidade</span></div>
+    <div class="card-header"><span class="card-title">GIRO DE CARTEIRA</span>${tsTag('giro')}<span class="card-subtitle">quantidade</span></div>
     ${lgd()}<div class="card-body">`;
   h+=mkRow('Hoje / Mês', duoQtd('giro'), false, true);
   h+=`</div>${metaBlock('giro')}${ritmoBlockQtd('giro', mesVal)}${hist}${obsBlock('giro')}</div>`;
@@ -1084,92 +1313,195 @@ function bGiro(){
 
 // ── ATIVOS ──
 function bAtivos(){
-  // Ativos = lógica de saldo (igual CHEMP): saldo anterior + saldo atual → delta calculado
-  // Sem acumulação diária — é posição de saldo
-  const deltaTotal = AT_PROD.reduce((s,p)=>{
-    const pid = slug(p);
-    const ant = pnRaw(g(`at_${pid}_ant`));
-    const atu = pnRaw(g(`at_${pid}_atu`));
-    return s + (atu - ant);
-  }, 0);
+  const du   = businessDaysUntilToday();
+  const dt   = totalBusinessDaysMonth();
+  const hoje = new Date();
+  // Dias corridos passados no mês (para ARV)
+  const diasCorridos = hoje.getDate();
+  const diasCorridosMes = new Date(hoje.getFullYear(), hoje.getMonth()+1, 0).getDate();
 
-  let h = `<div class="card">
-    <div class="card-header"><span class="card-title">ATIVOS</span><span class="card-subtitle">posição de saldo</span></div>
-    <div style="padding:0 14px 8px">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:6px 0;border-bottom:1px solid var(--border);margin-bottom:2px">
-        <span style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.8px">Produto</span>
-        <span style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.8px;text-align:right">Saldo Ant.</span>
-        <span style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:0.8px;text-align:right">Saldo Atual</span>
-      </div>`;
+  // Chaves de produção (o gerente digita o acumulado do mês)
+  const prodBS   = pnRaw(g('at_bs_prod'));
+  const prodARV  = pnRaw(g('at_arv_prod'));
+  const prodTot  = prodBS + prodARV;
 
-  AT_PROD.forEach(p => {
-    const pid = slug(p);
-    const antKey = `at_${pid}_ant`;
-    const atuKey = `at_${pid}_atu`;
-    const ant = pnRaw(g(antKey));
-    const atu = pnRaw(g(atuKey));
-    const delta = atu - ant;
-    const deltaColor = delta > 0 ? 'var(--green)' : delta < 0 ? 'var(--red)' : 'var(--text3)';
-    const deltaSinal = delta > 0 ? '+' : '';
+  // Liquidação (valor fixo, atualizado até ~dia 10)
+  const liqBS    = pnRaw(g('at_bs_liq'));
+  const liqARV   = pnRaw(g('at_arv_liq'));
+  const liqTot   = liqBS + liqARV;
 
-    h += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:8px 0;border-bottom:1px solid var(--border);align-items:center">
-      <div>
-        <div style="font-size:12px;font-weight:600">${p}</div>
-        ${delta !== 0 ? `<div style="font-size:10px;color:${deltaColor};font-weight:700">Δ ${deltaSinal}${fmt(delta)}</div>` : ''}
-      </div>
-      <div style="text-align:right">
-        <input type="text" value="${g(antKey)}" placeholder="0" class="mono" style="text-align:right;width:90px"
-          oninput="oIVal('${antKey}',this);recompute()" title="Saldo do mês anterior — ${p}">
-      </div>
-      <div style="text-align:right">
-        <input type="text" value="${g(atuKey)}" placeholder="0" class="mono" style="text-align:right;width:90px"
-          oninput="oIVal('${atuKey}',this);recompute()" title="Saldo atual — ${p}">
-      </div>
-    </div>`;
-  });
+  // Produção líquida
+  const liqBS_net  = prodBS  - liqBS;
+  const liqARV_net = prodARV - liqARV;
+  const liqTot_net = prodTot - liqTot;
 
-  // Total
-  const antTotalVal = AT_PROD.reduce((s,p)=>s+pnRaw(g(`at_${slug(p)}_ant`)),0);
-  const atuTotalVal = AT_PROD.reduce((s,p)=>s+pnRaw(g(`at_${slug(p)}_atu`)),0);
-  const deltaTotalVal = atuTotalVal - antTotalVal;
-  const dtColor = deltaTotalVal > 0 ? 'var(--green)' : deltaTotalVal < 0 ? 'var(--red)' : 'var(--text2)';
-  const dtSinal = deltaTotalVal > 0 ? '+' : '';
+  // Meta (sobre produção bruta total)
+  const metaVal  = pn('ativos_meta');
+  const metaBS   = pn('ativos_bs_meta');
+  const metaARV  = pn('ativos_arv_meta');
 
-  h += `<div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding:10px 0;background:var(--surface2);border-radius:0 0 8px 8px;margin:0 -14px;padding-left:14px;padding-right:14px">
-    <div>
-      <div style="font-size:11px;font-weight:700;color:var(--accent)">TOTAL</div>
-      <div style="font-size:10px;font-weight:700;color:${dtColor}">Δ ${dtSinal}R$ ${fmt(Math.abs(deltaTotalVal))}</div>
+  // Ritmo: BS = dias úteis, ARV = dias corridos
+  const ritmoBS  = (metaBS  > 0 && dt  > 0) ? (metaBS /dt )*du  : 0;
+  const ritmoARV = (metaARV > 0 && diasCorridosMes > 0) ? (metaARV/diasCorridosMes)*diasCorridos : 0;
+
+  function sinalCor(v){ return v>0?'var(--green)':v<0?'var(--red)':'var(--text3)'; }
+  function sinalTxt(v){ return v>0?'+':v<0?'−':''; }
+  function fmtAbs(v){ return 'R$ '+fmt(Math.abs(v)); }
+  function ritmoTag(real, esperado, label){
+    if(!esperado) return '';
+    const pct = (real/esperado)*100;
+    const ok  = pct >= 70;
+    return `<span style="font-size:9px;padding:1px 5px;border-radius:8px;font-weight:700;background:${ok?'var(--green-bg)':'var(--orange-bg)'};color:${ok?'var(--green)':'var(--orange)'}" title="Ritmo ${label}">${pct.toFixed(0)}% ritmo</span>`;
+  }
+
+  let h = `<div style="padding:0 14px">`;
+
+  // ─── SEÇÃO: PRODUÇÃO BRUTA ───
+  h += `<div class="card" style="margin-bottom:10px">
+    <div class="card-header" style="background:var(--green-bg);border-bottom:1px solid rgba(30,107,62,0.15)">
+      <span class="card-title" style="color:var(--green)">📈 Produção do Mês</span>${tsTag('ativos')}
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:800;color:var(--green)">R$ ${fmt(prodTot)||'—'}</span>
     </div>
-    <div style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--text2)">R$ ${fmt(antTotalVal)}</div>
-    <div style="text-align:right;font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;color:var(--accent)">R$ ${fmt(atuTotalVal)}</div>
-  </div>
+    <div style="padding:10px 14px">
+      <!-- BS -->
+      <div style="margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <div>
+            <span style="font-size:12px;font-weight:700;color:var(--text)">BS</span>
+            <span style="font-size:9px;color:var(--text3);margin-left:5px;background:var(--surface2);padding:1px 5px;border-radius:6px" title="BS = tudo que não é ARV: Capital de Giro, Desconto de Duplicata, CDC, etc.">ℹ️ tudo exceto ARV</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            ${ritmoTag(prodBS, ritmoBS, 'BS (dias úteis)')}
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--accent)">${prodBS?'R$ '+fmt(prodBS):'—'}</span>
+          </div>
+        </div>
+        <input type="text" value="${g('at_bs_prod')||''}" placeholder="0" class="mono"
+          style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface2)"
+          oninput="oI('at_bs_prod',this.value);recompute()" title="Produção acumulada de BS no mês">
+        ${metaBS?`<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px">
+          <span>Meta BS: R$ ${fmt(metaBS)}</span>
+          <span style="color:${sinalCor(prodBS-metaBS)};font-weight:700">${prodBS>=metaBS?'✅ Batida!':'GAP: R$ '+fmt(metaBS-prodBS)}</span>
+        </div>`:''}
+      </div>
+      <!-- ARV -->
+      <div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <div>
+            <span style="font-size:12px;font-weight:700;color:var(--text)">ARV</span>
+            <span style="font-size:9px;color:var(--text3);margin-left:5px;background:var(--surface2);padding:1px 5px;border-radius:6px">Antecipação de Recebíveis</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px">
+            ${ritmoTag(prodARV, ritmoARV, 'ARV (dias corridos)')}
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--accent)">${prodARV?'R$ '+fmt(prodARV):'—'}</span>
+          </div>
+        </div>
+        <input type="text" value="${g('at_arv_prod')||''}" placeholder="0" class="mono"
+          style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface2)"
+          oninput="oI('at_arv_prod',this.value);recompute()" title="Produção acumulada de ARV no mês">
+        ${metaARV?`<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-top:4px">
+          <span>Meta ARV: R$ ${fmt(metaARV)}</span>
+          <span style="color:${sinalCor(prodARV-metaARV)};font-weight:700">${prodARV>=metaARV?'✅ Batida!':'GAP: R$ '+fmt(metaARV-prodARV)}</span>
+        </div>`:''}
+      </div>
+    </div>
   </div>`;
 
-  // Meta e ritmo baseados no delta (incremento)
-  const metaVal = pn('ativos_meta');
+  // ─── SEÇÃO: LIQUIDAÇÃO ───
+  h += `<div class="card" style="margin-bottom:10px">
+    <div class="card-header" style="background:var(--red-bg);border-bottom:1px solid rgba(192,57,43,0.15)">
+      <span class="card-title" style="color:var(--red)">📉 Liquidação do Mês</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:800;color:var(--red)">${liqTot?'R$ '+fmt(liqTot):'Aguardando (~dia 10)'}</span>
+    </div>
+    <div style="padding:10px 14px">
+      <div style="font-size:10px;color:var(--text3);margin-bottom:10px;background:var(--orange-bg);padding:6px 10px;border-radius:6px">
+        ⏱️ Este valor geralmente só fica disponível a partir do dia 10 do mês.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px">BS Liquidado</div>
+          <input type="text" value="${g('at_bs_liq')||''}" placeholder="0" class="mono"
+            style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface2)"
+            oninput="oI('at_bs_liq',this.value);recompute()" title="Valor de BS liquidado no mês">
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:4px">ARV Liquidado</div>
+          <input type="text" value="${g('at_arv_liq')||''}" placeholder="0" class="mono"
+            style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface2)"
+            oninput="oI('at_arv_liq',this.value);recompute()" title="Valor de ARV liquidado no mês">
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  // ─── SEÇÃO: PRODUÇÃO LÍQUIDA ───
+  const netColor = sinalCor(liqTot_net);
+  const netBG    = liqTot_net>=0?'var(--green-bg)':'var(--red-bg)';
+  const netBorder= liqTot_net>=0?'rgba(30,107,62,0.2)':'rgba(192,57,43,0.2)';
+  h += `<div class="card" style="margin-bottom:10px">
+    <div class="card-header" style="background:${netBG};border-bottom:1px solid ${netBorder}">
+      <span class="card-title" style="color:${netColor}">⚖️ Produção Líquida</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;color:${netColor}">${sinalTxt(liqTot_net)} ${fmtAbs(liqTot_net)}</span>
+    </div>
+    <div style="padding:10px 14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:${sinalCor(liqBS_net)==='var(--green)'?'var(--green-bg)':liqBS_net<0?'var(--red-bg)':'var(--surface2)'};border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">BS Líquido</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:800;color:${sinalCor(liqBS_net)}">${sinalTxt(liqBS_net)} R$ ${fmt(Math.abs(liqBS_net))}</div>
+          <div style="font-size:9px;color:var(--text3);margin-top:4px">${prodBS?'R$ '+fmt(prodBS):'-'} − ${liqBS?'R$ '+fmt(liqBS):'-'}</div>
+        </div>
+        <div style="background:${sinalCor(liqARV_net)==='var(--green)'?'var(--green-bg)':liqARV_net<0?'var(--red-bg)':'var(--surface2)'};border-radius:10px;padding:12px;text-align:center">
+          <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">ARV Líquido</div>
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:15px;font-weight:800;color:${sinalCor(liqARV_net)}">${sinalTxt(liqARV_net)} R$ ${fmt(Math.abs(liqARV_net))}</div>
+          <div style="font-size:9px;color:var(--text3);margin-top:4px">${prodARV?'R$ '+fmt(prodARV):'-'} − ${liqARV?'R$ '+fmt(liqARV):'-'}</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
+  // ─── META TOTAL (sobre produção bruta) ───
   if(metaVal){
-    const pct = metaVal > 0 ? Math.min((deltaTotalVal/metaVal)*100, 100) : 0;
-    const gapVal = Math.max(metaVal - deltaTotalVal, 0);
-    h += `<div class="card" style="margin-top:8px">
+    const pct    = Math.min((prodTot/metaVal)*100, 100);
+    const gap    = metaVal - prodTot;
+    const cor    = pct>=100?'var(--green)':pct>=70?'var(--orange)':'var(--red)';
+    const rest   = dt - du;
+    h += `<div class="card" style="margin-bottom:10px">
       <div class="meta-section" style="border:none">
         <div class="meta-row">
-          <span class="meta-lbl">🎯 Meta (incremento)</span>
-          <span class="meta-pct" style="color:${pct>=100?'var(--green)':pct>=70?'var(--orange)':'var(--red)'}">${pct.toFixed(1)}%</span>
+          <span class="meta-lbl">🎯 Meta Produção Bruta Total</span>
+          <span class="meta-pct" style="color:${cor}">${pct.toFixed(1)}%</span>
         </div>
         <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;color:var(--accent);margin-bottom:8px">R$ ${fmt(metaVal)}</div>
         <div class="progress-bar"><div class="progress-fill ${pct>=100?'over':pct<50?'warn':''}" style="width:${pct}%"></div></div>
-        ${gapVal > 0 ? `<div style="margin-top:6px;font-size:11px;color:var(--text2)">📊 GAP: <strong style="color:var(--orange)">R$ ${fmt(gapVal)}</strong> para atingir a meta</div>` : `<div style="margin-top:6px;font-size:11px;color:var(--green);font-weight:700">✅ Meta atingida!</div>`}
+        ${gap>0
+          ? `<div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px">
+               <span style="color:var(--orange);font-weight:700">📊 GAP: R$ ${fmt(gap)}</span>
+               ${rest>0?`<span style="color:var(--text3)">Ritmo: R$ ${fmt(gap/rest)}/dia útil</span>`:''}
+             </div>`
+          : `<div style="margin-top:6px;font-size:11px;color:var(--green);font-weight:700">✅ Meta atingida! Save: R$ ${fmt(-gap)}</div>`}
       </div>
     </div>`;
   }
 
   h += obsBlock('ativos');
   h += `</div>`;
-  h += `<button class="section-clear-btn" onclick="openClearModal('ativos','Ativos',()=>clearModule('at'))" title="Apagar todos os registros de Ativos do mês">🗑️ Limpar registros de Ativos</button>`;
+  h += `<button class="section-clear-btn" onclick="openClearModal('ativos','Ativos',()=>{ ['at_bs_prod','at_arv_prod','at_bs_liq','at_arv_liq'].forEach(k=>sv(k,'')); recompute(); bAtivos(); })">🗑️ Limpar Ativos</button>`;
   el('sec-ativos').innerHTML = h;
 }
 
 // ── CONTAS ──
+function getContasList(){ try{ return JSON.parse(g('contas_clientes')||'[]'); }catch(e){ return []; } }
+function saveContasList(l){ sv('contas_clientes',JSON.stringify(l)); saveModTS('contas'); }
+function addContaCliente(){
+  const tipo    = el('conta_novo_tipo')?.value||'amarela';
+  const cliente = el('conta_novo_cliente')?.value?.trim();
+  const data    = el('conta_nova_data')?.value;
+  if(!cliente){ showToast('⚠️ Informe o nome do cliente'); return; }
+  const l = getContasList();
+  l.push({tipo,cliente,data:data||toDateStr(today)});
+  saveContasList(l); bContas(); showToast('✅ Cliente registrado!');
+}
+function removeContaCliente(i){ const l=getContasList(); l.splice(i,1); saveContasList(l); bContas(); }
+
 function bContas(){
   const amarela = pn('contas_amarela_dia') + pn('contas_amarela_acc');
   const verde   = pn('contas_verde_dia') + pn('contas_verde_acc');
@@ -1179,7 +1511,7 @@ function bContas(){
   const hist = renderDailyHist('contas_total_dia', v => String(v));
 
   let h = `<div class="card">
-    <div class="card-header"><span class="card-title">CONTAS</span><span class="card-subtitle">abertura por tipo</span></div>
+    <div class="card-header"><span class="card-title">CONTAS</span>${tsTag('contas')}</div>
     ${lgd()}
     <div style="padding:12px 14px;border-bottom:1px solid var(--border)">
       <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.8px">Abertura Hoje por Tipo</div>
@@ -1221,6 +1553,53 @@ function bContas(){
     </div>
     ${metaBlock('contas')}${ritmoBlockQtd('contas', total)}${hist}${obsBlock('contas')}
   </div>`;
+
+  // Lista de clientes registrados
+  const contasList = getContasList();
+  if(contasList.length){
+    h += `<div class="card">
+      <div class="card-header light"><span class="card-title">📋 Clientes Registrados</span><span class="card-count">${contasList.length}</span></div>`;
+    contasList.forEach((c,i)=>{
+      const tipoLabel = c.tipo==='amarela'?'🟡 Amarela':c.tipo==='verde'?'🟢 Verde':'🔵 Outros';
+      const tipoColor = c.tipo==='amarela'?'var(--orange)':c.tipo==='verde'?'var(--green)':'var(--blue)';
+      h += `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border)">
+        <span style="font-size:11px;font-weight:700;color:${tipoColor};min-width:65px">${tipoLabel}</span>
+        <span style="flex:1;font-size:12px;color:var(--text);font-weight:500">${c.cliente}</span>
+        <span style="font-size:10px;color:var(--text3)">${c.data?fmtDate(c.data):''}</span>
+        <button onclick="removeContaCliente(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px">✕</button>
+      </div>`;
+    });
+    h += `</div>`;
+  }
+
+  // Form adicionar cliente
+  h += `<div class="card">
+    <div class="card-header light"><span class="card-title">+ Registrar por Nome</span></div>
+    <div style="padding:12px 14px">
+      <div style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:end">
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Tipo</div>
+          <select id="conta_novo_tipo" style="padding:8px;border:1px solid var(--border);border-radius:8px;font-size:12px;height:38px">
+            <option value="amarela">🟡 Amarela</option>
+            <option value="verde">🟢 Verde</option>
+            <option value="outros">🔵 Outros</option>
+          </select>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Nome / CNPJ *</div>
+          <input type="text" id="conta_novo_cliente" placeholder="Nome do cliente"
+            style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px;height:38px">
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Data</div>
+          <input type="date" id="conta_nova_data" value="${toDateStr(today)}"
+            style="padding:8px;border:1px solid var(--border);border-radius:8px;font-size:12px;height:38px">
+        </div>
+      </div>
+      <button onclick="addContaCliente()" style="width:100%;margin-top:8px;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">+ Adicionar</button>
+    </div>
+  </div>`;
+
   h+=`<button class="btn-ajuste" onclick="openAjusteContas()" title="Lançar ajuste de contas para data específica">✏️ Lançar Ajuste de Contas</button>`;
   h+=`<button class="section-clear-btn" onclick="openClearModal('contas','Contas',()=>clearModule('contas'))" title="Apagar todos os registros de Contas do mês">🗑️ Limpar registros de Contas</button>`;
   el('sec-contas').innerHTML = h;
@@ -1282,7 +1661,7 @@ function renderSeguro(){
     <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">🛡️ Seguro — Resumo</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
       <div style="background:var(--green-bg);border:1px solid rgba(30,107,62,0.15);border-radius:8px;padding:10px 12px">
-        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Produção</div>
+        <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px">Novas Produções</div>
         <div style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:800;color:var(--green)">R$ ${fmt(prod)}</div>
       </div>
       <div style="background:var(--blue-bg);border:1px solid rgba(26,74,122,0.15);border-radius:8px;padding:10px 12px">
@@ -1300,7 +1679,8 @@ function renderSeguro(){
     </div>
     <div style="background:var(--accent);border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center">
       <div style="font-size:11px;font-weight:700;color:rgba(255,255,255,0.7)">PRODUÇÃO FINAL</div>
-      <div style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:800;color:#fff">R$ ${fmt(final)}</div>
+      <div style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:800;color:${final<0?'#ff6b6b':'#fff'}">${final<0?'−':''} R$ ${fmt(Math.abs(final))}</div>
+      ${final<0?`<div style="font-size:10px;color:rgba(255,100,100,0.8);margin-top:2px">⚠️ Saldo negativo — cancelamentos superam a produção</div>`:''}
     </div>
     <div style="font-size:9px;color:var(--text3);margin-top:6px;text-align:center">Produção + CHEMP − Cancelados − A Cancelar</div>
   </div>`;
@@ -1314,19 +1694,19 @@ function renderSeguro(){
         <div>
           <div style="font-size:10px;font-weight:700;color:var(--red);margin-bottom:4px">Cancelados (R$)</div>
           <input type="text" id="seg_cancelados" value="${extra.cancelados||''}" class="mono"
-            placeholder="0" oninput="this.value=fmtVal(this.value.replace(/-/g,''))"
+            placeholder="0" oninput="this.value=fmtVal(this.value.replace(/-/g,''));autoSaveSegExtra()"
             style="width:100%;padding:8px;border:1px solid rgba(192,57,43,0.3);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:13px;background:var(--red-bg);color:var(--red)">
         </div>
         <div>
           <div style="font-size:10px;font-weight:700;color:var(--orange);margin-bottom:4px">A Cancelar (R$)</div>
           <input type="text" id="seg_a_cancelar" value="${extra.a_cancelar||''}" class="mono"
-            placeholder="0" oninput="this.value=fmtVal(this.value.replace(/-/g,''))"
+            placeholder="0" oninput="this.value=fmtVal(this.value.replace(/-/g,''));autoSaveSegExtra()"
             style="width:100%;padding:8px;border:1px solid rgba(196,107,0,0.3);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:13px;background:var(--orange-bg);color:var(--orange)">
         </div>
         <div>
           <div style="font-size:10px;font-weight:700;color:var(--blue);margin-bottom:4px">CHEMP (R$)</div>
           <input type="text" id="seg_chemp" value="${extra.chemp||''}" class="mono"
-            placeholder="0" oninput="this.value=fmtVal(this.value.replace(/-/g,''))"
+            placeholder="0" oninput="this.value=fmtVal(this.value.replace(/-/g,''));autoSaveSegExtra()"
             style="width:100%;padding:8px;border:1px solid rgba(26,74,122,0.3);border-radius:8px;font-family:'IBM Plex Mono',monospace;font-size:13px;background:var(--blue-bg);color:var(--blue)">
         </div>
       </div>
@@ -1336,7 +1716,7 @@ function renderSeguro(){
 
   // Lista de produções
   h += `<div class="card">
-    <div class="card-header"><span class="card-title">📋 Produções</span><span class="card-count">${list.length} registro(s)</span></div>`;
+    <div class="card-header"><span class="card-title">📋 Produções</span>${tsTag('seguro')}<span class="card-count">${list.length} registro(s)</span></div>`;
   if(list.length === 0){
     h += '<div class="empty-state"><div class="empty-state-icon">🛡️</div>Nenhum seguro registrado.</div>';
   } else {
@@ -1408,11 +1788,29 @@ function renderSeguro(){
     </div>${ritmoBlock('seguro', final)}</div>`;
   }
 
+  // Obs do GG (vinda do Firebase)
+  const obsGG = g('seguro_obs_gg')||'';
+  if(obsGG.trim()){
+    h += `<div style="background:linear-gradient(135deg,rgba(26,74,122,0.08),rgba(26,74,122,0.03));border:1px solid rgba(26,74,122,0.2);border-radius:var(--radius);padding:10px 14px;margin-bottom:4px">
+      <div style="font-size:9px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">📢 Observação do GG — Seguro</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.5;white-space:pre-wrap">${obsGG.replace(/</g,'&lt;')}</div>
+    </div>`;
+  }
   h += obsBlock('seguro');
   h += `<button class="section-clear-btn" onclick="openClearModal('seguro','Seguros',()=>{ clearModule('seguro','seguro_list'); sv('seguro_extra','{}'); renderSeguro(); })">🗑️ Limpar Seguros</button>`;
   el('sec-seguro').innerHTML = h;
 }
 
+function autoSaveSegExtra(){
+  const canc  = el('seg_cancelados')?.value||'';
+  const aCanc = el('seg_a_cancelar')?.value||'';
+  const chemp = el('seg_chemp')?.value||'';
+  saveSeguroExtra({cancelados:canc, a_cancelar:aCanc, chemp});
+  // Atualizar resumo sem re-renderizar tudo
+  const {prod,canc:c,aCanc:ac,chemp:ch,final} = calcSeguro();
+  const elFinal = document.querySelector('.seg-final-val');
+  if(elFinal) elFinal.textContent = (final<0?'− ':'')+'R$ '+fmt(Math.abs(final));
+}
 function salvarSeguroExtra(){
   saveSeguroExtra({ cancelados:el('seg_cancelados')?.value||'', a_cancelar:el('seg_a_cancelar')?.value||'', chemp:el('seg_chemp')?.value||'' });
   renderSeguro(); showToast('✅ Ajustes salvos!');
@@ -1461,7 +1859,7 @@ function renderViab(){
 
   let h=`<div class="card">
     <div class="card-header">
-      <span class="card-title">VIABILIZADOS</span>
+      <span class="card-title">VIABILIZADOS</span>${tsTag('viab')}
       <span class="card-count">🔵 ${pipes} pipe · ✅ ${prods} prod</span>
     </div>`;
   if(alerts) h+=alerts;
@@ -1522,6 +1920,8 @@ function renderViabCard(v,i){
     <div class="cliente-card-body ${locked?'locked':''}">
       <div class="form-row"><div class="form-label required">Cliente</div>
         <input type="text" value="${v.cliente||''}" placeholder="Nome do cliente" ${locked?'disabled':''} oninput="viabSet(${i},'cliente',this.value)"></div>
+      <div class="form-row"><div class="form-label">Valor do Negócio (R$)</div>
+        <input type="text" value="${v.valor_negocio||''}" placeholder="Ex: 2.000.000" class="mono" ${locked?'disabled':''} oninput="viabSet(${i},'valor_negocio',fmtVal(this.value));this.value=fmtVal(this.value)" title="Valor total do negócio viabilizado"></div>
       <div class="form-row"><div class="form-label required">Viabiliza por</div>
         <select ${locked?'disabled':''} onchange="viabSet(${i},'viabiliza',this.value);renderViab()">
           <option value="">Selecione…</option>
@@ -1593,7 +1993,7 @@ function renderSafrapay(){
 
   let h=`<div class="card">
     <div class="card-header purple">
-      <span class="card-title">SAFRAPAY</span>
+      <span class="card-title">SAFRAPAY</span>${tsTag('safrapay')}
       <span class="card-count">🔵 ${pipes} pipe · ✅ ${prods} prod</span>
     </div>`;
   if(alerts) h+=alerts;
@@ -1727,7 +2127,7 @@ function renderCredito(){
 
   let h=`<div class="card">
     <div class="card-header blue">
-      <span class="card-title">CRÉDITO BS</span>
+      <span class="card-title">CRÉDITO BS</span>${tsTag('credito')}
       <span class="card-count">🔵 ${pipes} pipe · ✅ ${prods} prod</span>
     </div>`;
   if(alerts) h+=alerts;
@@ -1866,7 +2266,9 @@ function recompute(){
   SIMPLES_CFG.forEach(({prefix})=>{ setC(prefix+'_mes', fmt(getMes(prefix))); updateMeta(prefix); });
 
   // METAS
-  updateMeta('tac'); updateMeta('giro'); updateMeta('ativos', mT);
+  const atvProd = pnRaw(g('at_bs_prod')) + pnRaw(g('at_arv_prod'));
+  updateMeta('ativos', atvProd);
+  updateMeta('tac'); updateMeta('giro');
 }
 
 // ══════════════════════════════════════════════════
@@ -1922,7 +2324,7 @@ function auditLog(modulo, data, valorAnt, valorNovo, tipo){
 // Snapshot dos valores "Hoje" de todos os módulos
 function snapToday(dateStr){
   const snap = { data: dateStr, ts: new Date().toISOString() };
-  snap.tac        = g('tac_dia') || '0';
+  snap.tac        = String(getTACTotal());
   snap.giro       = g('giro_dia') || '0';
   snap.contas_amarela = g('contas_amarela_dia') || '0';
   snap.contas_verde   = g('contas_verde_dia') || '0';
@@ -2170,6 +2572,7 @@ function renderVals(){
   });
 }
 function swTab(id,btn){
+  if(id==='_sep') return;
   document.querySelectorAll('.section').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   el('sec-'+id).classList.add('active'); btn.classList.add('active');
@@ -2237,7 +2640,7 @@ const MEDALS_CFG = [
 ];
 
 function rankValOf(gid){
-  if(gid===GERENTE_ID) return getMes('tac');
+  if(gid===GERENTE_ID) return getTACTotal();
   const d=RANK_DATA[gid]; if(!d) return 0;
   return (parseFloat(String(d.tac_acc||'0').replace(/\./g,'').replace(',','.'))||0)
         +(parseFloat(String(d.tac_dia||'0').replace(/\./g,'').replace(',','.'))||0)
@@ -2376,11 +2779,11 @@ function buildConsolidado(){
   // Definir todos os módulos com realizado e meta
   const tacReal  = getMes('tac');           const tacMeta  = pn('tac_meta');
   const giroReal = getMes('giro');          const giroMeta = pn('giro_meta');
-  const ativReal = AT_PROD.reduce((s,p)=>s+(pnRaw(g(`at_${slug(p)}_atu`))-pnRaw(g(`at_${slug(p)}_ant`))),0);
+  const ativReal = pnRaw(g('at_bs_prod')) + pnRaw(g('at_arv_prod'));
   const ativMeta = pn('ativos_meta');
   const contReal = pn('contas_amarela_acc')+pn('contas_amarela_dia')+pn('contas_verde_acc')+pn('contas_verde_dia')+pn('contas_outros_acc')+pn('contas_outros_dia');
   const contMeta = pn('contas_meta');
-  const segReal  = getSeguroList().reduce((s,v)=>s+pnRaw(v.valor),0);
+  const {final: segReal} = calcSeguro();
   const segMeta  = pn('seguro_meta');
   const consoReal = getMes('consorcio');    const consoMeta = pn('consorcio_meta');
   const collReal  = getMes('collarkin');    const collMeta  = pn('collarkin_meta');
@@ -2491,24 +2894,29 @@ function renderDash(){
     </div>`;
   }
 
-  // ── PAINEL CONSOLIDADO ──
-  h += buildConsolidado();
-
   // Rankings por produto
   const rankMods = [
     { title:'🏆 Placar TAC', fn: gid=>getGerVal(gid,'tac'), fmtFn: v=>`R$ ${fmt(v)||'0'}` },
     { title:'🔄 Placar Giro de Carteira', fn: gid=>getGerVal(gid,'giro'), fmtFn: v=>Math.round(v)||'0' },
-    { title:'💰 Placar Ativos', fn: gid=>getGerVal(gid, AT_PROD.map(p=>`at_${slug(p)}`)), fmtFn: v=>`R$ ${fmt(v)||'0'}` },
+    { title:'💰 Placar Ativos', fn: gid=>{
+        if(gid===GERENTE_ID) return pnRaw(g('at_bs_prod'))+pnRaw(g('at_arv_prod'));
+        const d=RANK_DATA[gid]; if(!d) return 0;
+        return (parseFloat(String(d.at_bs_prod||'0').replace(/\./g,'').replace(',','.'))||0)+
+               (parseFloat(String(d.at_arv_prod||'0').replace(/\./g,'').replace(',','.'))||0);
+      }, fmtFn: v=>`R$ ${fmt(v)||'0'}` },
     { title:'🏦 Placar Contas', fn: gid=>{
         if(gid===GERENTE_ID) return (pn('contas_amarela_acc')+pn('contas_amarela_dia'))+(pn('contas_verde_acc')+pn('contas_verde_dia'))+(pn('contas_outros_acc')+pn('contas_outros_dia'));
         const d=RANK_DATA[gid]; if(!d) return 0;
         return (parseFloat(String(d.contas_amarela_acc||'0'))||0)+(parseFloat(String(d.contas_verde_acc||'0'))||0)+(parseFloat(String(d.contas_outros_acc||'0'))||0);
       }, fmtFn: v=>`${Math.round(v)||'0'} contas` },
     { title:'🛡️ Placar Seguro', fn: gid=>{
-        if(gid===GERENTE_ID){ const l=getSeguroList(); return l.reduce((s,v)=>s+parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0,0); }
+        if(gid===GERENTE_ID){ const {final}=calcSeguro(); return final; }
         const d=RANK_DATA[gid]; if(!d) return 0;
-        const l=d.seguro_list?JSON.parse(d.seguro_list):[];
-        return l.reduce((s,v)=>s+parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0,0);
+        const list=d.seguro_list?JSON.parse(d.seguro_list):[];
+        const prod=list.reduce((s,v)=>s+(parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0),0);
+        let canc=0,aCanc=0,chemp=0;
+        if(d.seguro_extra){ try{ const ex=JSON.parse(d.seguro_extra); canc=parseFloat(String(ex.cancelados||'0').replace(/\./g,'').replace(',','.'))||0; aCanc=parseFloat(String(ex.a_cancelar||'0').replace(/\./g,'').replace(',','.'))||0; chemp=parseFloat(String(ex.chemp||'0').replace(/\./g,'').replace(',','.'))||0; }catch(e){} }
+        return prod - canc - aCanc + chemp;
       }, fmtFn: v=>`R$ ${fmt(v)||'0'}` },
     { title:'👥 Placar Viabilizados', fn: gid=>{
         if(gid===GERENTE_ID) return getViabList().filter(x=>x.tipo==='prod').length;
@@ -2534,6 +2942,9 @@ function renderDash(){
     const ranking = MGR_IDS.map(gid=>({gid, val: mod.fn(gid)})).sort((a,b)=>b.val-a.val);
     h += buildRankingCard(mod.title, ranking, mod.fmtFn);
   });
+
+  // ── PAINEL CONSOLIDADO ──
+  h += buildConsolidado();
 
   // Streak
   const todayStr=toDateStr(today);
@@ -2664,7 +3075,7 @@ function renderHoje(){
     { lbl:'TAC',         real:getMes('tac'),   meta:pn('tac_meta'),   fmt_:v=>`R$ ${fmt(v)}` },
     { lbl:'Giro',        real:getMes('giro'),  meta:pn('giro_meta'),  fmt_:v=>`${Math.round(v)}` },
     { lbl:'Contas',      real:pn('contas_amarela_acc')+pn('contas_amarela_dia')+pn('contas_verde_acc')+pn('contas_verde_dia')+pn('contas_outros_acc')+pn('contas_outros_dia'), meta:pn('contas_meta'), fmt_:v=>`${Math.round(v)}` },
-    { lbl:'Seguro',      real:getSeguroList().reduce((s,v)=>s+pnRaw(v.valor),0), meta:pn('seguro_meta'), fmt_:v=>`R$ ${fmt(v)}` },
+    { lbl:'Seguro',      real:calcSeguro().final, meta:pn('seguro_meta'), fmt_:v=>`R$ ${fmt(v)}` },
     { lbl:'Viabilizados',real:getViabList().filter(x=>x.tipo==='prod').length, meta:pn('viab_meta'), fmt_:v=>`${v} prod` },
     { lbl:'Safrapay',    real:getSafrapayList().filter(x=>x.tipo==='prod').reduce((s,v)=>s+pnRaw(v.vop),0), meta:pn('safrapay_vop_meta'), fmt_:v=>`R$ ${fmt(v)}` },
     { lbl:'Crédito BS',  real:getCreditoList().filter(x=>x.tipo==='prod').reduce((s,v)=>s+pnRaw(v.valor),0), meta:pn('credito_meta'), fmt_:v=>`R$ ${fmt(v)}` },
@@ -2754,11 +3165,22 @@ function renderHoje(){
       const pct = m.meta>0 ? Math.min((m.real/m.meta)*100,100) : 0;
       const cor = pct>=100?'var(--green)':pct>=70?'var(--orange)':'var(--red)';
       const sinal = pct>=100?'✅':pct>=70?'🟡':'🔴';
-      h += `<div class="hoje-diag-row">
-        <span style="font-size:12px;margin-right:4px">${sinal}</span>
-        <span class="hoje-diag-lbl">${m.lbl}</span>
-        <div class="hoje-diag-bar"><div class="hoje-diag-fill" style="width:${pct}%;background:${cor}"></div></div>
-        <span class="hoje-diag-pct" style="color:${cor}">${m.meta>0?pct.toFixed(0)+'%':m.fmt_(m.real)}</span>
+      h += `<div class="hoje-diag-row" style="flex-direction:column;align-items:flex-start;padding:8px 14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:4px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:12px">${sinal}</span>
+            <span class="hoje-diag-lbl">${m.lbl}</span>
+          </div>
+          <div style="text-align:right">
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--accent)">${m.fmt_(m.real)}</span>
+            ${m.meta>0?`<span style="font-size:10px;color:var(--text3);margin-left:4px">/ ${m.fmt_(m.meta)}</span>`:''}
+          </div>
+        </div>
+        ${m.meta>0?`<div style="width:100%;height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${cor};border-radius:2px"></div>
+        </div>
+        <div style="font-size:9px;color:${cor};font-weight:700;margin-top:2px">${pct.toFixed(0)}%${pct<100?` · falta ${m.fmt_(m.meta-m.real)}`:''}
+        </div>`:''}
       </div>`;
     });
     h += `</div>`;
@@ -2774,7 +3196,7 @@ function renderHoje(){
       { lbl:'Consórcio',    real:getMes('consorcio'), meta:pn('consorcio_meta'), fmt_:v=>`R$ ${fmt(v)}` },
       { lbl:'Collarkin',    real:getMes('collarkin'), meta:pn('collarkin_meta'), fmt_:v=>`R$ ${fmt(v)}` },
       { lbl:'Captação',     real:getMes('captacao'),  meta:pn('captacao_meta'),  fmt_:v=>`R$ ${fmt(v)}` },
-      { lbl:'Seguro',       real:getSeguroList().reduce((s,v)=>s+pnRaw(v.valor),0), meta:pn('seguro_meta'), fmt_:v=>`R$ ${fmt(v)}` },
+      { lbl:'Seguro',       real:calcSeguro().final, meta:pn('seguro_meta'), fmt_:v=>`R$ ${fmt(v)}` },
       { lbl:'Viabilizados', real:getViabList().filter(x=>x.tipo==='prod').length, meta:pn('viab_meta'), fmt_:v=>`${v} prod` },
       { lbl:'Safrapay VOP', real:getSafrapayList().filter(x=>x.tipo==='prod').reduce((s,v)=>s+pnRaw(v.vop),0), meta:pn('safrapay_vop_meta'), fmt_:v=>`R$ ${fmt(v)}` },
       { lbl:'Crédito BS',   real:getCreditoList().filter(x=>x.tipo==='prod').reduce((s,v)=>s+pnRaw(v.valor),0), meta:pn('credito_meta'), fmt_:v=>`R$ ${fmt(v)}` },
@@ -2898,7 +3320,7 @@ function buildSecContext(){
   lines.push(`TAC: ${tacMes?'R$ '+fmt(tacMes):'não preenchido'}${tacMeta?' (meta: R$ '+fmt(tacMeta)+', '+(tacMes/tacMeta*100||0).toFixed(0)+'%)':''}`);
   const giroMes=getMes('giro'), giroMeta=pn('giro_meta');
   lines.push(`Giro: ${giroMes||'não preenchido'}${giroMeta?' (meta: '+giroMeta+')':''}`);
-  let ativT=0; AT_PROD.forEach(p=>ativT+=pnRaw(g(`at_${slug(p)}_atu`))-pnRaw(g(`at_${slug(p)}_ant`)));
+  let ativT=0; ativT = pnRaw(g('at_bs_prod')) + pnRaw(g('at_arv_prod'));
   lines.push(`Ativos (incremento): ${ativT?'R$ '+fmt(ativT):'não preenchido'}`);
   const am=pn('contas_amarela_acc')+pn('contas_amarela_dia');
   const ve=pn('contas_verde_acc')+pn('contas_verde_dia');
@@ -3186,6 +3608,11 @@ function fbSync(){
       contas_outros_total:  pn('contas_outros_acc') +pn('contas_outros_dia'),
       seguro_total:         segTotal,
       seguro_extra:         g('seguro_extra')||'{}',
+      tac_list:             g('tac_list')||'[]',
+      at_bs_prod:           g('at_bs_prod')||'0',
+      at_arv_prod:          g('at_arv_prod')||'0',
+      at_bs_liq:            g('at_bs_liq')||'0',
+      at_arv_liq:           g('at_arv_liq')||'0',
     };
     db.ref(GERENTE_PATH).set(payload).catch(e=>console.warn('Sync error:',e));
   },800);
@@ -3206,6 +3633,11 @@ if(db){
   db.ref(ALL_PATH).on('value', snap=>{
     const val=snap.val();
     if(val) MGR_IDS.forEach(gid=>{ if(val[gid]&&gid!==GERENTE_ID) RANK_DATA[gid]=val[gid]; });
+    // Capturar seguro_obs_gg do próprio gerente no Firebase
+    if(val&&val[GERENTE_ID]?.seguro_obs_gg !== undefined){
+      sv('seguro_obs_gg', val[GERENTE_ID].seguro_obs_gg||'');
+      bSeguro();
+    }
     updateStreak(); renderDash(); checkMedals(); checkPodium();
   });
 
