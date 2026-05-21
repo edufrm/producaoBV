@@ -27,7 +27,32 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .brand-sub{font-size:10px;color:rgba(255,255,255,.45);letter-spacing:2px;text-transform:uppercase;margin-top:2px}
 .date-pill{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold-light);background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);padding:3px 9px;border-radius:20px;white-space:nowrap}
 .sync-pill{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;white-space:nowrap;background:rgba(196,107,0,.25);color:#ffc97a;border:1px solid rgba(196,107,0,.3);transition:all .3s}
-.sync-pill.on{background:rgba(30,107,62,.3);color:#7de0a4;border-color:rgba(30,107,62,.35)}
+.modal-overlay.open { display:flex !important; }
+#audit_trigger:hover { opacity:1 !important; }
+
+/* ── SECRETÁRIA GG ── */
+.sec-chat{display:flex;flex-direction:column;height:calc(100vh - 160px);min-height:400px}
+.chat-messages{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.chat-msg{max-width:88%;display:flex;flex-direction:column;gap:3px}
+.chat-msg.user{align-self:flex-end}
+.chat-msg.ai{align-self:flex-start}
+.chat-bubble{padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.5}
+.chat-bubble.user{background:var(--accent);color:#fff;border-radius:16px 16px 4px 16px}
+.chat-bubble.ai{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:16px 16px 16px 4px;box-shadow:var(--shadow);white-space:pre-wrap}
+.chat-bubble.ai.loading{color:var(--text3);font-style:italic}
+.chat-ts{font-size:9px;color:var(--text3);padding:0 4px}
+.chat-input-bar{padding:10px 14px 14px;background:var(--surface);border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end}
+.chat-input{flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:20px;font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:var(--text);background:var(--surface2);resize:none;max-height:100px;line-height:1.4;outline:none}
+.chat-input:focus{border-color:var(--accent);background:#fff}
+.chat-btn-mic{width:38px;height:38px;border-radius:50%;border:none;background:var(--red-bg);color:var(--red);font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.chat-btn-mic.rec{background:var(--red);color:#fff;animation:pulse-rec 1s ease-in-out infinite}
+@keyframes pulse-rec{0%,100%{opacity:1}50%{opacity:0.6}}
+.chat-btn-send{width:38px;height:38px;border-radius:50%;border:none;background:var(--accent);color:#fff;font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.chat-header-bar{padding:12px 14px;background:linear-gradient(135deg,var(--accent),#2d5c42);display:flex;align-items:center;gap:10px;border-radius:var(--radius) var(--radius) 0 0}
+.chat-avatar{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.agenda-item{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin:4px 0;font-size:12px}
+.agenda-time{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold);font-weight:700}
+.lembrete-item{background:var(--orange-bg);border:1px solid rgba(196,107,0,0.2);border-radius:8px;padding:8px 12px;margin:4px 0;font-size:12px;color:var(--orange)}
 
 /* TABS */
 .tabs-wrapper{position:relative}
@@ -235,6 +260,17 @@ input.meta-inp:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,
 <div class="toast" id="toast"></div>
 <div id="app"></div>
 
+<!-- MODAL AUDITORIA -->
+<div class="modal-overlay" id="modalAuditoria" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:500;align-items:flex-end" onclick="if(event.target===this)this.classList.remove('open')">
+  <div style="background:var(--surface);border-radius:16px 16px 0 0;width:100%;max-height:80vh;overflow:hidden;display:flex;flex-direction:column">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--accent)">
+      <span style="font-family:'Syne',sans-serif;font-size:14px;font-weight:800;color:#fff">🔍 Log de Auditoria</span>
+      <button onclick="el('modalAuditoria').classList.remove('open')" style="background:none;border:none;color:rgba(255,255,255,0.6);font-size:18px;cursor:pointer">✕</button>
+    </div>
+    <div id="auditBody" style="overflow-y:auto;flex:1;padding-bottom:20px"></div>
+  </div>
+</div>
+
 <div class="bottom-bar">
   <button class="btn btn-excel" onclick="exportExcel()">📊 Excel</button>
   <button class="btn btn-s" id="btnMeta" style="display:none" onclick="saveMetas()">💾 Salvar Metas</button>
@@ -304,6 +340,63 @@ function businessDaysInMonth(year,month){
   return days;
 }
 
+
+// ══════════════════════════════════════════════════
+// API KEY ANTHROPIC
+// ══════════════════════════════════════════════════
+const API_KEY_STORAGE = 'anthropic_api_key_v1';
+
+function getApiKey(){ return localStorage.getItem(API_KEY_STORAGE)||''; }
+function saveApiKey(k){ localStorage.setItem(API_KEY_STORAGE, k.trim()); }
+
+function checkApiKey(){
+  const key = getApiKey();
+  if(!key){
+    const k = prompt('Para usar a SecretárIA, informe sua API Key da Anthropic:\n(Será salva apenas no seu dispositivo, nunca compartilhada)\n\nObtê-la em: console.anthropic.com');
+    if(k && k.trim().startsWith('sk-ant-')){
+      saveApiKey(k);
+      return k.trim();
+    } else if(k) {
+      alert('Chave inválida. Deve começar com sk-ant-');
+      return null;
+    }
+    return null;
+  }
+  return key;
+}
+
+async function callAnthropicAPI(system, messages, maxTokens=1000){
+  const key = checkApiKey();
+  if(!key) throw new Error('API Key não configurada. Recarregue e tente novamente.');
+  
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: maxTokens,
+      system: system,
+      messages: messages
+    })
+  });
+  
+  if(!resp.ok){
+    const err = await resp.json().catch(()=>({}));
+    if(resp.status === 401){
+      localStorage.removeItem(API_KEY_STORAGE);
+      throw new Error('API Key inválida ou expirada. Recarregue para inserir novamente.');
+    }
+    throw new Error(err.error?.message || `Erro ${resp.status}`);
+  }
+  
+  return resp.json();
+}
+
 const MGR = ['bruno','camyla','julio','kaio','roberta','sergio','thais','wheldson'];
 const NAMES = {bruno:'Bruno',camyla:'Camyla',julio:'Júlio',kaio:'Kaio',
                roberta:'Roberta',sergio:'Sérgio',thais:'Thaís',wheldson:'Wheldson'};
@@ -312,21 +405,9 @@ const SIMPLES = [{id:'contas',t:'CONTAS'},{id:'consorcio',t:'CONSÓRCIO'},
                  {id:'collarkin',t:'COLLARKIN'},{id:'captacao',t:'CAPTAÇÃO'},{id:'seguro',t:'SEGURO'}];
 
 const TABS_CFG = [
-  {id:'dash',    l:'📊 Dashboard'},
-  {id:'tac',     l:'TAC'},
-  {id:'chemp',   l:'CHEMP'},
-  {id:'giro',    l:'Giro'},
-  {id:'ativos',  l:'Ativos'},
-  {id:'contas',  l:'Contas'},
-  {id:'consorcio',l:'Consórcio'},
-  {id:'collarkin',l:'Collarkin'},
-  {id:'captacao', l:'Captação'},
-  {id:'seguro',   l:'Seguro'},
-  {id:'viab',     l:'Viabiliz.'},
-  {id:'safrapay', l:'Safrapay'},
-  {id:'credito',  l:'Crédito'},
-  {id:'metas',    l:'🎯 Metas'},
-  {id:'diario',   l:'📝 Diário'},
+  {id:'dash',       l:'📊 Dashboard'},
+  {id:'metas',      l:'🎯 Metas'},
+  {id:'secretaria', l:'🤖 SecretárIA'},
 ];
 
 // WA include defaults
@@ -459,6 +540,32 @@ let DASH_AI_LOADING = false;
 
 const PRODUTOS_CFG = [
   { id:'tac',       lbl:'TAC',              fmt_: fmtR, valFn: gid=>getMes(gid,'tac'), metaKey:'tac' },
+  { id:'chemp',     lbl:'CHEMP',            fmt_: fmtR, valFn: gid=>pnd(gid,'chemp_dia'), metaKey:'chemp',
+    customCard: (gid)=>{
+      const ant   = pnd(gid,'chemp_ant');
+      const dia   = pnd(gid,'chemp_dia');
+      const delta = dia - ant;
+      const dColor = delta>=0?'var(--green)':'var(--red)';
+      const dSinal = delta>=0?'+':'';
+      return `<div style="padding:12px 14px;border-bottom:1px solid var(--border)">
+        <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px">💼 CHEMP</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+          <div style="text-align:center;background:var(--surface2);padding:8px;border-radius:8px">
+            <div style="font-size:9px;color:var(--text3);margin-bottom:3px">Saldo Ant.</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700">${fmtR(ant)||'—'}</div>
+          </div>
+          <div style="text-align:center;background:var(--surface2);padding:8px;border-radius:8px">
+            <div style="font-size:9px;color:var(--text3);margin-bottom:3px">Saldo Atual</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:var(--accent)">${fmtR(dia)||'—'}</div>
+          </div>
+          <div style="text-align:center;background:var(--surface2);padding:8px;border-radius:8px">
+            <div style="font-size:9px;color:var(--text3);margin-bottom:3px">Δ Incremento</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:700;color:${dColor}">${ant||dia?`${dSinal}${fmtR(delta)}`:'—'}</div>
+          </div>
+        </div>
+      </div>`;
+    }
+  },
   { id:'giro',      lbl:'Giro de Carteira', fmt_: v=>`${Math.round(v)||0}`, valFn: gid=>getMes(gid,'giro'), metaKey:'giro' },
   { id:'ativos',    lbl:'Ativos',           fmt_: fmtR, valFn: gid=>{ let t=0; AT.forEach(p=>t+=getMes(gid,`at_${slug(p)}`)); return t; }, metaKey:'ativos' },
   { id:'contas',    lbl:'Contas',           fmt_: v=>`${Math.round(v)||0}`, valFn: gid=>pnd(gid,'contas_amarela_acc')+pnd(gid,'contas_verde_acc')+pnd(gid,'contas_outros_acc'), metaKey:'contas' },
@@ -517,7 +624,7 @@ function getProjecao(real, meta){
 function rDash(){
   let h = `<div style="padding:0 14px">`;
 
-  // ── FILTROS ──
+  // ── FILTROS com auditoria discreta ──
   h += buildDashFilters();
 
   if(DASH_MODE === 'gerente'){
@@ -533,10 +640,18 @@ function rDash(){
 function buildDashFilters(){
   const modeGer = DASH_MODE==='gerente';
   let h = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;box-shadow:var(--shadow)">
-    <!-- Toggle de modo -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)">
+    <!-- Toggle de modo + auditoria discreta -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border);position:relative">
       <button onclick="setDashMode('gerente')" style="padding:10px;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:all .2s;background:${modeGer?'var(--accent)':'var(--surface)'};color:${modeGer?'#fff':'var(--text2)'}" title="Visão por gerente">👤 Por Gerente</button>
       <button onclick="setDashMode('ranking')" style="padding:10px;font-size:12px;font-weight:700;border:none;cursor:pointer;transition:all .2s;background:${!modeGer?'var(--accent)':'var(--surface)'};color:${!modeGer?'#fff':'var(--text2)'}" title="Visão de ranking por produto">🏆 Ranking</button>
+      <!-- Auditoria discreta: hover no desktop, long press no mobile -->
+      <div id="audit_trigger" style="position:absolute;bottom:2px;right:6px;opacity:0;transition:opacity 0.3s;cursor:pointer;font-size:9px;color:var(--text3)"
+        onmouseenter="this.style.opacity='1'"
+        onmouseleave="this.style.opacity='0'"
+        ontouchstart="startAuditLongPress(event)"
+        ontouchend="cancelAuditLongPress()"
+        onclick="abrirAuditoria()"
+        title="Log de auditoria">🔍</div>
     </div>`;
 
   if(DASH_MODE === 'gerente'){
@@ -619,6 +734,9 @@ function buildDashGerente(){
 
     // Cards de produto com barra horizontal
     prods.forEach(p=>{
+      // CHEMP tem card customizado
+      if(p.customCard){ h += p.customCard(gid); return; }
+
       const real = p.valFn(gid);
       const meta = getMeta(gid, p.id);
       const pct  = getPct(real, meta);
@@ -659,13 +777,7 @@ function buildDashGerente(){
       h += buildBarChart(gid, prods);
     }
 
-    // Botão de análise IA
-    h += `<div style="padding:10px 14px">
-      <button onclick="gerarAnaliseIA('${gid}')" style="width:100%;padding:9px;background:var(--purple-bg);color:var(--purple);border:1px solid rgba(91,45,142,0.2);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer" title="Gerar análise com IA">🤖 Gerar Análise com IA</button>
-      <div id="ia_${gid}" style="margin-top:8px;font-size:12px;line-height:1.6;color:var(--text2)"></div>
-    </div>
-
-    </div>`;
+    h += `</div>`; // fecha card do gerente
   });
 
   return h;
@@ -820,16 +932,7 @@ Escreva uma análise executiva em português, com:
 Seja direto, específico e use os números. Máximo 150 palavras.`;
 
   try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 400,
-        messages: [{ role:'user', content: prompt }]
-      })
-    });
-    const data = await resp.json();
+    const data = await callAnthropicAPI('', [{ role:'user', content: prompt }], 400);
     const texto = data.content?.[0]?.text || 'Não foi possível gerar análise.';
     div.innerHTML = `<div style="background:var(--purple-bg);border:1px solid rgba(91,45,142,0.15);border-radius:8px;padding:12px;font-size:12px;line-height:1.6;color:var(--text);white-space:pre-wrap">${texto}</div>`;
   } catch(e){
@@ -1325,384 +1428,341 @@ function buildExcel(){
 // RENDER ALL
 // ══════════════════════════════════════════════════
 function renderAll(){
-  rDash(); rTAC(); rCHEMP(); rGiro(); rAtivos();
-  SIMPLES.forEach(s=>rSimples(s));
-  rViab(); rSafrapay(); rCredito(); rMetas(); rDiario();
+  rDash(); rMetas(); rSecretariaGG();
 }
 
 // ══════════════════════════════════════════════════
-// DIÁRIO EXECUTIVO
+// SECRETÁRIA INTELIGENTE GG
 // ══════════════════════════════════════════════════
-const DIARIO_KEY    = 'gg_diario_v1';
-const RESUMOS_KEY   = 'gg_resumos_v1';
-let   MIC_ACTIVE    = false;
-let   MIC_RECOGNIZER = null;
+const GG_SEC_KEY    = 'gg_sec_hist_v1';
+const GG_AGENDA_KEY = 'gg_agenda_v1';
+const GG_LEMB_KEY   = 'gg_lemb_v1';
+const GG_NOTAS_KEY  = 'gg_notas_v1';  // mantém diário como notas
+let   GG_MIC_ON     = false;
+let   GG_MIC_REC    = null;
+let   GG_SEC_LOADING = false;
 
-function getDiario(){ try{ return JSON.parse(localStorage.getItem(DIARIO_KEY)||'{}'); }catch(e){ return {}; } }
-function saveDiario(d){ try{ localStorage.setItem(DIARIO_KEY, JSON.stringify(d)); }catch(e){} }
-function getResumos(){ try{ return JSON.parse(localStorage.getItem(RESUMOS_KEY)||'[]'); }catch(e){ return []; } }
-function saveResumos(r){ try{ localStorage.setItem(RESUMOS_KEY, JSON.stringify(r)); }catch(e){} }
+function getGGHist(){  try{ return JSON.parse(localStorage.getItem(GG_SEC_KEY)||'[]'); }catch(e){ return []; } }
+function saveGGHist(h){ try{ localStorage.setItem(GG_SEC_KEY, JSON.stringify(h.slice(-100))); }catch(e){} }
+function getGGAgenda(){ try{ return JSON.parse(localStorage.getItem(GG_AGENDA_KEY)||'[]'); }catch(e){ return []; } }
+function saveGGAgenda(a){ try{ localStorage.setItem(GG_AGENDA_KEY, JSON.stringify(a)); }catch(e){} }
+function getGGLemb(){  try{ return JSON.parse(localStorage.getItem(GG_LEMB_KEY)||'[]'); }catch(e){ return []; } }
+function saveGGLemb(l){ try{ localStorage.setItem(GG_LEMB_KEY, JSON.stringify(l)); }catch(e){} }
+function getGGNotas(){ try{ return JSON.parse(localStorage.getItem(GG_NOTAS_KEY)||'{}'); }catch(e){ return {}; } }
+function saveGGNotas(n){ try{ localStorage.setItem(GG_NOTAS_KEY, JSON.stringify(n)); }catch(e){} }
 
 function toDateStrGG(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-function fmtDiarioDate(ds){
-  const d = new Date(ds+'T00:00:00');
-  const dias = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
-  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  return `${dias[d.getDay()]}, ${d.getDate()} de ${meses[d.getMonth()]}`;
-}
+function fmtDateGG(ds){ const d=new Date(ds+'T00:00:00'); const dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']; const ms=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']; return `${dias[d.getDay()]}, ${d.getDate()} ${ms[d.getMonth()]}`; }
+function fmtGGTime(iso){ const d=new Date(iso); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
 
 function getWeekDates(){
-  // Retorna as datas da semana atual (seg a hoje)
-  const d = new Date(today);
-  const dow = d.getDay(); // 0=dom
-  const mondayOffset = dow === 0 ? -6 : 1 - dow;
-  const monday = new Date(d);
-  monday.setDate(d.getDate() + mondayOffset);
-  const dates = [];
-  for(let i=0; i<5; i++){
-    const dt = new Date(monday);
-    dt.setDate(monday.getDate() + i);
-    if(dt <= today) dates.push(toDateStrGG(dt));
-  }
+  const d=new Date(today), dow=d.getDay();
+  const off=dow===0?-6:1-dow;
+  const mon=new Date(d); mon.setDate(d.getDate()+off);
+  const dates=[];
+  for(let i=0;i<5;i++){ const dt=new Date(mon); dt.setDate(mon.getDate()+i); if(dt<=today) dates.push(toDateStrGG(dt)); }
   return dates;
 }
 
-function getDadosSemanais(){
-  // Consolida dados de produção da semana atual
-  const lines = [];
-  const weekDates = getWeekDates();
-  const startDate = weekDates[0];
-  const endDate   = weekDates[weekDates.length-1];
-
-  lines.push(`Período: ${fmtDiarioDate(startDate)} a ${fmtDiarioDate(endDate)}`);
-  lines.push(`Dias úteis analisados: ${weekDates.length}`);
+// Contexto completo da agência para a IA
+function buildGGContext(){
+  const du=getDiasUteisPassados(), dt=getTotalDiasUteis();
+  const lines=[];
+  lines.push(`GG: Eduardo | Agência Boa Viagem (14400) | Mês: ${MONTH_KEY} | Hoje: ${toDateStrGG(today)} (${du}/${dt} dias úteis)`);
   lines.push('');
-  lines.push('=== PRODUÇÃO DA SEMANA ===');
-
-  // TAC
-  const tacTotal = MGR.reduce((s,gid)=>s+getMes(gid,'tac'),0);
-  const tacMeta  = MGR.reduce((s,gid)=>s+(METAS[gid]?.tac||0),0);
-  lines.push(`TAC: ${fmtR(tacTotal)} (meta agência: ${fmtR(tacMeta)})`);
-
-  // Por gerente — TAC
+  lines.push('=== EQUIPE E STATUS ==');
   MGR.forEach(gid=>{
-    const real = getMes(gid,'tac');
-    const meta = METAS[gid]?.tac||0;
-    const pct  = meta>0?(real/meta*100).toFixed(0)+'%':'sem meta';
-    lines.push(`  ${NAMES[gid]}: ${fmtR(real)} — ${pct}`);
+    const st=gerStatus(gid);
+    const tac=getMes(gid,'tac'), tacM=METAS[gid]?.tac||0;
+    const pct=tacM>0?(tac/tacM*100).toFixed(0)+'%':'sem meta';
+    lines.push(`${NAMES[gid]}: TAC R$ ${fmt(tac)} (${pct}) | Status: ${st.lbl}`);
   });
   lines.push('');
-
-  // Outros produtos resumidos
-  const giroT = MGR.reduce((s,gid)=>s+getMes(gid,'giro'),0);
-  lines.push(`Giro de Carteira: ${Math.round(giroT)} operações`);
-
-  const viabT = MGR.reduce((s,gid)=>s+getProds(gid,'viab_list').prods.length,0);
+  lines.push('=== CONSOLIDADO DO MÊS ==');
+  let tacT=0; MGR.forEach(gid=>tacT+=getMes(gid,'tac'));
+  lines.push(`TAC Total: R$ ${fmt(tacT)}`);
+  let giroT=0; MGR.forEach(gid=>giroT+=getMes(gid,'giro'));
+  lines.push(`Giro Total: ${Math.round(giroT)}`);
+  let viabT=0; MGR.forEach(gid=>viabT+=getProds(gid,'viab_list').prods.length);
   lines.push(`Viabilizados: ${viabT} produções`);
-
-  const spVop = MGR.reduce((s,gid)=>s+getSafrapayVop(gid),0);
-  lines.push(`Safrapay VOP: ${fmtR(spVop)}`);
-
-  const crVal = MGR.reduce((s,gid)=>s+getCreditoValor(gid),0);
-  lines.push(`Crédito BS: ${fmtR(crVal)}`);
-
-  // Status de disciplina
-  lines.push('');
-  lines.push('=== DISCIPLINA ===');
-  const offline = MGR.filter(gid=>gerStatus(gid).cls==='badge-off').map(gid=>NAMES[gid]);
-  if(offline.length) lines.push(`Offline: ${offline.join(', ')}`);
-  else lines.push('Todos atualizando regularmente ✅');
-
+  let spVop=0; MGR.forEach(gid=>spVop+=getSafrapayVop(gid));
+  lines.push(`Safrapay VOP: R$ ${fmt(spVop)}`);
+  let crVal=0; MGR.forEach(gid=>crVal+=getCreditoValor(gid));
+  lines.push(`Crédito BS: R$ ${fmt(crVal)}`);
+  // Notas do diário desta semana
+  const notas=getGGNotas(), week=getWeekDates();
+  const notasSemana=week.filter(d=>notas[d]).map(d=>`${fmtDateGG(d)}: ${notas[d]}`);
+  if(notasSemana.length){ lines.push(''); lines.push('=== NOTAS DA SEMANA =='); notasSemana.forEach(n=>lines.push(n)); }
+  // Agenda
+  const ag=getGGAgenda().filter(a=>a.data>=toDateStrGG(today)).slice(0,5);
+  if(ag.length){ lines.push(''); lines.push('=== PRÓXIMOS COMPROMISSOS =='); ag.forEach(a=>lines.push(`${a.data} ${a.hora||''} — ${a.titulo}`)); }
+  const lb=getGGLemb().filter(l=>!l.feito).slice(0,5);
+  if(lb.length){ lines.push(''); lines.push('=== LEMBRETES =='); lb.forEach(l=>lines.push(`• ${l.texto}`)); }
   return lines.join('\n');
 }
 
-function rDiario(){
-  const diario = getDiario();
+function buildGGSystemPrompt(){
+  const ctx = buildGGContext();
+  const jsonNota    = '```json\n{"action":"nota","data":"YYYY-MM-DD","texto":""}```';
+  const jsonAgendar = '```json\n{"action":"agendar","titulo":"","data":"YYYY-MM-DD","hora":"HH:MM","descricao":""}```';
+  const jsonLemb    = '```json\n{"action":"lembrete","texto":""}```';
+  return `Você é a SecretárIA Inteligente do Eduardo, Gerente Geral da Agência Boa Viagem do Banco Safra (Ag. 14400).
+
+Você tem visão completa da equipe (8 gerentes) e ajuda o GG a gerir melhor a agência.
+
+CAPACIDADES:
+1. DIÁRIO/NOTAS — registre as notas do GG. Retorne JSON: ${jsonNota}
+2. RESUMO DA SEMANA — gere e-mail executivo para a gestora combinando notas + dados reais. Tom: otimista com pontos de atenção, por tópicos de produto.
+3. AGENDA — agende compromissos. JSON: ${jsonAgendar}
+4. LEMBRETE — salve lembretes. JSON: ${jsonLemb}
+5. ANÁLISE DA EQUIPE — analise performance individual e coletiva, identifique riscos, sugira intervenções.
+6. BUSCA CNPJ/MERCADO — pesquise empresas, ramos de atividade, tendências de mercado.
+7. DICAS DE GESTÃO — melhores práticas para liderar equipes comerciais bancárias.
+8. AUDITORIA — quando solicitado, analise padrões nos logs de auditoria dos gerentes.
+
+REGRAS:
+- Seja estratégica e executiva. Eduardo é o GG, não o gerente.
+- Use dados reais da equipe nas análises.
+- Para e-mail da semana: por tópicos de produto, otimista mas com pontos de atenção reais.
+- JSON em bloco separado do texto.
+
+DADOS ATUAIS DA AGÊNCIA:
+${ctx}`;
+}
+
+function rSecretariaGG(){ renderGGSec(); }
+
+function renderGGSec(){
+  const hist   = getGGHist();
+  const agenda = getGGAgenda().filter(a=>a.data>=toDateStrGG(today)).sort((a,b)=>a.data.localeCompare(b.data));
+  const lembs  = getGGLemb().filter(l=>!l.feito);
+  const notas  = getGGNotas();
   const todayStr = toDateStrGG(today);
-  const weekDates = getWeekDates();
-  const resumos = getResumos();
 
-  let h = `<div style="padding:0 14px">`;
-
-  // ── Card de entrada do dia ──
-  const entradaHoje = diario[todayStr] || '';
-  h += `<div class="diario-day">
-    <div class="diario-day-header">
-      <span class="diario-day-date">📝 ${fmtDiarioDate(todayStr)}</span>
-      <span class="diario-day-badge">Hoje</span>
-    </div>
-    <div class="diario-input-area">
-      <textarea class="diario-textarea" id="diario_hoje" placeholder="O que aconteceu hoje? Destaque produções, dificuldades, conversas importantes, reuniões, pontos de atenção...
-
-Pode falar também — clique no 🎤 microfone.">${entradaHoje}</textarea>
-      <div class="diario-btns">
-        <button class="diario-btn-mic" id="btn_mic" onclick="toggleMic()" title="Falar por microfone (Speech-to-Text)">🎤 Falar</button>
-        <button class="diario-btn-save" onclick="salvarEntradaDiario()" title="Salvar entrada de hoje">💾 Salvar entrada</button>
+  let h=`<div class="sec-chat">
+    <div class="chat-header-bar">
+      <div class="chat-avatar">🤖</div>
+      <div style="flex:1">
+        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:#fff">SecretárIA Inteligente — GG</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.5)">Banco Safra · Ag. Boa Viagem</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        ${agenda.length?`<div style="background:rgba(255,255,255,0.15);border-radius:12px;padding:3px 8px;font-size:10px;color:#fff;cursor:pointer" onclick="toggleGGPanel('gg_agenda_panel')" title="Agenda">📅 ${agenda.length}</div>`:''}
+        ${lembs.length?`<div style="background:rgba(196,107,0,0.4);border-radius:12px;padding:3px 8px;font-size:10px;color:#ffc97a;cursor:pointer" onclick="toggleGGPanel('gg_lemb_panel')" title="Lembretes">⏰ ${lembs.length}</div>`:''}
+        <div style="background:rgba(255,255,255,0.1);border-radius:12px;padding:3px 8px;font-size:10px;color:rgba(255,255,255,0.5);cursor:pointer" onclick="toggleGGPanel('gg_notas_panel')" title="Notas da semana">📋 Notas</div>
+        <div style="background:rgba(255,255,255,0.1);border-radius:12px;padding:3px 8px;font-size:10px;color:rgba(255,255,255,0.5);cursor:pointer" onclick="limparGGHist()" title="Limpar histórico">🗑️</div>
       </div>
     </div>
-  </div>`;
 
-  // ── Botão de gerar resumo ──
-  const isQuintaOuSexta = today.getDay()===4 || today.getDay()===5;
-  h += `<div style="background:${isQuintaOuSexta?'var(--green-bg)':'var(--surface2)'};border:1px solid ${isQuintaOuSexta?'rgba(30,107,62,0.2)':'var(--border)'};border-radius:var(--radius);padding:14px;margin-bottom:12px">
-    <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px">
-      ${isQuintaOuSexta?'✅ É quinta ou sexta — hora de gerar o resumo!':'📅 O resumo da semana fica disponível na quinta e sexta'}
+    <!-- Painel Agenda -->
+    <div id="gg_agenda_panel" style="display:none;background:var(--surface2);border-bottom:1px solid var(--border);padding:10px 14px;max-height:160px;overflow-y:auto">
+      <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">📅 Agenda</div>
+      ${agenda.length?agenda.map((a,i)=>`<div class="agenda-item" style="display:flex;justify-content:space-between;align-items:center"><div><div class="agenda-time">${a.data}${a.hora?' '+a.hora:''}</div><div style="font-size:12px;font-weight:600">${a.titulo}</div>${a.descricao?`<div style="font-size:11px;color:var(--text3)">${a.descricao}</div>`:''}</div><button onclick="removerGGAgenda(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px">✕</button></div>`).join(''): '<div style="font-size:12px;color:var(--text3)">Nenhum compromisso.</div>'}
     </div>
-    <button onclick="gerarResumoSemana()" style="width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer" title="Gerar e-mail da semana com IA">✉️ Gerar Resumo da Semana com IA</button>
+
+    <!-- Painel Lembretes -->
+    <div id="gg_lemb_panel" style="display:none;background:var(--orange-bg);border-bottom:1px solid rgba(196,107,0,0.2);padding:10px 14px;max-height:160px;overflow-y:auto">
+      <div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">⏰ Lembretes</div>
+      ${lembs.length?lembs.map((l,i)=>`<div class="lembrete-item" style="display:flex;justify-content:space-between;align-items:center"><span>${l.texto}</span><div style="display:flex;gap:6px"><button onclick="marcarFeitoGG(${i})" style="background:var(--green);color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer">✓</button><button onclick="removerGGLemb(${i})" style="background:none;border:none;color:var(--orange);cursor:pointer;font-size:16px">✕</button></div></div>`).join(''): '<div style="font-size:12px;color:var(--orange)">Sem lembretes.</div>'}
+    </div>
+
+    <!-- Painel Notas da Semana -->
+    <div id="gg_notas_panel" style="display:none;background:var(--surface2);border-bottom:1px solid var(--border);padding:10px 14px;max-height:200px;overflow-y:auto">
+      <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">📋 Notas da Semana</div>`;
+
+  // Campo de nota do dia
+  h+=`<div style="margin-bottom:10px">
+      <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Nota de hoje (${fmtDateGG(todayStr)})</div>
+      <div style="display:flex;gap:6px">
+        <textarea id="gg_nota_hoje" placeholder="O que aconteceu hoje…" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:12px;font-family:'IBM Plex Sans',sans-serif;resize:none;height:60px;background:var(--surface)">${notas[todayStr]||''}</textarea>
+        <button onclick="salvarNotaGG()" style="padding:6px 10px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:11px;cursor:pointer;height:60px;white-space:nowrap">💾<br>Salvar</button>
+      </div>
+    </div>`;
+
+  // Notas da semana
+  const week=getWeekDates().filter(d=>d!==todayStr&&notas[d]);
+  if(week.length){
+    week.reverse().forEach(ds=>{
+      h+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12px">
+        <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:4px">${fmtDateGG(ds)}</div>
+        <div style="color:var(--text);line-height:1.5">${notas[ds]}</div>
+      </div>`;
+    });
+  }
+
+  // Botão gerar resumo
+  const isQuintaOuSexta=today.getDay()===4||today.getDay()===5;
+  h+=`<button onclick="pedirResumoGG()" style="width:100%;padding:9px;background:${isQuintaOuSexta?'var(--accent)':'var(--surface)'};color:${isQuintaOuSexta?'#fff':'var(--text2)'};border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-top:4px">${isQuintaOuSexta?'✉️ Gerar Resumo da Semana (quinta/sexta) ▶':'📝 Pedir resumo da semana para a IA'}</button>`;
+  h+=`</div>
+
+    <!-- Mensagens do chat -->
+    <div class="chat-messages" id="gg_messages">`;
+
+  if(!hist.length){
+    h+=`<div class="chat-msg ai"><div class="chat-bubble ai">Sou sua secretárIA Inteligente. Em que posso te ajudar hoje? Quer saber o que posso fazer por você? Só me perguntar que te digo tudo que posso fazer. 😊</div><div class="chat-ts">${fmtGGTime(new Date().toISOString())}</div></div>`;
+  } else {
+    hist.forEach(m=>{
+      const display=m.role==='assistant'?m.content.replace(/\`\`\`json[\s\S]*?\`\`\`/g,'').trim():m.content;
+      if(!display) return;
+      h+=`<div class="chat-msg ${m.role}"><div class="chat-bubble ${m.role}">${display.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>${m.ts?`<div class="chat-ts">${fmtGGTime(m.ts)}</div>`:''}</div>`;
+    });
+  }
+
+  h+=`</div>
+    <div class="chat-input-bar">
+      <button class="chat-btn-mic" id="gg_mic_btn" onclick="toggleGGMic()" title="Falar por microfone">🎤</button>
+      <textarea class="chat-input" id="gg_input" placeholder="Digite ou fale sua mensagem…" rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarGGMsg();}"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
+      <button class="chat-btn-send" onclick="enviarGGMsg()" title="Enviar">➤</button>
+    </div>
   </div>`;
 
-  // ── Resultado do resumo ──
-  h += `<div id="resumo_resultado"></div>`;
+  el('sec-secretaria').innerHTML=h;
+  setTimeout(()=>{ const m=el('gg_messages'); if(m) m.scrollTop=m.scrollHeight; },100);
+}
 
-  // ── Entradas da semana ──
-  const entradasSemana = weekDates.filter(d=>d!==todayStr && diario[d]);
-  if(entradasSemana.length){
-    h += `<div class="diario-day" style="margin-bottom:12px">
-      <div class="diario-day-header">
-        <span class="diario-day-date">📅 Esta Semana</span>
-        <span class="diario-day-badge">${entradasSemana.length} dia(s)</span>
-      </div>`;
-    entradasSemana.reverse().forEach(ds=>{
-      h += `<div style="padding:10px 14px;border-bottom:1px solid var(--border)">
-        <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px">${fmtDiarioDate(ds)}</div>
-        <div style="font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap">${diario[ds]}</div>
-        <div style="display:flex;gap:6px;margin-top:8px">
-          <button onclick="editarEntrada('${ds}')" style="font-size:10px;padding:4px 10px;background:var(--blue-bg);color:var(--blue);border:1px solid rgba(26,74,122,0.2);border-radius:6px;cursor:pointer" title="Editar esta entrada">✏️ Editar</button>
-          <button onclick="removerEntrada('${ds}')" style="font-size:10px;padding:4px 10px;background:var(--red-bg);color:var(--red);border:1px solid rgba(192,57,43,0.2);border-radius:6px;cursor:pointer" title="Remover esta entrada">🗑️ Remover</button>
+function toggleGGPanel(id){ const p=el(id); if(p) p.style.display=p.style.display==='none'?'block':'none'; }
+function removerGGAgenda(i){ const a=getGGAgenda(); a.splice(i,1); saveGGAgenda(a); renderGGSec(); }
+function removerGGLemb(i){ const l=getGGLemb(); l.splice(i,1); saveGGLemb(l); renderGGSec(); }
+function marcarFeitoGG(i){ const l=getGGLemb(); l[i].feito=true; saveGGLemb(l); showToast('✅ Lembrete concluído!'); renderGGSec(); }
+function limparGGHist(){ if(!confirm('Limpar histórico da SecretárIA?')) return; localStorage.removeItem(GG_SEC_KEY); renderGGSec(); showToast('Histórico limpo ✓'); }
+
+function salvarNotaGG(){
+  const texto=el('gg_nota_hoje')?.value?.trim();
+  if(!texto){ showToast('⚠️ Digite algo antes de salvar'); return; }
+  const notas=getGGNotas();
+  notas[toDateStrGG(today)]=texto;
+  saveGGNotas(notas);
+  showToast('✅ Nota salva!');
+  renderGGSec();
+}
+
+function pedirResumoGG(){
+  const input=el('gg_input');
+  if(input) input.value='Gere o resumo da semana formatado como e-mail para minha gestora. Tom otimista com pontos de atenção reais, por tópico de produto.';
+  enviarGGMsg();
+}
+
+async function enviarGGMsg(){
+  if(GG_SEC_LOADING) return;
+  const input=el('gg_input');
+  const texto=input?.value?.trim();
+  if(!texto) return;
+  if(GG_MIC_ON) stopGGMic();
+  input.value=''; input.style.height='auto';
+
+  const hist=getGGHist();
+  hist.push({role:'user',content:texto,ts:new Date().toISOString()});
+  saveGGHist(hist);
+  renderGGSec();
+  GG_SEC_LOADING=true;
+
+  const msgs=el('gg_messages');
+  if(msgs){ const ld=document.createElement('div'); ld.className='chat-msg ai'; ld.id='gg_loading'; ld.innerHTML=`<div class="chat-bubble ai loading">⏳ Pensando…</div>`; msgs.appendChild(ld); msgs.scrollTop=msgs.scrollHeight; }
+
+  try{
+    const apiMsgs=hist.slice(-20).map(m=>({role:m.role==='user'?'user':'assistant',content:m.content}));
+    const data=await callAnthropicAPI(buildGGSystemPrompt(), apiMsgs, 1200);
+    const resposta=data.content?.[0]?.text||'Não consegui responder.';
+    await processGGActions(resposta);
+    const h2=getGGHist();
+    h2.push({role:'assistant',content:resposta,ts:new Date().toISOString()});
+    saveGGHist(h2);
+  }catch(e){
+    const h2=getGGHist();
+    h2.push({role:'assistant',content:`❌ Erro: ${e.message}`,ts:new Date().toISOString()});
+    saveGGHist(h2);
+  }
+
+  GG_SEC_LOADING=false;
+  renderGGSec();
+}
+
+async function processGGActions(texto){
+  const m=texto.match(/\`\`\`json\s*([\s\S]*?)\s*\`\`\`/);
+  if(!m) return;
+  try{
+    const a=JSON.parse(m[1]);
+    if(a.action==='agendar'){ const ag=getGGAgenda(); ag.push({titulo:a.titulo,data:a.data,hora:a.hora||'',descricao:a.descricao||''});  ag.sort((x,y)=>x.data.localeCompare(y.data)); saveGGAgenda(ag); showToast(`📅 Agendado: ${a.titulo}`); }
+    else if(a.action==='lembrete'){ const lb=getGGLemb(); lb.push({texto:a.texto,feito:false,ts:new Date().toISOString()}); saveGGLemb(lb); showToast('⏰ Lembrete salvo!'); }
+    else if(a.action==='nota'){ const notas=getGGNotas(); const ds=a.data||toDateStrGG(today); notas[ds]=(notas[ds]?notas[ds]+'\n':'')+a.texto; saveGGNotas(notas); showToast('📋 Nota salva!'); }
+  }catch(e){ console.warn('GG action error:',e); }
+}
+
+function toggleGGMic(){ GG_MIC_ON?stopGGMic():startGGMic(); }
+function startGGMic(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ showToast('⚠️ Use Chrome para reconhecimento de voz'); return; }
+  GG_MIC_REC=new SR(); GG_MIC_REC.lang='pt-BR'; GG_MIC_REC.continuous=true; GG_MIC_REC.interimResults=true;
+  const btn=el('gg_mic_btn'), input=el('gg_input');
+  let base=input?.value||'';
+  GG_MIC_REC.onstart=()=>{ GG_MIC_ON=true; if(btn){btn.classList.add('rec');btn.textContent='⏹';} showToast('🎤 Ouvindo…'); };
+  GG_MIC_REC.onresult=(e)=>{ let fin='',int=''; for(let i=e.resultIndex;i<e.results.length;i++){ if(e.results[i].isFinal)fin+=e.results[i][0].transcript+' '; else int+=e.results[i][0].transcript; } if(fin)base+=(base?' ':'')+fin.trim(); if(input)input.value=base+(int?' '+int:''); };
+  GG_MIC_REC.onerror=()=>stopGGMic();
+  GG_MIC_REC.onend=()=>{ if(GG_MIC_ON)GG_MIC_REC.start(); };
+  GG_MIC_REC.start();
+}
+function stopGGMic(){ GG_MIC_ON=false; if(GG_MIC_REC){GG_MIC_REC.stop();GG_MIC_REC=null;} const btn=el('gg_mic_btn'); if(btn){btn.classList.remove('rec');btn.textContent='🎤';} showToast('⏹ Gravação encerrada'); }
+
+// ══════════════════════════════════════════════════
+// AUDITORIA DISCRETA
+// ══════════════════════════════════════════════════
+let _auditLongPressTimer = null;
+
+function startAuditLongPress(e){
+  e.preventDefault();
+  _auditLongPressTimer = setTimeout(()=>{ abrirAuditoria(); }, 800);
+}
+function cancelAuditLongPress(){
+  clearTimeout(_auditLongPressTimer);
+}
+
+function abrirAuditoria(){
+  // Coletar logs de todos os gerentes via Firebase DATA
+  let todosLogs = [];
+  MGR.forEach(gid=>{
+    const raw = DATA[gid]?._audit_log;
+    if(raw){
+      try{
+        const logs = JSON.parse(raw);
+        logs.forEach(l=>{ l._gid = gid; l._nome = NAMES[gid]; todosLogs.push(l); });
+      }catch(e){}
+    }
+  });
+
+  // Ordenar por timestamp mais recente
+  todosLogs.sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+
+  const modal = el('modalAuditoria');
+  const body  = el('auditBody');
+
+  if(!todosLogs.length){
+    body.innerHTML = `<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px">Nenhum registro de auditoria ainda.</div>`;
+  } else {
+    const tipoLabel = { fechamento_auto:'📅 Fechamento auto', ajuste_substituicao:'✏️ Substituição', ajuste_adicao:'➕ Adição' };
+    body.innerHTML = todosLogs.slice(0,100).map(l=>{
+      const dt = new Date(l.ts);
+      const dtStr = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+      const cor = l.tipo==='fechamento_auto'?'var(--text3)':l.tipo==='ajuste_substituicao'?'var(--orange)':'var(--blue)';
+      return `<div style="padding:8px 14px;border-bottom:1px solid var(--border);font-size:11px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:2px">
+          <strong style="color:var(--accent)">${l._nome}</strong>
+          <span style="color:var(--text3);font-family:'IBM Plex Mono',monospace">${dtStr}</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="color:${cor};font-weight:600">${tipoLabel[l.tipo]||l.tipo}</span>
+          <span style="color:var(--text2)">${l.modulo} · ${l.data_alvo||'hoje'}</span>
+        </div>
+        <div style="color:var(--text3);margin-top:2px">
+          ${l.valor_anterior?`Antes: ${l.valor_anterior} →`:''}
+          <strong style="color:var(--text)">${l.valor_novo}</strong>
         </div>
       </div>`;
-    });
-    h += `</div>`;
+    }).join('');
   }
 
-  // ── Histórico de resumos anteriores ──
-  if(resumos.length){
-    h += `<div class="resumo-card">
-      <div class="resumo-header">
-        <span class="resumo-title">📚 Resumos Anteriores</span>
-        <span style="font-size:10px;color:rgba(255,255,255,0.5)">${resumos.length} resumo(s)</span>
-      </div>`;
-    resumos.slice().reverse().forEach((r,i)=>{
-      const idx = resumos.length - 1 - i;
-      h += `<div class="hist-resumo-item" onclick="verResumoAnterior(${idx})">
-        <div style="font-size:12px;font-weight:700;color:var(--accent)">${r.semana}</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:2px">Gerado em ${r.gerado} · clique para ver</div>
-      </div>`;
-    });
-    h += `</div>`;
-  }
-
-  h += `</div>`;
-  el('sec-diario').innerHTML = h;
-}
-
-function salvarEntradaDiario(){
-  const texto = el('diario_hoje')?.value?.trim();
-  if(!texto){ showToast('⚠️ Digite algo antes de salvar'); return; }
-  const diario = getDiario();
-  const todayStr = toDateStrGG(today);
-  diario[todayStr] = texto;
-  saveDiario(diario);
-  showToast('✅ Entrada salva!');
-  rDiario();
-}
-
-function editarEntrada(ds){
-  const diario = getDiario();
-  const texto = prompt(`Editar entrada de ${fmtDiarioDate(ds)}:`, diario[ds]||'');
-  if(texto===null) return;
-  diario[ds] = texto.trim();
-  saveDiario(diario);
-  showToast('✅ Entrada atualizada!');
-  rDiario();
-}
-
-function removerEntrada(ds){
-  if(!confirm(`Remover entrada de ${fmtDiarioDate(ds)}?`)) return;
-  const diario = getDiario();
-  delete diario[ds];
-  saveDiario(diario);
-  showToast('Removido ✓');
-  rDiario();
-}
-
-function verResumoAnterior(idx){
-  const resumos = getResumos();
-  const r = resumos[idx];
-  if(!r) return;
-  const div = el('resumo_resultado');
-  if(!div) return;
-  div.innerHTML = buildResumoCard(r.semana, r.texto, false);
-  div.scrollIntoView({behavior:'smooth'});
-}
-
-function buildResumoCard(semana, texto, isNovo){
-  return `<div class="resumo-card">
-    <div class="resumo-header">
-      <span class="resumo-title">✉️ Resumo — ${semana}</span>
-      ${isNovo?'<span style="font-size:10px;color:var(--gold-light);background:rgba(255,255,255,0.1);padding:2px 8px;border-radius:10px">Novo</span>':''}
-    </div>
-    <div class="resumo-body" id="resumo_texto_copy">${texto}</div>
-    <button class="resumo-copy-btn" onclick="copiarResumo()" title="Copiar texto para área de transferência">📋 Copiar texto para colar no e-mail</button>
-  </div>`;
-}
-
-function copiarResumo(){
-  const div = el('resumo_texto_copy');
-  if(!div) return;
-  navigator.clipboard.writeText(div.textContent).then(()=>{
-    showToast('📋 Copiado! Cole no seu e-mail corporativo.');
-  }).catch(()=>{
-    // Fallback
-    const sel = window.getSelection();
-    const range = document.createRange();
-    range.selectNodeContents(div);
-    sel.removeAllRanges();
-    sel.addRange(range);
-    document.execCommand('copy');
-    sel.removeAllRanges();
-    showToast('📋 Copiado!');
-  });
-}
-
-async function gerarResumoSemana(){
-  const div = el('resumo_resultado');
-  if(!div) return;
-
-  // Salvar entrada de hoje se tiver algo digitado
-  const textoHoje = el('diario_hoje')?.value?.trim();
-  if(textoHoje){
-    const diario = getDiario();
-    diario[toDateStrGG(today)] = textoHoje;
-    saveDiario(diario);
-  }
-
-  div.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;text-align:center;margin-bottom:12px">
-    <div style="font-size:24px;margin-bottom:8px">🤖</div>
-    <div style="font-size:13px;color:var(--text2)">Gerando resumo da semana com IA...<br><span style="font-size:11px;color:var(--text3)">Combinando seu diário com os dados de produção</span></div>
-  </div>`;
-
-  // Coletar diário da semana
-  const diario = getDiario();
-  const weekDates = getWeekDates();
-  const entradasTexto = weekDates.map(ds=>{
-    const entry = diario[ds];
-    return entry ? `${fmtDiarioDate(ds)}:\n${entry}` : `${fmtDiarioDate(ds)}: (sem registro)`;
-  }).join('\n\n');
-
-  // Dados de produção
-  const dadosProd = getDadosSemanais();
-
-  // Mês/ano atual
-  const meses = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-  const periodoLabel = `semana de ${fmtDiarioDate(weekDates[0])} a ${fmtDiarioDate(weekDates[weekDates.length-1])}`;
-
-  const prompt = `Você é um assistente executivo especializado em gestão bancária. Você vai redigir um e-mail de resumo semanal para a gestora de Eduardo, Gerente Geral da Agência Boa Viagem do Banco Safra.
-
-PERFIL DO E-MAIL:
-- Tom: profissional, otimista mas realista (sem positividade tóxica)
-- Estrutura: por tópicos de produtos
-- Inclua highlights da semana, produções realizadas e pontos de atenção reais
-- Use os números reais dos dados de produção
-- Termine com uma perspectiva para a próxima semana
-
-DIÁRIO DA SEMANA (notas do Eduardo):
-${entradasTexto}
-
-DADOS REAIS DE PRODUÇÃO DO SISTEMA:
-${dadosProd}
-
-Escreva o e-mail completo, formatado, pronto para ser enviado. Comece com "Olá [nome da gestora]," (Eduardo vai preencher o nome). Use emojis com moderação, apenas onde for natural. Máximo 400 palavras.`;
-
-  try {
-    const resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:800,
-        messages:[{role:'user',content:prompt}]
-      })
-    });
-    const data = await resp.json();
-    const texto = data.content?.[0]?.text || 'Não foi possível gerar o resumo.';
-
-    // Salvar no histórico
-    const resumos = getResumos();
-    const now = new Date();
-    const gerado = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
-    resumos.push({ semana: periodoLabel, texto, gerado });
-    if(resumos.length>20) resumos.splice(0,resumos.length-20);
-    saveResumos(resumos);
-
-    div.innerHTML = buildResumoCard(periodoLabel, texto, true);
-    div.scrollIntoView({behavior:'smooth'});
-
-  } catch(e){
-    div.innerHTML = `<div style="background:var(--red-bg);border:1px solid rgba(192,57,43,0.2);border-radius:var(--radius);padding:14px;font-size:12px;color:var(--red)">❌ Erro ao gerar resumo: ${e.message}</div>`;
-  }
-}
-
-// ── Speech to Text ──
-function toggleMic(){
-  if(MIC_ACTIVE){
-    stopMic();
-  } else {
-    startMic();
-  }
-}
-
-function startMic(){
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if(!SR){
-    showToast('⚠️ Seu navegador não suporta reconhecimento de voz. Use Chrome.');
-    return;
-  }
-  MIC_RECOGNIZER = new SR();
-  MIC_RECOGNIZER.lang = 'pt-BR';
-  MIC_RECOGNIZER.continuous = true;
-  MIC_RECOGNIZER.interimResults = true;
-
-  const btn = el('btn_mic');
-  const textarea = el('diario_hoje');
-  let baseText = textarea?.value || '';
-  let interim = '';
-
-  MIC_RECOGNIZER.onstart = ()=>{
-    MIC_ACTIVE = true;
-    if(btn){ btn.classList.add('recording'); btn.textContent='⏹ Parar'; }
-    showToast('🎤 Gravando... fale agora');
-  };
-
-  MIC_RECOGNIZER.onresult = (e)=>{
-    interim = '';
-    let final = '';
-    for(let i=e.resultIndex; i<e.results.length; i++){
-      if(e.results[i].isFinal){ final += e.results[i][0].transcript + ' '; }
-      else { interim += e.results[i][0].transcript; }
-    }
-    if(final){ baseText += (baseText ? ' ' : '') + final.trim(); }
-    if(textarea) textarea.value = baseText + (interim ? ' ' + interim : '');
-  };
-
-  MIC_RECOGNIZER.onerror = (e)=>{
-    showToast('⚠️ Erro no microfone: ' + e.error);
-    stopMic();
-  };
-
-  MIC_RECOGNIZER.onend = ()=>{
-    if(MIC_ACTIVE) MIC_RECOGNIZER.start(); // reinicia para gravação contínua
-  };
-
-  MIC_RECOGNIZER.start();
-}
-
-function stopMic(){
-  MIC_ACTIVE = false;
-  if(MIC_RECOGNIZER){ MIC_RECOGNIZER.stop(); MIC_RECOGNIZER = null; }
-  const btn = el('btn_mic');
-  if(btn){ btn.classList.remove('recording'); btn.textContent='🎤 Falar'; }
-  showToast('⏹ Gravação encerrada');
+  modal.classList.add('open');
 }
 
 // ══════════════════════════════════════════════════

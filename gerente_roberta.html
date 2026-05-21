@@ -345,6 +345,28 @@ select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 .seguro-val { font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 700; color: var(--green); }
 .seguro-data { font-size: 10px; color: var(--text3); }
 .btn-remove-sm { background: var(--red-bg); color: var(--red); border: 1px solid rgba(192,57,43,0.2); border-radius: 5px; padding: 2px 6px; font-size: 10px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
+/* ── SECRETÁRIA ── */
+.sec-chat { display:flex; flex-direction:column; height:calc(100vh - 180px); min-height:400px; }
+.chat-messages { flex:1; overflow-y:auto; padding:12px 14px; display:flex; flex-direction:column; gap:10px; }
+.chat-msg { max-width:88%; display:flex; flex-direction:column; gap:3px; }
+.chat-msg.user { align-self:flex-end; }
+.chat-msg.ai   { align-self:flex-start; }
+.chat-bubble { padding:10px 14px; border-radius:16px; font-size:13px; line-height:1.5; }
+.chat-bubble.user { background:var(--accent); color:#fff; border-radius:16px 16px 4px 16px; }
+.chat-bubble.ai   { background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:16px 16px 16px 4px; box-shadow:var(--shadow); white-space:pre-wrap; }
+.chat-bubble.ai.loading { color:var(--text3); font-style:italic; }
+.chat-ts { font-size:9px; color:var(--text3); padding:0 4px; }
+.chat-input-bar { padding:10px 14px 14px; background:var(--surface); border-top:1px solid var(--border); display:flex; gap:8px; align-items:flex-end; }
+.chat-input { flex:1; padding:10px 12px; border:1px solid var(--border); border-radius:20px; font-family:'IBM Plex Sans',sans-serif; font-size:13px; color:var(--text); background:var(--surface2); resize:none; max-height:100px; line-height:1.4; outline:none; }
+.chat-input:focus { border-color:var(--accent); background:#fff; }
+.chat-btn-mic  { width:38px; height:38px; border-radius:50%; border:none; background:var(--red-bg); color:var(--red); font-size:16px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+.chat-btn-mic.rec { background:var(--red); color:#fff; animation:pulse-rec 1s ease-in-out infinite; }
+.chat-btn-send { width:38px; height:38px; border-radius:50%; border:none; background:var(--accent); color:#fff; font-size:16px; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
+.chat-avatar { width:28px; height:28px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0; }
+.chat-header-bar { padding:10px 14px; background:linear-gradient(135deg,var(--accent),#2d5c42); display:flex; align-items:center; gap:10px; border-radius:var(--radius) var(--radius) 0 0; }
+.agenda-item { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:10px 12px; margin:4px 0; font-size:12px; }
+.agenda-item-time { font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--gold); font-weight:700; }
+.lembrete-item { background:var(--orange-bg); border:1px solid rgba(196,107,0,0.2); border-radius:8px; padding:8px 12px; margin:4px 0; font-size:12px; color:var(--orange); }
 </style>
 </head>
 <body>
@@ -455,25 +477,83 @@ const MONTH_KEY = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(
 // ── Configurações ──
 const AT_PROD    = ['BS','ARV','Desconto','Outros'];
 const TABS_CFG   = [
-  {id:'dash',      l:'📊 Dashboard'},
-  {id:'tac',       l:'TAC'},
-  {id:'chemp',     l:'CHEMP'},
-  {id:'giro',      l:'Giro de Carteira'},
-  {id:'ativos',    l:'Ativos'},
-  {id:'contas',    l:'Contas'},
-  {id:'consorcio', l:'Consórcio'},
-  {id:'collarkin', l:'Collarkin'},
-  {id:'captacao',  l:'Captação'},
-  {id:'seguro',    l:'Seguro'},
-  {id:'viab',      l:'Viabiliz.'},
-  {id:'safrapay',  l:'Safrapay'},
-  {id:'credito',   l:'Crédito BS'},
+  {id:'tac',        l:'TAC'},
+  {id:'chemp',      l:'CHEMP'},
+  {id:'giro',       l:'Giro de Carteira'},
+  {id:'ativos',     l:'Ativos'},
+  {id:'contas',     l:'Contas'},
+  {id:'consorcio',  l:'Consórcio'},
+  {id:'collarkin',  l:'Collarkin'},
+  {id:'captacao',   l:'Captação'},
+  {id:'seguro',     l:'Seguro'},
+  {id:'viab',       l:'Viabiliz.'},
+  {id:'safrapay',   l:'Safrapay'},
+  {id:'credito',    l:'Crédito BS'},
+  {id:'dash',       l:'📊 Dashboard'},
+  {id:'secretaria', l:'🤖 SecretárIA'},
 ];
 const SIMPLES_CFG = [
   {id:'consorcio', title:'CONSÓRCIO',  prefix:'consorcio'},
   {id:'collarkin', title:'COLLARKIN',  prefix:'collarkin'},
   {id:'captacao',  title:'CAPTAÇÃO',   prefix:'captacao'},
 ];
+
+
+// ══════════════════════════════════════════════════
+// API KEY ANTHROPIC
+// ══════════════════════════════════════════════════
+const API_KEY_STORAGE = 'anthropic_api_key_v1';
+
+function getApiKey(){ return localStorage.getItem(API_KEY_STORAGE)||''; }
+function saveApiKey(k){ localStorage.setItem(API_KEY_STORAGE, k.trim()); }
+
+function checkApiKey(){
+  const key = getApiKey();
+  if(!key){
+    const k = prompt('Para usar a SecretárIA, informe sua API Key da Anthropic:\n(Será salva apenas no seu dispositivo, nunca compartilhada)\n\nObtê-la em: console.anthropic.com');
+    if(k && k.trim().startsWith('sk-ant-')){
+      saveApiKey(k);
+      return k.trim();
+    } else if(k) {
+      alert('Chave inválida. Deve começar com sk-ant-');
+      return null;
+    }
+    return null;
+  }
+  return key;
+}
+
+async function callAnthropicAPI(system, messages, maxTokens=1000){
+  const key = checkApiKey();
+  if(!key) throw new Error('API Key não configurada. Recarregue e tente novamente.');
+  
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: maxTokens,
+      system: system,
+      messages: messages
+    })
+  });
+  
+  if(!resp.ok){
+    const err = await resp.json().catch(()=>({}));
+    if(resp.status === 401){
+      localStorage.removeItem(API_KEY_STORAGE);
+      throw new Error('API Key inválida ou expirada. Recarregue para inserir novamente.');
+    }
+    throw new Error(err.error?.message || `Erro ${resp.status}`);
+  }
+  
+  return resp.json();
+}
 
 // ══════════════════════════════════════════════════
 // FERIADOS RECIFE + BANCÁRIOS
@@ -819,7 +899,8 @@ function getRankingFor(valFn){
 }
 
 function getGerVal(gid, keys){
-  if(gid === '_self'){
+  // Dados do próprio gerente vêm do estado local (S)
+  if(gid === '_self' || gid === GERENTE_ID){
     if(Array.isArray(keys)) return keys.reduce((s,k)=>s+getMes(k),0);
     return getMes(keys);
   }
@@ -841,14 +922,29 @@ function getGerVal(gid, keys){
 
 function buildRankingCard(title, rankingArr, fmtFn){
   const myPos  = rankingArr.findIndex(r => r.gid === GERENTE_ID);
-  const myRank = myPos + 1;
   const myVal  = myPos >= 0 ? rankingArr[myPos].val : 0;
-  const topVal = rankingArr[0]?.val || 0;
-  const gap    = topVal - myVal;
-  const isFirst = myRank === 1;
 
+  // Se não tem nada preenchido, mostra card neutro
+  if(!myVal || myVal === 0){
+    return `<div class="card" style="margin-bottom:12px">
+      <div class="card-header"><span class="card-title">${title}</span></div>
+      <div style="padding:14px;text-align:center">
+        <div style="font-size:28px;margin-bottom:6px">—</div>
+        <div style="font-size:11px;color:var(--text3)">Preencha sua produção para ver sua posição</div>
+      </div>
+    </div>`;
+  }
+
+  // Calcular posição real só entre quem tem valor
+  const rankingComValor = rankingArr.filter(r => r.val > 0).sort((a,b)=>b.val-a.val);
+  const myPosReal = rankingComValor.findIndex(r => r.gid === GERENTE_ID);
+  const myRank    = myPosReal + 1;
+  const topVal    = rankingComValor[0]?.val || 0;
+  const gap       = topVal - myVal;
+  const isFirst   = myRank === 1;
   const medalIcon = myRank===1?'🥇':myRank===2?'🥈':myRank===3?'🥉':'';
-  const pct = topVal > 0 ? Math.round((myVal/topVal)*100) : 0;
+  const pct       = topVal > 0 ? Math.round((myVal/topVal)*100) : 0;
+  const totalComValor = rankingComValor.length;
 
   let h = `<div class="card" style="margin-bottom:12px">
     <div class="card-header"><span class="card-title">${title}</span></div>
@@ -858,7 +954,7 @@ function buildRankingCard(title, rankingArr, fmtFn){
   h += `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
     <div style="font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--accent);line-height:1">${medalIcon||myRank+'º'}</div>
     <div style="flex:1">
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Sua posição</div>
+      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:1px">Sua posição (de ${totalComValor} com produção)</div>
       <div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:700;color:var(--green)">${fmtFn(myVal)}</div>
     </div>
   </div>`;
@@ -873,7 +969,7 @@ function buildRankingCard(title, rankingArr, fmtFn){
     </div>
   </div>`;
 
-  // Gap e 1º lugar (anônimo)
+  // Gap e 1º lugar anônimo
   if(!isFirst){
     h += `<div style="background:var(--surface2);border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
       <div>
@@ -906,10 +1002,11 @@ function buildAll(){
   el('app').innerHTML = TABS_CFG.map((t,i)=>
     `<div class="section ${i===0?'active':''}" id="sec-${t.id}"></div>`
   ).join('');
-  bDash(); bTAC(); bCHEMP(); bGiro(); bAtivos();
+  bTAC(); bCHEMP(); bGiro(); bAtivos();
   bContas();
   SIMPLES_CFG.forEach(sim=>bSimple(sim));
   bSeguro(); bViab(); bSafrapay(); bCredito();
+  bDash(); bSecretaria();
   checkInactivity();
 }
 
@@ -2195,11 +2292,12 @@ function bDash(){
 }
 
 function renderDash(){
-  const ranking=getRankingTAC();
-  const myPos=ranking.findIndex(x=>x.gid===GERENTE_ID);
-  const myRank=myPos+1;
   const myVal=rankValOf(GERENTE_ID);
-  const topVal=ranking[0]?.val||0;
+  const ranking=getRankingTAC();
+  const rankingComValor=ranking.filter(x=>x.val>0);
+  const myPos=rankingComValor.findIndex(x=>x.gid===GERENTE_ID);
+  const myRank=myVal>0 ? myPos+1 : 0;
+  const topVal=rankingComValor[0]?.val||0;
   const gap=topVal-myVal;
   const streak=getStreak();
   const earned=checkMedals();
@@ -2212,14 +2310,21 @@ function renderDash(){
   const inactivityAlert = checkInactivity();
   if(inactivityAlert) h += inactivityAlert;
 
-  // Hero
-  h+=`<div class="dash-hero">
-    ${medalIcon?`<span class="dash-medal">${medalIcon}</span>`:''}
-    <div class="dash-pos-label">Sua posição no Placar TAC</div>
-    <div class="dash-pos">${myRank}<span class="dash-pos-suffix">º</span></div>
-    <div class="dash-msg">${getMotiMsg(myRank, gap)}</div>
-    ${myRank>1?`<div class="dash-gap">📈 Faltam R$ ${fmt(gap)} para o 1º lugar</div>`:''}
-  </div>`;
+  // Hero — só aparece se tiver TAC preenchido
+  if(myVal > 0){
+    h+=`<div class="dash-hero">
+      ${medalIcon?`<span class="dash-medal">${medalIcon}</span>`:''}
+      <div class="dash-pos-label">Sua posição no Placar TAC</div>
+      <div class="dash-pos">${myRank}<span class="dash-pos-suffix">º</span></div>
+      <div class="dash-msg">${getMotiMsg(myRank, gap)}</div>
+      ${myRank>1?`<div class="dash-gap">📈 Faltam R$ ${fmt(gap)} para o 1º lugar</div>`:''}
+    </div>`;
+  } else {
+    h+=`<div class="dash-hero" style="text-align:center;padding:20px 16px">
+      <div class="dash-pos-label" style="margin-bottom:8px">Seu Placar TAC</div>
+      <div style="font-size:15px;color:rgba(255,255,255,0.7)">Preencha o TAC para ver sua posição no placar</div>
+    </div>`;
+  }
 
   // Rankings por produto
   const rankMods = [
@@ -2227,30 +2332,30 @@ function renderDash(){
     { title:'🔄 Placar Giro de Carteira', fn: gid=>getGerVal(gid,'giro'), fmtFn: v=>Math.round(v)||'0' },
     { title:'💰 Placar Ativos', fn: gid=>getGerVal(gid, AT_PROD.map(p=>`at_${slug(p)}`)), fmtFn: v=>`R$ ${fmt(v)||'0'}` },
     { title:'🏦 Placar Contas', fn: gid=>{
-        if(gid==='_self') return (pn('contas_amarela_acc')+pn('contas_amarela_dia'))+(pn('contas_verde_acc')+pn('contas_verde_dia'))+(pn('contas_outros_acc')+pn('contas_outros_dia'));
+        if(gid===GERENTE_ID) return (pn('contas_amarela_acc')+pn('contas_amarela_dia'))+(pn('contas_verde_acc')+pn('contas_verde_dia'))+(pn('contas_outros_acc')+pn('contas_outros_dia'));
         const d=RANK_DATA[gid]; if(!d) return 0;
         return (parseFloat(String(d.contas_amarela_acc||'0'))||0)+(parseFloat(String(d.contas_verde_acc||'0'))||0)+(parseFloat(String(d.contas_outros_acc||'0'))||0);
       }, fmtFn: v=>`${Math.round(v)||'0'} contas` },
     { title:'🛡️ Placar Seguro', fn: gid=>{
-        if(gid==='_self'){ const l=getSeguroList(); return l.reduce((s,v)=>s+parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0,0); }
+        if(gid===GERENTE_ID){ const l=getSeguroList(); return l.reduce((s,v)=>s+parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0,0); }
         const d=RANK_DATA[gid]; if(!d) return 0;
         const l=d.seguro_list?JSON.parse(d.seguro_list):[];
         return l.reduce((s,v)=>s+parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0,0);
       }, fmtFn: v=>`R$ ${fmt(v)||'0'}` },
     { title:'👥 Placar Viabilizados', fn: gid=>{
-        if(gid==='_self') return getViabList().filter(x=>x.tipo==='prod').length;
+        if(gid===GERENTE_ID) return getViabList().filter(x=>x.tipo==='prod').length;
         const d=RANK_DATA[gid]; if(!d) return 0;
         const l=d.viab_list?JSON.parse(d.viab_list):[];
         return l.filter(x=>x.tipo==='prod').length;
       }, fmtFn: v=>`${v} prod` },
     { title:'💳 Placar Safrapay (VOP)', fn: gid=>{
-        if(gid==='_self') return getSafrapayList().filter(x=>x.tipo==='prod').reduce((s,v)=>s+parseFloat(String(v.vop||'0').replace(/\./g,'').replace(',','.'))||0,0);
+        if(gid===GERENTE_ID) return getSafrapayList().filter(x=>x.tipo==='prod').reduce((s,v)=>s+parseFloat(String(v.vop||'0').replace(/\./g,'').replace(',','.'))||0,0);
         const d=RANK_DATA[gid]; if(!d) return 0;
         const l=d.safrapay_list?JSON.parse(d.safrapay_list):[];
         return l.filter(x=>x.tipo==='prod').reduce((s,v)=>s+parseFloat(String(v.vop||'0').replace(/\./g,'').replace(',','.'))||0,0);
       }, fmtFn: v=>`R$ ${fmt(v)||'0'}` },
     { title:'💼 Placar Crédito BS (valor)', fn: gid=>{
-        if(gid==='_self') return getCreditoList().filter(x=>x.tipo==='prod').reduce((s,v)=>s+parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0,0);
+        if(gid===GERENTE_ID) return getCreditoList().filter(x=>x.tipo==='prod').reduce((s,v)=>s+parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0,0);
         const d=RANK_DATA[gid]; if(!d) return 0;
         const l=d.credito_list?JSON.parse(d.credito_list):[];
         return l.filter(x=>x.tipo==='prod').reduce((s,v)=>s+parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0,0);
@@ -2282,6 +2387,239 @@ function renderDash(){
   el('sec-dash').innerHTML=h;
   checkRankUp();
 }
+
+// ══════════════════════════════════════════════════
+// SECRETÁRIA INTELIGENTE
+// ══════════════════════════════════════════════════
+const SEC_HIST_KEY   = SK + '_sec_hist';
+const SEC_AGENDA_KEY = SK + '_sec_agenda';
+const SEC_LEMB_KEY   = SK + '_sec_lemb';
+let   SEC_MIC_ON     = false;
+let   SEC_MIC_REC    = null;
+let   SEC_LOADING    = false;
+
+function getSecHist(){  try{ return JSON.parse(localStorage.getItem(SEC_HIST_KEY)||'[]'); }catch(e){ return []; } }
+function saveSecHist(h){ try{ localStorage.setItem(SEC_HIST_KEY, JSON.stringify(h.slice(-80))); }catch(e){} }
+function getAgenda(){   try{ return JSON.parse(localStorage.getItem(SEC_AGENDA_KEY)||'[]'); }catch(e){ return []; } }
+function saveAgenda(a){ try{ localStorage.setItem(SEC_AGENDA_KEY, JSON.stringify(a)); }catch(e){} }
+function getLemb(){     try{ return JSON.parse(localStorage.getItem(SEC_LEMB_KEY)||'[]'); }catch(e){ return []; } }
+function saveLemb(l){   try{ localStorage.setItem(SEC_LEMB_KEY, JSON.stringify(l)); }catch(e){} }
+
+function fmtSecTime(iso){
+  const d=new Date(iso);
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function buildSecContext(){
+  const du=businessDaysUntilToday(), dt=totalBusinessDaysMonth();
+  const lines=[];
+  lines.push(`Gerente: ${GERENTE_NOME} | Mês: ${MONTH_KEY} | Hoje: ${toDateStr(today)} (${du}/${dt} dias úteis)`);
+  lines.push('');
+  lines.push('=== PRODUÇÃO DO MÊS ===');
+  const tacMes=getMes('tac'), tacMeta=pn('tac_meta');
+  lines.push(`TAC: ${tacMes?'R$ '+fmt(tacMes):'não preenchido'}${tacMeta?' (meta: R$ '+fmt(tacMeta)+', '+(tacMes/tacMeta*100||0).toFixed(0)+'%)':''}`);
+  const giroMes=getMes('giro'), giroMeta=pn('giro_meta');
+  lines.push(`Giro: ${giroMes||'não preenchido'}${giroMeta?' (meta: '+giroMeta+')':''}`);
+  let ativT=0; AT_PROD.forEach(p=>ativT+=pnRaw(g(`at_${slug(p)}_atu`))-pnRaw(g(`at_${slug(p)}_ant`)));
+  lines.push(`Ativos (incremento): ${ativT?'R$ '+fmt(ativT):'não preenchido'}`);
+  const am=pn('contas_amarela_acc')+pn('contas_amarela_dia');
+  const ve=pn('contas_verde_acc')+pn('contas_verde_dia');
+  const ou=pn('contas_outros_acc')+pn('contas_outros_dia');
+  lines.push(`Contas: ${am+ve+ou||'não preenchido'} (🟡${am} 🟢${ve} 🔵${ou})`);
+  SIMPLES_CFG.forEach(({title,prefix})=>{ const v=getMes(prefix); lines.push(`${title}: ${v?'R$ '+fmt(v):'não preenchido'}`); });
+  const segs=getSeguroList();
+  lines.push(`Seguros: ${segs.length} registros | Total: R$ ${fmt(segs.reduce((s,v)=>s+pnRaw(v.valor),0))}`);
+  const vp=getViabList().filter(x=>x.tipo==='prod').length, vpi=getViabList().filter(x=>x.tipo==='pipe').length;
+  lines.push(`Viabilizados: ${vp} prod | ${vpi} pipe`);
+  const sp=getSafrapayList().filter(x=>x.tipo==='prod');
+  lines.push(`Safrapay: ${sp.length} prod | VOP: R$ ${fmt(sp.reduce((s,v)=>s+pnRaw(v.vop),0))}`);
+  const cr=getCreditoList().filter(x=>x.tipo==='prod');
+  lines.push(`Crédito BS: ${cr.length} prod | R$ ${fmt(cr.reduce((s,v)=>s+pnRaw(v.valor),0))}`);
+  lines.push('');
+  lines.push('=== COMPARATIVO ANÔNIMO ===');
+  const tacRanking=[...MGR_IDS.filter(x=>x!==GERENTE_ID).map(gid=>{ const d=RANK_DATA[gid]; return d?(parseFloat(String(d.tac_acc||'0').replace(/\./g,'').replace(',','.'))||0)+(parseFloat(String(d.tac_dia||'0').replace(/\./g,'').replace(',','.'))||0):0; }),tacMes].sort((a,b)=>b-a);
+  const myPos=tacRanking.findIndex(v=>Math.abs(v-tacMes)<1)+1;
+  if(tacMes) lines.push(`Posição TAC: ${myPos}º de ${tacRanking.filter(v=>v>0).length} gerentes com produção`);
+  const agenda=getAgenda().filter(a=>a.data>=toDateStr(today)).slice(0,3);
+  if(agenda.length){ lines.push(''); lines.push('=== PRÓXIMOS COMPROMISSOS ==='); agenda.forEach(a=>lines.push(`${a.data} ${a.hora||''} — ${a.titulo}`)); }
+  const lembs=getLemb().filter(l=>!l.feito).slice(0,3);
+  if(lembs.length){ lines.push(''); lines.push('=== LEMBRETES ==='); lembs.forEach(l=>lines.push(`• ${l.texto}`)); }
+  return lines.join('\n');
+}
+
+function buildSecSystemPrompt(){
+  return `Você é a SecretárIA Inteligente do ${GERENTE_NOME}, gerente do Banco Safra, Agência Boa Viagem (Ag. 14400).
+
+Você é uma assistente executiva especializada em gestão bancária comercial. Ajude o gerente a ser mais produtivo, informado e eficiente.
+
+CAPACIDADES:
+1. INSERIR PRODUÇÃO/PIPE — colete todas as informações necessárias e retorne JSON: \`\`\`json\n{"action":"inserir_producao","modulo":"viab|safrapay|credito","tipo":"pipe|prod","cliente":"nome","valor":"","data":"YYYY-MM-DD",...}\`\`\`
+2. AGENDA — retorne JSON: \`\`\`json\n{"action":"agendar","titulo":"","data":"YYYY-MM-DD","hora":"HH:MM","descricao":""}\`\`\`
+3. LEMBRETE — retorne JSON: \`\`\`json\n{"action":"lembrete","texto":""}\`\`\`
+4. BUSCA CNPJ/EMPRESA — use conhecimentos sobre ramo de atividade e sugira oportunidades de produtos Safra.
+5. ANÁLISE DE PERFORMANCE — analise dados reais do gerente, compare com colegas anonimamente, sugira melhorias.
+6. DICAS COMERCIAIS — seguros, consórcio, capital de giro, antecipação, desconto, investimentos, SafraPay, crédito.
+7. MERCADO FINANCEIRO — notícias e tendências que afetam a carteira.
+
+REGRAS:
+- Seja direta, prática e motivadora. Tom profissional mas próximo.
+- Compare colegas sempre de forma anônima.
+- Para inserção, SEMPRE confirme os dados antes do JSON.
+- O JSON deve estar em bloco separado do texto normal.
+
+DADOS ATUAIS DO GERENTE:
+${buildSecContext()}`;
+}
+
+function bSecretaria(){ renderSecretaria(); }
+
+function renderSecretaria(){
+  const hist   = getSecHist();
+  const agenda = getAgenda().filter(a=>a.data>=toDateStr(today)).sort((a,b)=>a.data.localeCompare(b.data));
+  const lembs  = getLemb().filter(l=>!l.feito);
+
+  let h=`<div class="sec-chat">
+    <div class="chat-header-bar">
+      <div class="chat-avatar">🤖</div>
+      <div style="flex:1">
+        <div style="font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:#fff">SecretárIA Inteligente</div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.5)">Banco Safra · Ag. Boa Viagem</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        ${agenda.length?`<div style="background:rgba(255,255,255,0.15);border-radius:12px;padding:3px 8px;font-size:10px;color:#fff;cursor:pointer" onclick="toggleSecPanel('sec_agenda_panel')" title="Ver agenda">📅 ${agenda.length}</div>`:''}
+        ${lembs.length?`<div style="background:rgba(196,107,0,0.4);border-radius:12px;padding:3px 8px;font-size:10px;color:#ffc97a;cursor:pointer" onclick="toggleSecPanel('sec_lemb_panel')" title="Ver lembretes">⏰ ${lembs.length}</div>`:''}
+        <div style="background:rgba(255,255,255,0.1);border-radius:12px;padding:3px 8px;font-size:10px;color:rgba(255,255,255,0.5);cursor:pointer" onclick="limparSecHist()" title="Limpar histórico">🗑️</div>
+      </div>
+    </div>
+
+    <div id="sec_agenda_panel" style="display:none;background:var(--surface2);border-bottom:1px solid var(--border);padding:10px 14px;max-height:160px;overflow-y:auto">
+      <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">📅 Próximos Compromissos</div>
+      ${agenda.length?agenda.map((a,i)=>`<div class="agenda-item" style="display:flex;justify-content:space-between;align-items:center"><div><div class="agenda-item-time">${a.data}${a.hora?' '+a.hora:''}</div><div style="font-size:12px;font-weight:600">${a.titulo}</div>${a.descricao?`<div style="font-size:11px;color:var(--text3)">${a.descricao}</div>`:''}</div><button onclick="removerAgendaSec(${i})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px">✕</button></div>`).join(''):'<div style="font-size:12px;color:var(--text3)">Nenhum compromisso próximo.</div>'}
+    </div>
+
+    <div id="sec_lemb_panel" style="display:none;background:var(--orange-bg);border-bottom:1px solid rgba(196,107,0,0.2);padding:10px 14px;max-height:160px;overflow-y:auto">
+      <div style="font-size:10px;font-weight:700;color:var(--orange);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">⏰ Lembretes</div>
+      ${lembs.length?lembs.map((l,i)=>`<div class="lembrete-item" style="display:flex;justify-content:space-between;align-items:center"><span>${l.texto}</span><div style="display:flex;gap:6px"><button onclick="marcarFeitoSec(${i})" style="background:var(--green);color:#fff;border:none;border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer">✓</button><button onclick="removerLembreteSec(${i})" style="background:none;border:none;color:var(--orange);cursor:pointer;font-size:16px">✕</button></div></div>`).join(''):'<div style="font-size:12px;color:var(--orange)">Sem lembretes pendentes.</div>'}
+    </div>
+
+    <div class="chat-messages" id="sec_messages">`;
+
+  if(!hist.length){
+    h+=`<div class="chat-msg ai"><div class="chat-bubble ai">Sou sua secretárIA Inteligente. Em que posso te ajudar hoje? Quer saber o que posso fazer por você? Só me perguntar que te digo tudo que posso fazer. 😊</div><div class="chat-ts">${fmtSecTime(new Date().toISOString())}</div></div>`;
+  } else {
+    hist.forEach(m=>{
+      // Esconder bloco JSON da IA na exibição
+      const displayContent = m.role==='assistant'
+        ? m.content.replace(/```json[\s\S]*?```/g,'').trim()
+        : m.content;
+      if(!displayContent) return;
+      h+=`<div class="chat-msg ${m.role}"><div class="chat-bubble ${m.role}">${displayContent.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>${m.ts?`<div class="chat-ts">${fmtSecTime(m.ts)}</div>`:''}</div>`;
+    });
+  }
+
+  h+=`</div>
+    <div class="chat-input-bar">
+      <button class="chat-btn-mic" id="sec_mic_btn" onclick="toggleSecMic()" title="Falar por microfone">🎤</button>
+      <textarea class="chat-input" id="sec_input" placeholder="Digite ou fale sua mensagem…" rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarSecMsg();}"
+        oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,100)+'px'"></textarea>
+      <button class="chat-btn-send" onclick="enviarSecMsg()" title="Enviar">➤</button>
+    </div>
+  </div>`;
+
+  el('sec-secretaria').innerHTML=h;
+  setTimeout(()=>{ const m=el('sec_messages'); if(m) m.scrollTop=m.scrollHeight; },100);
+}
+
+function toggleSecPanel(id){ const p=el(id); if(p) p.style.display=p.style.display==='none'?'block':'none'; }
+function removerAgendaSec(i){ const a=getAgenda(); a.splice(i,1); saveAgenda(a); renderSecretaria(); }
+function removerLembreteSec(i){ const l=getLemb(); l.splice(i,1); saveLemb(l); renderSecretaria(); }
+function marcarFeitoSec(i){ const l=getLemb(); l[i].feito=true; saveLemb(l); showToast('✅ Lembrete concluído!'); renderSecretaria(); }
+function limparSecHist(){ if(!confirm('Limpar todo o histórico da SecretárIA?')) return; localStorage.removeItem(SEC_HIST_KEY); renderSecretaria(); showToast('Histórico limpo ✓'); }
+
+async function enviarSecMsg(){
+  if(SEC_LOADING) return;
+  const input=el('sec_input');
+  const texto=input?.value?.trim();
+  if(!texto) return;
+  if(SEC_MIC_ON) stopSecMic();
+  input.value=''; input.style.height='auto';
+
+  const hist=getSecHist();
+  hist.push({role:'user',content:texto,ts:new Date().toISOString()});
+  saveSecHist(hist);
+
+  // Log para auditoria (GG poderá ver)
+  try{ auditLog('SecretárIA',toDateStr(today),'',texto,'secretaria_msg'); }catch(e){}
+
+  renderSecretaria();
+  SEC_LOADING=true;
+
+  const msgs=el('sec_messages');
+  if(msgs){
+    const ld=document.createElement('div');
+    ld.className='chat-msg ai'; ld.id='sec_loading';
+    ld.innerHTML=`<div class="chat-bubble ai loading">⏳ Pensando…</div>`;
+    msgs.appendChild(ld); msgs.scrollTop=msgs.scrollHeight;
+  }
+
+  try{
+    const apiMsgs=hist.slice(-20).map(m=>({role:m.role==='user'?'user':'assistant',content:m.content}));
+    const data=await callAnthropicAPI(buildSecSystemPrompt(), apiMsgs, 1000);
+    const resposta=data.content?.[0]?.text||'Desculpe, não consegui responder.';
+    await processSecActions(resposta);
+    const h2=getSecHist();
+    h2.push({role:'assistant',content:resposta,ts:new Date().toISOString()});
+    saveSecHist(h2);
+  }catch(e){
+    const h2=getSecHist();
+    h2.push({role:'assistant',content:`❌ Erro: ${e.message}`,ts:new Date().toISOString()});
+    saveSecHist(h2);
+  }
+
+  SEC_LOADING=false;
+  renderSecretaria();
+}
+
+async function processSecActions(texto){
+  const m=texto.match(/```json\s*([\s\S]*?)\s*```/);
+  if(!m) return;
+  try{
+    const a=JSON.parse(m[1]);
+    if(a.action==='agendar'){
+      const ag=getAgenda();
+      ag.push({titulo:a.titulo,data:a.data,hora:a.hora||'',descricao:a.descricao||''});
+      ag.sort((x,y)=>x.data.localeCompare(y.data));
+      saveAgenda(ag); showToast(`📅 Agendado: ${a.titulo}`);
+    } else if(a.action==='lembrete'){
+      const lb=getLemb();
+      lb.push({texto:a.texto,feito:false,ts:new Date().toISOString()});
+      saveLemb(lb); showToast('⏰ Lembrete salvo!');
+    } else if(a.action==='inserir_producao'){
+      const mod=(a.modulo||'').toLowerCase();
+      const tipo=a.tipo||'pipe';
+      if(mod.includes('viab')){ const l=getViabList(); l.push({cliente:a.cliente||'',viabiliza:a.viabiliza||'',valor:a.valor||'',data:a.data||toDateStr(today),tipo,_confirmed:false}); saveViabList(l); bViab(); showToast('✅ Inserido em Viabilizados!'); }
+      else if(mod.includes('safrapay')){ const l=getSafrapayList(); l.push({cliente:a.cliente||'',vop:a.vop||'',arv:a.arv||'nao',arvValor:a.arv_valor||'',status:a.status||'',data:a.data||toDateStr(today),tipo,_confirmed:false}); saveSafrapayList(l); bSafrapay(); showToast('✅ Inserido em Safrapay!'); }
+      else if(mod.includes('cred')){ const l=getCreditoList(); l.push({cliente:a.cliente||'',valor:a.valor||'',garantia:a.garantia||'',status:a.status||'',data:a.data||toDateStr(today),tipo,_confirmed:false}); saveCreditoList(l); bCredito(); showToast('✅ Inserido em Crédito BS!'); }
+    }
+  }catch(e){ console.warn('Action error:',e); }
+}
+
+function toggleSecMic(){ SEC_MIC_ON?stopSecMic():startSecMic(); }
+function startSecMic(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){ showToast('⚠️ Use Chrome para reconhecimento de voz'); return; }
+  SEC_MIC_REC=new SR();
+  SEC_MIC_REC.lang='pt-BR'; SEC_MIC_REC.continuous=true; SEC_MIC_REC.interimResults=true;
+  const btn=el('sec_mic_btn'), input=el('sec_input');
+  let base=input?.value||'';
+  SEC_MIC_REC.onstart=()=>{ SEC_MIC_ON=true; if(btn){btn.classList.add('rec');btn.textContent='⏹';} showToast('🎤 Ouvindo…'); };
+  SEC_MIC_REC.onresult=(e)=>{ let fin='',int=''; for(let i=e.resultIndex;i<e.results.length;i++){ if(e.results[i].isFinal)fin+=e.results[i][0].transcript+' '; else int+=e.results[i][0].transcript; } if(fin)base+=(base?' ':'')+fin.trim(); if(input)input.value=base+(int?' '+int:''); };
+  SEC_MIC_REC.onerror=()=>stopSecMic();
+  SEC_MIC_REC.onend=()=>{ if(SEC_MIC_ON)SEC_MIC_REC.start(); };
+  SEC_MIC_REC.start();
+}
+function stopSecMic(){ SEC_MIC_ON=false; if(SEC_MIC_REC){SEC_MIC_REC.stop();SEC_MIC_REC=null;} const btn=el('sec_mic_btn'); if(btn){btn.classList.remove('rec');btn.textContent='🎤';} showToast('⏹ Gravação encerrada'); }
 
 // ══════════════════════════════════════════════════
 // FIREBASE
