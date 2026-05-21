@@ -353,7 +353,7 @@ select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 .chat-msg.ai   { align-self:flex-start; }
 .chat-bubble { padding:10px 14px; border-radius:16px; font-size:13px; line-height:1.5; }
 .chat-bubble.user { background:var(--accent); color:#fff; border-radius:16px 16px 4px 16px; }
-.chat-bubble.ai   { background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:16px 16px 16px 4px; box-shadow:var(--shadow); white-space:pre-wrap; }
+.chat-bubble.ai   { background:var(--surface); border:1px solid var(--border); color:var(--text); border-radius:16px 16px 16px 4px; box-shadow:var(--shadow); line-height:1.6; }
 .chat-bubble.ai.loading { color:var(--text3); font-style:italic; }
 .chat-ts { font-size:9px; color:var(--text3); padding:0 4px; }
 .chat-input-bar { padding:10px 14px 14px; background:var(--surface); border-top:1px solid var(--border); display:flex; gap:8px; align-items:flex-end; }
@@ -2405,6 +2405,65 @@ function saveAgenda(a){ try{ localStorage.setItem(SEC_AGENDA_KEY, JSON.stringify
 function getLemb(){     try{ return JSON.parse(localStorage.getItem(SEC_LEMB_KEY)||'[]'); }catch(e){ return []; } }
 function saveLemb(l){   try{ localStorage.setItem(SEC_LEMB_KEY, JSON.stringify(l)); }catch(e){} }
 
+// Renderiza markdown simples para HTML
+function renderMD(text){
+  if(!text) return '';
+  // Processar linha por linha para melhor controle
+  const lines = text.split('\n');
+  let html = '';
+  let inList = false;
+
+  lines.forEach(line => {
+    // Remover espaços extras
+    const l = line.trim();
+    if(!l){ html += inList ? '' : '<br>'; return; }
+
+    // Cabeçalhos ## ou ### → título bold colorido
+    const hMatch = l.match(/^#{1,3}\s+(.+)/);
+    if(hMatch){
+      if(inList){ html += '</div>'; inList=false; }
+      const t = hMatch[1].replace(/\*\*/g,'');
+      html += `<div style="font-weight:700;color:var(--accent);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;margin:10px 0 4px;padding-bottom:3px;border-bottom:1px solid var(--border)">${t}</div>`;
+      return;
+    }
+
+    // Separador ---
+    if(/^---+$/.test(l)){
+      html += '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.2);margin:8px 0">';
+      return;
+    }
+
+    // Item de lista - ou •
+    const liMatch = l.match(/^[-•*]\s+(.+)/);
+    if(liMatch){
+      const item = formatInline(liMatch[1]);
+      html += `<div style="display:flex;gap:6px;padding:3px 0"><span style="color:var(--gold);flex-shrink:0">•</span><span>${item}</span></div>`;
+      return;
+    }
+
+    // Item numerado
+    const numMatch = l.match(/^(\d+)[.)]\s+(.+)/);
+    if(numMatch){
+      const item = formatInline(numMatch[2]);
+      html += `<div style="display:flex;gap:6px;padding:3px 0"><span style="color:var(--gold);font-weight:700;flex-shrink:0;min-width:16px">${numMatch[1]}.</span><span>${item}</span></div>`;
+      return;
+    }
+
+    // Linha normal
+    html += `<div style="padding:1px 0">${formatInline(l)}</div>`;
+  });
+
+  return html;
+}
+
+function formatInline(text){
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em style="color:var(--text2)">$1</em>')
+    .replace(/`(.+?)`/g,'<code style="background:rgba(0,0,0,0.06);padding:1px 4px;border-radius:3px;font-family:monospace;font-size:11px">$1</code>');
+}
+
 function fmtSecTime(iso){
   const d=new Date(iso);
   return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
@@ -2466,6 +2525,7 @@ REGRAS:
 - Compare colegas sempre de forma anônima.
 - Para inserção, SEMPRE confirme os dados antes do JSON.
 - O JSON deve estar em bloco separado do texto normal.
+- FORMATAÇÃO: use **negrito** para destaques, listas com - para itens, títulos curtos em negrito. Evite ## excessivos. Respostas limpas e organizadas visualmente.
 
 DADOS ATUAIS DO GERENTE:
 ${buildSecContext()}`;
@@ -2510,10 +2570,10 @@ function renderSecretaria(){
     hist.forEach(m=>{
       // Esconder bloco JSON da IA na exibição
       const displayContent = m.role==='assistant'
-        ? m.content.replace(/```json[\s\S]*?```/g,'').trim()
-        : m.content;
+        ? renderMD(m.content.replace(/```json[\s\S]*?```/g,'').trim())
+        : m.content.replace(/</g,'&lt;').replace(/>/g,'&gt;');
       if(!displayContent) return;
-      h+=`<div class="chat-msg ${m.role}"><div class="chat-bubble ${m.role}">${displayContent.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>${m.ts?`<div class="chat-ts">${fmtSecTime(m.ts)}</div>`:''}</div>`;
+      h+=`<div class="chat-msg ${m.role}"><div class="chat-bubble ${m.role}">${displayContent}</div>${m.ts?`<div class="chat-ts">${fmtSecTime(m.ts)}</div>`:''}</div>`;
     });
   }
 

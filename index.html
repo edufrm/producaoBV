@@ -38,7 +38,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 .chat-msg.ai{align-self:flex-start}
 .chat-bubble{padding:10px 14px;border-radius:16px;font-size:13px;line-height:1.5}
 .chat-bubble.user{background:var(--accent);color:#fff;border-radius:16px 16px 4px 16px}
-.chat-bubble.ai{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:16px 16px 16px 4px;box-shadow:var(--shadow);white-space:pre-wrap}
+.chat-bubble.ai{background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:16px 16px 16px 4px;box-shadow:var(--shadow);line-height:1.6}
 .chat-bubble.ai.loading{color:var(--text3);font-style:italic}
 .chat-ts{font-size:9px;color:var(--text3);padding:0 4px}
 .chat-input-bar{padding:10px 14px 14px;background:var(--surface);border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end}
@@ -1453,6 +1453,31 @@ function saveGGNotas(n){ try{ localStorage.setItem(GG_NOTAS_KEY, JSON.stringify(
 
 function toDateStrGG(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function fmtDateGG(ds){ const d=new Date(ds+'T00:00:00'); const dias=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']; const ms=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']; return `${dias[d.getDay()]}, ${d.getDate()} ${ms[d.getMonth()]}`; }
+function formatInlineGG(text){
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em style="color:var(--text2)">$1</em>')
+    .replace(/`(.+?)`/g,'<code style="background:rgba(0,0,0,0.06);padding:1px 4px;border-radius:3px;font-family:monospace;font-size:11px">$1</code>');
+}
+function renderMDgg(text){
+  if(!text) return '';
+  const lines = text.split('\n');
+  let html = '';
+  lines.forEach(line => {
+    const l = line.trim();
+    if(!l){ html += '<br>'; return; }
+    const hMatch = l.match(/^#{1,3}\s+(.+)/);
+    if(hMatch){ html += `<div style="font-weight:700;color:var(--accent);font-size:12px;text-transform:uppercase;letter-spacing:0.5px;margin:10px 0 4px;padding-bottom:3px;border-bottom:1px solid var(--border)">${hMatch[1].replace(/\*\*/g,'')}</div>`; return; }
+    if(/^---+$/.test(l)){ html += '<hr style="border:none;border-top:1px solid rgba(0,0,0,0.1);margin:8px 0">'; return; }
+    const liMatch = l.match(/^[-•*]\s+(.+)/);
+    if(liMatch){ html += `<div style="display:flex;gap:6px;padding:3px 0"><span style="color:var(--gold);flex-shrink:0">•</span><span>${formatInlineGG(liMatch[1])}</span></div>`; return; }
+    const numMatch = l.match(/^(\d+)[.)]\s+(.+)/);
+    if(numMatch){ html += `<div style="display:flex;gap:6px;padding:3px 0"><span style="color:var(--gold);font-weight:700;flex-shrink:0;min-width:16px">${numMatch[1]}.</span><span>${formatInlineGG(numMatch[2])}</span></div>`; return; }
+    html += `<div style="padding:1px 0">${formatInlineGG(l)}</div>`;
+  });
+  return html;
+}
 function fmtGGTime(iso){ const d=new Date(iso); return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }
 
 function getWeekDates(){
@@ -1525,6 +1550,7 @@ REGRAS:
 - Use dados reais da equipe nas análises.
 - Para e-mail da semana: por tópicos de produto, otimista mas com pontos de atenção reais.
 - JSON em bloco separado do texto.
+- FORMATAÇÃO: use **negrito** para destaques, listas com - para itens. Evite ## excessivos. Respostas limpas e organizadas visualmente.
 
 DADOS ATUAIS DA AGÊNCIA:
 ${ctx}`;
@@ -1602,9 +1628,9 @@ function renderGGSec(){
     h+=`<div class="chat-msg ai"><div class="chat-bubble ai">Sou sua secretárIA Inteligente. Em que posso te ajudar hoje? Quer saber o que posso fazer por você? Só me perguntar que te digo tudo que posso fazer. 😊</div><div class="chat-ts">${fmtGGTime(new Date().toISOString())}</div></div>`;
   } else {
     hist.forEach(m=>{
-      const display=m.role==='assistant'?m.content.replace(/\`\`\`json[\s\S]*?\`\`\`/g,'').trim():m.content;
+      const display=m.role==='assistant'?renderMDgg(m.content.replace(/```json[\s\S]*?```/g,'').trim()):m.content.replace(/</g,'&lt;').replace(/>/g,'&gt;');
       if(!display) return;
-      h+=`<div class="chat-msg ${m.role}"><div class="chat-bubble ${m.role}">${display.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>${m.ts?`<div class="chat-ts">${fmtGGTime(m.ts)}</div>`:''}</div>`;
+      h+=`<div class="chat-msg ${m.role}"><div class="chat-bubble ${m.role}">${display}</div>${m.ts?`<div class="chat-ts">${fmtGGTime(m.ts)}</div>`:''}</div>`;
     });
   }
 
