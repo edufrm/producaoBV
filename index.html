@@ -687,18 +687,30 @@ function buildDashFilters(){
 function setDashMode(mode){ DASH_MODE=mode; rDash(); }
 function setDashGerentes(v){ DASH_GERENTES = v==='all' ? [...MGR] : [v]; rDash(); }
 function toggleDashGerente(gid){
-  if(DASH_GERENTES.includes(gid)){
-    if(DASH_GERENTES.length===1) return; // ao menos 1
-    DASH_GERENTES = DASH_GERENTES.filter(x=>x!==gid);
-  } else { DASH_GERENTES.push(gid); }
+  // Se todos estão selecionados e clica em um → seleciona só esse
+  if(DASH_GERENTES.length === MGR.length){
+    DASH_GERENTES = [gid];
+  } else if(DASH_GERENTES.includes(gid)){
+    // Se já está selecionado e é o único → volta para todos
+    if(DASH_GERENTES.length === 1){ DASH_GERENTES = [...MGR]; }
+    else { DASH_GERENTES = DASH_GERENTES.filter(x=>x!==gid); }
+  } else {
+    DASH_GERENTES.push(gid);
+  }
   rDash();
 }
 function setDashProdutos(v){ DASH_PRODUTOS = v==='all' ? PRODUTOS_CFG.map(p=>p.id) : [v]; rDash(); }
 function toggleDashProduto(pid){
-  if(DASH_PRODUTOS.includes(pid)){
-    if(DASH_PRODUTOS.length===1) return;
-    DASH_PRODUTOS = DASH_PRODUTOS.filter(x=>x!==pid);
-  } else { DASH_PRODUTOS.push(pid); }
+  // Se todos estão selecionados e clica em um → seleciona só esse
+  if(DASH_PRODUTOS.length === PRODUTOS_CFG.length){
+    DASH_PRODUTOS = [pid];
+  } else if(DASH_PRODUTOS.includes(pid)){
+    // Se já está selecionado e é o único → volta para todos
+    if(DASH_PRODUTOS.length === 1){ DASH_PRODUTOS = PRODUTOS_CFG.map(p=>p.id); }
+    else { DASH_PRODUTOS = DASH_PRODUTOS.filter(x=>x!==pid); }
+  } else {
+    DASH_PRODUTOS.push(pid);
+  }
   rDash();
 }
 
@@ -753,11 +765,13 @@ function buildDashGerente(){
         </div>`;
 
       if(meta>0){
+        const abaixo = isAbaixoRitmo(real, meta);
+        const pctRitmo = getPctRitmo(real, meta);
         h += `<div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-bottom:6px">
           <div style="height:100%;width:${Math.min(pct,100)}%;background:${color};border-radius:3px;transition:width .5s"></div>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3)">
-          <span>Meta: ${p.fmt_(meta)} · <strong style="color:${color}">${pct.toFixed(1)}%</strong></span>
+          <span>Meta: ${p.fmt_(meta)} · <strong style="color:${color}">${pct.toFixed(1)}%</strong>${abaixo ? ` <span style="color:var(--orange);font-weight:700" title="Abaixo do ritmo esperado para hoje">· 📉 ${pctRitmo}% do ritmo</span>` : ''}</span>
           ${gap>0 ? `<span style="color:var(--orange)">GAP: ${p.fmt_(gap)}</span>` : `<span style="color:var(--green);font-weight:700">✅ Meta!</span>`}
         </div>`;
         if(proj!==null){
@@ -814,27 +828,32 @@ function buildBarChart(gid, prods){
 // ── Alertas globais ──
 function buildAlertasGlobais(){
   const alertas = [];
-  const duPass = getDiasUteisPassados();
-  const duTot  = getTotalDiasUteis();
-
   DASH_GERENTES.forEach(gid=>{
-    // Sem atualização há 1+ dia útil
     const st = gerStatus(gid);
     if(st.cls==='badge-off') alertas.push({ tipo:'danger', msg:`⚠️ <strong>${NAMES[gid]}</strong> está offline — sem atualização` });
-
-    // Abaixo do ritmo em TAC
-    const real = getMes(gid,'tac');
-    const meta = getMeta(gid,'tac');
-    if(meta && duPass && duTot){
-      const ritmoEsp = (meta/duTot)*duPass;
-      if(real < ritmoEsp*0.7) alertas.push({ tipo:'warn', msg:`📉 <strong>${NAMES[gid]}</strong> está abaixo do ritmo em TAC (${((real/ritmoEsp)*100).toFixed(0)}% do esperado)` });
-    }
   });
-
   if(!alertas.length) return '';
   return `<div style="margin-bottom:12px">
-    ${alertas.map(a=>`<div style="background:${a.tipo==='danger'?'var(--red-bg)':'var(--orange-bg)'};border:1px solid ${a.tipo==='danger'?'rgba(192,57,43,0.2)':'rgba(196,107,0,0.2)'};border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:12px;color:var(--text)">${a.msg}</div>`).join('')}
+    ${alertas.map(a=>`<div style="background:var(--red-bg);border:1px solid rgba(192,57,43,0.2);border-radius:8px;padding:8px 12px;margin-bottom:6px;font-size:12px;color:var(--text)">${a.msg}</div>`).join('')}
   </div>`;
+}
+
+// Verifica se um gerente está abaixo do ritmo em um produto
+function isAbaixoRitmo(real, meta){
+  const duPass = getDiasUteisPassados();
+  const duTot  = getTotalDiasUteis();
+  if(!meta || !duPass || !duTot) return false;
+  const ritmoEsp = (meta/duTot)*duPass;
+  if(ritmoEsp <= 0) return false;
+  return real < ritmoEsp * 0.7;
+}
+function getPctRitmo(real, meta){
+  const duPass = getDiasUteisPassados();
+  const duTot  = getTotalDiasUteis();
+  if(!meta || !duPass || !duTot) return 0;
+  const ritmoEsp = (meta/duTot)*duPass;
+  if(ritmoEsp <= 0) return 0;
+  return Math.round((real/ritmoEsp)*100);
 }
 
 // ── Visão de Ranking ──
