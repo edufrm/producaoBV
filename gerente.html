@@ -5663,6 +5663,7 @@ if(PROD_PARAM && PRODUTOS_TABS.some(p=>p.id===PROD_PARAM)){ try{ abrirProduto(PR
 if(EMBED){ try{
   const hd=document.querySelector('.header'); if(hd) hd.style.display='none';
   const bb=document.querySelector('.bottom-bar'); if(bb) bb.style.display='none';
+  const mt=document.getElementById('mobMenuTab'); if(mt) mt.style.setProperty('display','none','important'); // não duplica a abinha dentro do iframe (vence o !important do @media)
   document.body.style.padding='0';
   const f1=el('diaCheckFab'); if(f1) f1.remove();
   const f2=el('produtoBackFab'); if(f2) f2.remove();
