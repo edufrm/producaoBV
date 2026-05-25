@@ -25,6 +25,7 @@
 body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 100px; }
 body.produto-aberto { padding-bottom: 134px; }
 .hint-i { display: none; }  /* ícone ⓘ só aparece no celular (desktop mostra o texto direto) */
+#mobMenuTab { display: none; }  /* abinha lateral só aparece no celular */
 
 /* HEADER */
 .header { background: var(--accent); padding: 14px 16px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,0.18); }
@@ -420,19 +421,22 @@ select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 
 /* ===== AJUSTES SÓ PARA CELULAR (não afeta o computador) ===== */
 @media (max-width: 600px){
-  /* rodapé fixo fora — libera a tela */
+  /* rodapé vira menu deslizante numa abinha lateral — libera a tela toda */
   body{ padding-bottom: 18px !important; }
   body.produto-aberto{ padding-bottom: 92px !important; }
+  #mobMenuTab{ display:flex !important; align-items:center; justify-content:center; position:fixed; right:0; bottom:calc(118px + env(safe-area-inset-bottom)); width:32px; height:60px; border:none; border-radius:12px 0 0 12px; background:var(--accent); color:#fff; font-size:19px; box-shadow:-3px 3px 12px rgba(0,0,0,0.28); z-index:320; cursor:pointer; padding:0; }
+  body.menu-open #mobMenuTab{ background:var(--text3); }
+  .bottom-bar{ position:fixed !important; left:auto !important; right:44px !important; bottom:calc(110px + env(safe-area-inset-bottom)) !important; top:auto !important; width:auto !important; min-width:168px; flex-direction:column !important; align-items:stretch !important; justify-content:flex-start !important; gap:8px !important; background:var(--surface) !important; border:1px solid var(--border) !important; border-radius:14px !important; box-shadow:0 10px 30px rgba(0,0,0,0.3) !important; padding:10px !important; z-index:319 !important; transform:translateX(180%); opacity:0; pointer-events:none; transition:transform .25s ease, opacity .2s ease; }
+  .bottom-bar > div{ flex-direction:column !important; align-items:stretch !important; width:100%; gap:8px !important; }
+  .bottom-bar .btn-hist, .bottom-bar #diaCheckBtn{ width:100% !important; justify-content:center; text-align:center; }
+  body.menu-open .bottom-bar{ transform:translateX(0); opacity:1; pointer-events:auto; }
+  #diaCheckBtn{ position:static !important; right:auto !important; bottom:auto !important; box-shadow:none !important; }
   /* área de trabalho mais larga: menos moldura nas laterais */
   .section{ padding-left: 8px !important; padding-right: 8px !important; }
   .cal-wrap{ padding-left: 6px !important; padding-right: 6px !important; }
   /* calendário: campos do +Novo empilham (não se sobrepõem) */
   .cal-grid2{ grid-template-columns: 1fr !important; }
   .cal-inp{ font-size: 16px !important; }
-  .bottom-bar{ position: static !important; background: transparent !important; box-shadow: none !important; border-top: none !important; padding: 10px 14px 4px !important; justify-content: center !important; }
-  .bottom-bar .version-badge{ display: none !important; }
-  /* Dia Check vira pílula flutuante */
-  #diaCheckBtn{ position: fixed !important; right: 12px !important; bottom: 12px !important; z-index: 250 !important; box-shadow: 0 5px 16px rgba(0,0,0,0.3) !important; padding: 12px 18px !important; font-size: 14px !important; }
   /* títulos de tela menores */
   .tela-titulo{ font-size: 15px !important; line-height: 1.15 !important; }
   .brand-name{ font-size: 15px !important; }
@@ -572,6 +576,8 @@ select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
   </div>
   <span class="version-badge" title="Versão do aplicativo">v2.5.0</span>
 </div>
+<!-- abinha lateral (só no celular) que abre o menu do rodapé, liberando a tela -->
+<button id="mobMenuTab" onclick="toggleMobMenu()" title="Menu" aria-label="Abrir menu">☰</button>
 
 <script>
 // ══════════════════════════════════════════════════
@@ -845,6 +851,15 @@ function setC(id,v){ const e=el(id); if(e) e.value=v||''; }
 function showToast(msg){ const t=el('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2400); }
 // ⓘ: no celular o texto de ajuda fica escondido; toca no ⓘ p/ mostrar/esconder. No desktop o texto aparece normal.
 function toggleHint(ic){ const t=ic.parentElement&&ic.parentElement.querySelector('.hint-t'); if(t) t.classList.toggle('show'); }
+// abinha lateral (celular): abre/fecha o menu do rodapé; fecha ao tocar numa opção ou fora dele
+function toggleMobMenu(){ document.body.classList.toggle('menu-open'); }
+document.addEventListener('click', function(e){
+  if(!document.body.classList.contains('menu-open')) return;
+  const tab=document.getElementById('mobMenuTab'); if(tab && tab.contains(e.target)) return; // o toggle já cuida
+  const bar=document.querySelector('.bottom-bar');
+  if(bar && bar.contains(e.target)){ if(e.target.closest('button')) setTimeout(()=>document.body.classList.remove('menu-open'),140); return; }
+  document.body.classList.remove('menu-open'); // tocou fora → fecha
+});
 
 function toDateStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function daysDiff(dateStr,todayStr){ return Math.round((new Date(dateStr+'T00:00:00')-new Date(todayStr+'T00:00:00'))/(1000*60*60*24)); }
@@ -3194,9 +3209,10 @@ function ajustarAlturaChat(){
   if(!sec || !sec.classList.contains('active')) return;
   const c = sec.querySelector('.sec-chat');
   if(!c) return;
+  const isMobile = window.matchMedia('(max-width:600px)').matches;
   const bar = document.querySelector('.bottom-bar');
-  const footerH = bar ? bar.offsetHeight : 0;
-  const avail = window.innerHeight - c.getBoundingClientRect().top - footerH - 8;
+  const footerH = isMobile ? 0 : (bar ? bar.offsetHeight : 0); // no celular o rodapé é flutuante (abinha)
+  const avail = window.innerHeight - c.getBoundingClientRect().top - footerH - (isMobile?14:8);
   if(avail > 260) c.style.height = avail + 'px';
 }
 window.addEventListener('resize', ajustarAlturaChat);
