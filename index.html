@@ -78,6 +78,7 @@ body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--tex
 
 /* SECTIONS */
 .section{display:none;padding:14px 14px 0}
+.hint-i{display:none}  /* ícone ⓘ só aparece no celular (desktop mostra o texto direto) */
 .section.active{display:block}
 
 /* CARDS */
@@ -240,6 +241,45 @@ input.meta-inp:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(201,168,
 .hist-resumo-item { padding:10px 14px; border-bottom:1px solid var(--border); cursor:pointer; }
 .hist-resumo-item:last-child { border-bottom:none; }
 .hist-resumo-item:hover { background:var(--surface2); }
+
+/* ===== AJUSTES SÓ PARA CELULAR (não afeta o computador) ===== */
+@media (max-width: 600px){
+  body{ padding-bottom: 18px !important; }
+  /* área de trabalho mais larga: menos moldura nas laterais */
+  .section{ padding-left: 8px !important; padding-right: 8px !important; }
+  .cal-wrap{ padding-left: 6px !important; padding-right: 6px !important; }
+  /* calendário: campos do +Novo empilham (não se sobrepõem) */
+  .cal-grid2{ grid-template-columns: 1fr !important; }
+  .cal-inp{ font-size: 16px !important; }
+  .bottom-bar{ position: static !important; background: transparent !important; box-shadow: none !important; border-top: none !important; padding: 10px 14px 4px !important; justify-content: center !important; }
+  .bottom-bar > span{ display: none !important; }
+  #diaCheckBtnGG{ position: fixed !important; right: 12px !important; bottom: 12px !important; z-index: 250 !important; box-shadow: 0 5px 16px rgba(0,0,0,0.3) !important; padding: 12px 18px !important; font-size: 14px !important; }
+  .tela-titulo{ font-size: 15px !important; line-height: 1.15 !important; }
+  .tab{ font-size: 14px !important; padding: 12px 15px !important; }
+  .card-title{ font-size: 13px !important; }
+  .lbl{ font-size: 14px !important; }
+  .val{ font-size: 14px !important; }
+  .row{ padding: 12px 14px !important; }
+  .ger-head-name{ font-size: 16px !important; }
+  .cm-name{ font-size: 14px !important; }
+  .cm-detail{ font-size: 12px !important; }
+  .meta-lbl{ font-size: 13px !important; }
+  .meta-inp{ font-size: 16px !important; }
+  input[type="text"], input[type="date"], select, textarea{ font-size: 16px !important; padding: 10px !important; }
+  .sc-badge, .ger-status{ font-size: 11px !important; }
+  /* telas montadas com estilo inline (Check-in/out, Hoje, Dashboard): sobe as fontes minúsculas p/ leitura no celular.
+     Gráficos SVG usam o atributo font-size="9" (não style), então NÃO são afetados. */
+  #sec-checkin [style*="font-size:8px"],#sec-checkin [style*="font-size:9px"],#sec-checkin [style*="font-size:10px"],#sec-checkin [style*="font-size: 8px"],#sec-checkin [style*="font-size: 9px"],#sec-checkin [style*="font-size: 10px"],
+  #sec-hoje [style*="font-size:8px"],#sec-hoje [style*="font-size:9px"],#sec-hoje [style*="font-size:10px"],#sec-hoje [style*="font-size: 8px"],#sec-hoje [style*="font-size: 9px"],#sec-hoje [style*="font-size: 10px"],
+  #sec-dash [style*="font-size:8px"],#sec-dash [style*="font-size:9px"],#sec-dash [style*="font-size:10px"],#sec-dash [style*="font-size: 8px"],#sec-dash [style*="font-size: 9px"],#sec-dash [style*="font-size: 10px"]{ font-size:12px !important; line-height:1.35 !important; }
+  #sec-checkin [style*="font-size:11px"],#sec-checkin [style*="font-size: 11px"],
+  #sec-hoje [style*="font-size:11px"],#sec-hoje [style*="font-size: 11px"],
+  #sec-dash [style*="font-size:11px"],#sec-dash [style*="font-size: 11px"]{ font-size:13px !important; }
+  /* ⓘ declutter no celular: esconde o texto de ajuda; toca no ⓘ p/ revelar */
+  .hint-i{ display:inline-flex !important; align-items:center; justify-content:center; width:20px; height:20px; min-width:20px; border-radius:50%; border:1px solid var(--border); background:var(--surface2); color:var(--accent); font-size:12px !important; font-weight:800; line-height:1; cursor:pointer; vertical-align:middle; }
+  .hint-t{ display:none !important; }
+  .hint-t.show{ display:inline !important; }
+}
 </style>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -479,6 +519,8 @@ function getMes(gid,base){ if(base==='tac'){ try{ return JSON.parse(gd(gid,'cred
 function fmtDate(s){ if(!s) return '—'; const[y,m,d]=s.split('-'); return `${d}/${m}/${y}`; }
 function daysDiff(dateStr,todayStr){ return Math.round((new Date(dateStr+'T00:00:00')-new Date(todayStr+'T00:00:00'))/(1000*60*60*24)); }
 function showToast(msg){ const t=el('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600); }
+// ⓘ: no celular o texto de ajuda fica escondido; toca no ⓘ p/ mostrar/esconder. No desktop o texto aparece normal.
+function toggleHint(ic){ const t=ic.parentElement&&ic.parentElement.querySelector('.hint-t'); if(t) t.classList.toggle('show'); }
 
 function fmtStatus(s){
   const m={analise_sgn:'Análise SGN',sgn_aprovado:'SGN aprovado',necessario_rebate:'Necessário rebate',
@@ -673,7 +715,7 @@ const PRODUTOS_CFG = [
     }
   },
   { id:'collarkin', lbl:'Collar Kin',        fmt_: fmtR, valFn: gid=>getMes(gid,'collarkin'), metaKey:'collarkin' },
-  { id:'contas',    lbl:'Abertura de conta', fmt_: v=>`${Math.round(v)||0}`, valFn: gid=>pnd(gid,'contas_amarela_acc')+pnd(gid,'contas_verde_acc')+pnd(gid,'contas_outros_acc'), metaKey:'contas' },
+  { id:'contas',    lbl:'Abertura de conta', fmt_: v=>`${Math.round(v)||0}`, valFn: gid=>ggContasCount(gid), metaKey:'contas' },
   { id:'consorcio', lbl:'Consórcio',        fmt_: fmtR, valFn: gid=>getMes(gid,'consorcio'), metaKey:'consorcio' },
   { id:'credito',   lbl:'Crédito',          fmt_: fmtR, valFn: gid=>getCreditoValor(gid), metaKey:'credito' },
   { id:'giro',      lbl:'Giro de Carteira', fmt_: v=>`${Math.round(v)||0}`, valFn: gid=>getMes(gid,'giro'), metaKey:'giro' },
@@ -1941,8 +1983,11 @@ window.autoSaveMeta = function(gid, prefix, raw){
 // ── Helpers de produção p/ o relatório (lê os dados de cada gerente via gd/pnd) ──
 function waToday(){ return today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0'); }
 function waListSum(gid,key,campo,soHoje,soProd){ try{ let l=JSON.parse(gd(gid,key)||'[]'); if(soProd!==false) l=l.filter(x=>x.tipo==='prod'); if(soHoje) l=l.filter(x=>x.data===waToday()); return l.reduce((s,v)=>s+pnRaw(v[campo]),0); }catch(e){ return 0; } }
-function waContasVAmes(g){ return pnd(g,'contas_amarela_acc')+pnd(g,'contas_amarela_dia')+pnd(g,'contas_verde_acc')+pnd(g,'contas_verde_dia'); }
-function waContasVAhoje(g){ return pnd(g,'contas_amarela_dia')+pnd(g,'contas_verde_dia'); }
+function ggContasList(gid){ try{ return JSON.parse(gd(gid,'contas_clientes')||'[]'); }catch(e){ return []; } }
+function ggContasCount(gid){ return ggContasList(gid).length; }
+function ggContasDia(gid){ const td=chkTodayGG(); return ggContasList(gid).filter(x=>x.data===td).length; }
+function waContasVAmes(g){ return ggContasList(g).filter(x=>x.tipo==='amarela'||x.tipo==='verde').length; }
+function waContasVAhoje(g){ const td=chkTodayGG(); return ggContasList(g).filter(x=>(x.tipo==='amarela'||x.tipo==='verde')&&x.data===td).length; }
 function waChempPorTipo(g,tipo){ try{ return JSON.parse(gd(g,'chemp_list')||'[]').filter(x=>x.tipoChemp===tipo).reduce((s,v)=>s+pnRaw(v.valor),0); }catch(e){ return 0; } }
 
 const WA_CFG = [
@@ -1992,7 +2037,7 @@ const PRODUTOS_GG = [
   {id:'captacao',  l:'Captação',   ic:'🪙', fn:g=>getMes(g,'captacao'),                                                          fmt:v=>`R$ ${fmtR(v)}`},
   {id:'chemp',     l:'CHEMP',      ic:'📑', fn:g=>getChempTotal(g),                                                              fmt:v=>`R$ ${fmtR(v)}`},
   {id:'collarkin', l:'Collar Kin', ic:'📈', fn:g=>getMes(g,'collarkin'),                                                         fmt:v=>`R$ ${fmtR(v)}`},
-  {id:'contas',    l:'Abertura de conta', ic:'🏦', fn:g=>pnd(g,'contas_amarela_acc')+pnd(g,'contas_verde_acc')+pnd(g,'contas_outros_acc'), fmt:v=>`${Math.round(v)}`},
+  {id:'contas',    l:'Abertura de conta', ic:'🏦', fn:g=>ggContasCount(g), fmt:v=>`${Math.round(v)}`},
   {id:'consorcio', l:'Consórcio',  ic:'🔑', fn:g=>getMes(g,'consorcio'),                                                         fmt:v=>`R$ ${fmtR(v)}`},
   {id:'credito',   l:'Crédito',    ic:'💼', fn:g=>getCreditoValor(g),                                                            fmt:v=>`R$ ${fmtR(v)}`},
   {id:'giro',      l:'Giro',       ic:'🔄', fn:g=>getMes(g,'giro'),                                                              fmt:v=>`${Math.round(v)}`},
@@ -2269,8 +2314,7 @@ function ggProducaoHoje(gid){
   const listVal=(key,campo,soProd)=>{ try{ let l=JSON.parse(gd(gid,key)||'[]'); if(soProd!==false) l=l.filter(x=>x.tipo==='prod'); return {dia:l.filter(x=>x.data===td).reduce((s,v)=>s+pnRaw(v[campo]),0), mes:l.reduce((s,v)=>s+pnRaw(v[campo]),0)}; }catch(e){ return {dia:0,mes:0}; } };
   const money=(ic,lbl,d,m)=>{ if(d>0||m>0) out.push(`${ic} ${lbl}: dia R$ ${fmt(d)} · mês R$ ${fmt(m)}`); };
   const qtd=(ic,lbl,d,m)=>{ if(d>0||m>0) out.push(`${ic} ${lbl}: dia ${Math.round(d)||'—'} · mês ${Math.round(m)||'—'}`); };
-  const cd=pnd(gid,'contas_amarela_dia')+pnd(gid,'contas_verde_dia')+pnd(gid,'contas_outros_dia');
-  qtd('🏦','Abertura de conta', cd, cd+pnd(gid,'contas_amarela_acc')+pnd(gid,'contas_verde_acc')+pnd(gid,'contas_outros_acc'));
+  qtd('🏦','Abertura de conta', ggContasDia(gid), ggContasCount(gid));
   qtd('🔄','Giro', pnd(gid,'giro_dia'), getMes(gid,'giro'));
   const tac=listVal('credito_list','tac'); money('📊','TAC', tac.dia, tac.mes);
   const cr=listVal('credito_list','valor'); money('💼','Crédito', cr.dia, cr.mes);
@@ -2313,7 +2357,7 @@ function rCheckinGG(){
   MGR.forEach(gid=>{ const r=ggChkGet(gid); if(r.checkin.feito)nIn++; if(r.checkout.feito)nOut++; });
 
   let h=`<div style="padding:14px 14px 0">
-    <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent)">🤝 Check-in / Check-out — Equipe</div>
+    <div class="tela-titulo" style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent)">🤝 Check-in / Check-out — Equipe</div>
     <div style="font-size:11px;color:var(--text3);margin:2px 0 12px">${fmtDate(td)} · ☀️ Check-in: <b style="color:var(--green)">${nIn}/${MGR.length}</b> · 🌙 Check-out: <b style="color:var(--blue)">${nOut}/${MGR.length}</b></div>`;
 
   MGR.forEach(gid=>{
@@ -3168,7 +3212,7 @@ function rHojeGG(){
     </div>`;
   if(!agenda.length){ cardAgenda += `<div style="padding:14px;text-align:center;font-size:12px;color:var(--text3)">Nenhum compromisso para hoje.</div>`; }
   else { agenda.forEach(a=>{ const ti=calTipoInfo(a.tipo); cardAgenda += `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)"><span style="font-size:18px">${ti.icon}</span><div style="flex:1"><div style="font-size:12px;font-weight:600">${escSec(a.titulo)}</div><div style="font-size:10px;color:var(--text3)">${a.hora?'⏰ '+a.hora+(a.horaFim?'–'+a.horaFim:''):'Dia todo'} · ${ti.lbl}${a.local?' · 📍 '+escSec(a.local):''}${a.descricao?' · '+escSec(a.descricao):''}</div></div><button onclick="calRemover('${a.id}')" title="Remover" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px">✕</button></div>`; }); }
-  cardAgenda += `<div style="padding:7px 14px;font-size:9px;color:var(--text3);font-style:italic;border-top:1px dashed var(--border);line-height:1.4">ℹ️ Compromissos do <b>Outlook</b>/<b>Teams</b> não aparecem aqui.</div></div>`;
+  cardAgenda += `<div style="padding:7px 14px;font-size:9px;color:var(--text3);font-style:italic;border-top:1px dashed var(--border);line-height:1.4"><span class="hint-i" onclick="toggleHint(this)">ⓘ</span><span class="hint-t">ℹ️ Compromissos do <b>Outlook</b>/<b>Teams</b> não aparecem aqui.</span></div></div>`;
 
   // CARD: Lembretes
   let cardLembretes = '';
@@ -3220,7 +3264,7 @@ function rHojeGG(){
     { lbl:'Captação',     val:MGR.reduce((s,g)=>s+getMes(g,'captacao'),0),     fmt_:v=>`R$ ${fmtR(v)}` },
     { lbl:'CHEMP',        val:MGR.reduce((s,g)=>s+getChempTotal(g),0),         fmt_:v=>`R$ ${fmtR(v)}` },
     { lbl:'Collar Kin',   val:MGR.reduce((s,g)=>s+getMes(g,'collarkin'),0),    fmt_:v=>`R$ ${fmtR(v)}` },
-    { lbl:'Abertura de conta', val:MGR.reduce((s,g)=>s+pnd(g,'contas_amarela_acc')+pnd(g,'contas_verde_acc')+pnd(g,'contas_outros_acc'),0), fmt_:v=>`${Math.round(v)}` },
+    { lbl:'Abertura de conta', val:MGR.reduce((s,g)=>s+ggContasCount(g),0), fmt_:v=>`${Math.round(v)}` },
     { lbl:'Consórcio',    val:MGR.reduce((s,g)=>s+getMes(g,'consorcio'),0),    fmt_:v=>`R$ ${fmtR(v)}` },
     { lbl:'Crédito',      val:MGR.reduce((s,g)=>s+getCreditoValor(g),0),       fmt_:v=>`R$ ${fmtR(v)}` },
     { lbl:'Giro',         val:MGR.reduce((s,g)=>s+getMes(g,'giro'),0),         fmt_:v=>`${Math.round(v)}` },
@@ -3260,11 +3304,11 @@ function rHojeGG(){
   </div>`;
 
   // CARD: Análise do Dia
-  let cardAnalise = `<div class="hoje-gg-section"><div class="hoje-gg-header"><span class="hoje-gg-title">🤖 Análise do Dia</span></div><div style="padding:12px 14px"><div style="font-size:11px;color:var(--text3);margin-bottom:10px">Performance da equipe com pontos de atenção e plano de ação gerado pela IA.</div><button id="gg_analise_btn" onclick="gerarAnaliseGG()" style="width:100%;padding:10px;background:linear-gradient(135deg,var(--accent),#2d5c42);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">✨ Gerar análise do dia</button><div id="gg_analise_resultado" style="margin-top:10px"></div></div></div>`;
+  let cardAnalise = `<div class="hoje-gg-section"><div class="hoje-gg-header"><span class="hoje-gg-title">🤖 Análise do Dia</span></div><div style="padding:12px 14px"><div style="font-size:11px;color:var(--text3);margin-bottom:10px"><span class="hint-i" onclick="toggleHint(this)">ⓘ</span><span class="hint-t">Performance da equipe com pontos de atenção e plano de ação gerado pela IA.</span></div><button id="gg_analise_btn" onclick="gerarAnaliseGG()" style="width:100%;padding:10px;background:linear-gradient(135deg,var(--accent),#2d5c42);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">✨ Gerar análise do dia</button><div id="gg_analise_resultado" style="margin-top:10px"></div></div></div>`;
 
   // Montagem na ordem pedida
   let h = `<div style="padding:14px 14px 0">`;
-  h += `<div style="text-align:center;margin-bottom:14px"><div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent)">${dataFmt}</div><div style="font-size:11px;color:var(--text3);margin-top:2px">${du} de ${dt} dias úteis — ${rest} restante${rest!==1?'s':''}</div></div>`;
+  h += `<div style="text-align:center;margin-bottom:14px"><div class="tela-titulo" style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent)">${dataFmt}</div><div style="font-size:11px;color:var(--text3);margin-top:2px">${du} de ${dt} dias úteis — ${rest} restante${rest!==1?'s':''}</div></div>`;
   h += `<div class="hoje-gg-frase"><div style="font-size:13px;color:rgba(255,255,255,0.9);line-height:1.6;font-style:italic">"${frase.texto}"</div>${frase.autor?`<div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:6px">— ${frase.autor}</div>`:''}</div>`;
   h += cardAgenda + cardLembretes + cardRecados + cardAlertas + cardNota + cardConsolidado + cardStatus + cardAnalise;
   h += `</div>`;
@@ -3545,7 +3589,7 @@ function rCalendarioGG(){
   const primeiroDiaSemana=new Date(y,mo,1).getDay();
   const diasNoMes=new Date(y,mo+1,0).getDate();
 
-  let h=`<div style="padding:12px 14px 0">`;
+  let h=`<div class="cal-wrap" style="padding:12px 14px 0">`;
 
   // Seletor de agenda (minha / cada gerente)
   h += `<div style="margin-bottom:10px"><select onchange="calSetOwner(this.value)" style="width:100%;padding:9px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-weight:700;background:var(--surface);color:var(--text)">
@@ -3659,7 +3703,7 @@ function renderCalForm(){
   const souCriador = !e.criadorId || e.criadorId===MEU_ID;
   const tipoBtns=Object.entries(CAL_TIPOS).map(([k,v])=>`<button type="button" onclick="calSetTipo('${k}')" id="cal_tipo_${k}" style="flex:1;border:1px solid ${tipo===k?v.cor:'var(--border)'};background:${tipo===k?v.bg:'var(--surface)'};color:${tipo===k?v.cor:'var(--text3)'};border-radius:8px;padding:7px 3px;font-size:11px;font-weight:700;cursor:pointer">${v.icon} ${v.lbl}</button>`).join('');
   const lbl=`style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px"`;
-  const inp=`style="width:100%;padding:9px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);color:var(--text);box-sizing:border-box"`;
+  const inp=`class="cal-inp" style="width:100%;min-width:0;padding:9px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);color:var(--text);box-sizing:border-box"`;
   const enviarMode = CAL_FORM_MODE==='enviar';
   const convidarBlock = souCriador
     ? `<div style="margin-bottom:12px"><label ${lbl}>${enviarMode?'📤 Para quem enviar?':'👥 Convidar'} <span style="text-transform:none;font-weight:600;color:var(--text3)">— toque para marcar um ou vários</span></label>
@@ -3676,13 +3720,13 @@ function renderCalForm(){
     <input type="hidden" id="cal_f_tipo" value="${tipo}">
     <div style="display:flex;gap:5px;margin-bottom:10px">${tipoBtns}</div>
     <div style="margin-bottom:8px"><label ${lbl}>Título</label><input id="cal_f_titulo" type="text" value="${escSec(e.titulo||'')}" placeholder="Ex: Reunião de equipe" ${inp}></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-      <div><label ${lbl}>Data</label><input id="cal_f_data" type="date" value="${data}" ${inp}></div>
-      <div><label ${lbl}>Alerta</label><select id="cal_f_alerta" ${inp}>${CAL_ALERT_OPCOES.map(o=>`<option value="${o.v}" ${o.v===alerta?'selected':''}>${o.l}</option>`).join('')}</select></div>
+    <div class="cal-grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div style="min-width:0"><label ${lbl}>Data</label><input id="cal_f_data" type="date" value="${data}" ${inp}></div>
+      <div style="min-width:0"><label ${lbl}>Alerta</label><select id="cal_f_alerta" ${inp}>${CAL_ALERT_OPCOES.map(o=>`<option value="${o.v}" ${o.v===alerta?'selected':''}>${o.l}</option>`).join('')}</select></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-      <div><label ${lbl}>Hora início</label><input id="cal_f_hora" type="time" value="${e.hora||''}" ${inp}></div>
-      <div><label ${lbl}>Hora fim</label><input id="cal_f_horafim" type="time" value="${e.horaFim||''}" ${inp}></div>
+    <div class="cal-grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div style="min-width:0"><label ${lbl}>Hora início</label><input id="cal_f_hora" type="time" value="${e.hora||''}" ${inp}></div>
+      <div style="min-width:0"><label ${lbl}>Hora fim</label><input id="cal_f_horafim" type="time" value="${e.horaFim||''}" ${inp}></div>
     </div>
     <div style="margin-bottom:8px"><label ${lbl}>Local (opcional)</label><input id="cal_f_local" type="text" value="${escSec(e.local||'')}" placeholder="Ex: Agência" ${inp}></div>
     <div style="margin-bottom:12px"><label ${lbl}>Descrição (opcional)</label><textarea id="cal_f_desc" rows="2" placeholder="Detalhes…" ${inp}>${escSec(e.descricao||'')}</textarea></div>

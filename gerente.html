@@ -23,6 +23,8 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 body { font-family: 'IBM Plex Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 100px; }
+body.produto-aberto { padding-bottom: 134px; }
+.hint-i { display: none; }  /* ícone ⓘ só aparece no celular (desktop mostra o texto direto) */
 
 /* HEADER */
 .header { background: var(--accent); padding: 14px 16px 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,0.18); }
@@ -415,6 +417,58 @@ select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.o
 .hoje-diag-fill { height:100%; border-radius:2px; }
 .hoje-diag-pct { font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:700; min-width:35px; text-align:right; }
 .badge-novo { display:inline-block; width:8px; height:8px; background:var(--red); border-radius:50%; margin-left:4px; vertical-align:middle; animation:pulse-rec 1.5s ease-in-out infinite; }
+
+/* ===== AJUSTES SÓ PARA CELULAR (não afeta o computador) ===== */
+@media (max-width: 600px){
+  /* rodapé fixo fora — libera a tela */
+  body{ padding-bottom: 18px !important; }
+  body.produto-aberto{ padding-bottom: 92px !important; }
+  /* área de trabalho mais larga: menos moldura nas laterais */
+  .section{ padding-left: 8px !important; padding-right: 8px !important; }
+  .cal-wrap{ padding-left: 6px !important; padding-right: 6px !important; }
+  /* calendário: campos do +Novo empilham (não se sobrepõem) */
+  .cal-grid2{ grid-template-columns: 1fr !important; }
+  .cal-inp{ font-size: 16px !important; }
+  .bottom-bar{ position: static !important; background: transparent !important; box-shadow: none !important; border-top: none !important; padding: 10px 14px 4px !important; justify-content: center !important; }
+  .bottom-bar .version-badge{ display: none !important; }
+  /* Dia Check vira pílula flutuante */
+  #diaCheckBtn{ position: fixed !important; right: 12px !important; bottom: 12px !important; z-index: 250 !important; box-shadow: 0 5px 16px rgba(0,0,0,0.3) !important; padding: 12px 18px !important; font-size: 14px !important; }
+  /* títulos de tela menores */
+  .tela-titulo{ font-size: 15px !important; line-height: 1.15 !important; }
+  .brand-name{ font-size: 15px !important; }
+  /* fontes maiores p/ leitura + áreas de toque */
+  .tab{ font-size: 14px !important; padding: 12px 15px !important; }
+  .card-title{ font-size: 13px !important; letter-spacing: 0.8px !important; }
+  .card-count{ font-size: 12px !important; }
+  .lbl{ font-size: 14px !important; }
+  .row{ padding: 12px 14px !important; }
+  .form-label{ font-size: 13px !important; }
+  input[type="text"], input[type="date"], select, textarea{ font-size: 16px !important; padding: 10px !important; }
+  input.n, input.nm{ width: 64px !important; }
+  .type-btn, .conta-btn, .yn-btn{ font-size: 14px !important; padding: 12px 8px !important; }
+  .btn-add{ font-size: 15px !important; padding: 14px !important; }
+  .btn-confirm, .btn-edit, .btn-remove{ font-size: 14px !important; padding: 10px 15px !important; }
+  .btn-remove-sm{ font-size: 14px !important; padding: 8px 11px !important; }
+  .cliente-card-title{ font-size: 13px !important; }
+  .cliente-card-compact-info .ccc-nome{ font-size: 15px !important; }
+  .cliente-card-compact-info .ccc-sub{ font-size: 12px !important; }
+  .meta-lbl{ font-size: 13px !important; }
+  .meta-pct{ font-size: 13px !important; }
+  .legend-item{ font-size: 12px !important; }
+  .cc-lbl{ font-size: 11px !important; }
+  /* telas montadas com estilo inline (Check-in/out, Hoje, Dashboard): sobe as fontes minúsculas p/ leitura no celular.
+     Gráficos SVG usam o atributo font-size="9" (não style), então NÃO são afetados. */
+  #sec-checkin [style*="font-size:8px"],#sec-checkin [style*="font-size:9px"],#sec-checkin [style*="font-size:10px"],#sec-checkin [style*="font-size: 8px"],#sec-checkin [style*="font-size: 9px"],#sec-checkin [style*="font-size: 10px"],
+  #sec-hoje [style*="font-size:8px"],#sec-hoje [style*="font-size:9px"],#sec-hoje [style*="font-size:10px"],#sec-hoje [style*="font-size: 8px"],#sec-hoje [style*="font-size: 9px"],#sec-hoje [style*="font-size: 10px"],
+  #sec-dash [style*="font-size:8px"],#sec-dash [style*="font-size:9px"],#sec-dash [style*="font-size:10px"],#sec-dash [style*="font-size: 8px"],#sec-dash [style*="font-size: 9px"],#sec-dash [style*="font-size: 10px"]{ font-size:12px !important; line-height:1.35 !important; }
+  #sec-checkin [style*="font-size:11px"],#sec-checkin [style*="font-size: 11px"],
+  #sec-hoje [style*="font-size:11px"],#sec-hoje [style*="font-size: 11px"],
+  #sec-dash [style*="font-size:11px"],#sec-dash [style*="font-size: 11px"]{ font-size:13px !important; }
+  /* ⓘ declutter no celular: esconde o texto de ajuda; toca no ⓘ p/ revelar */
+  .hint-i{ display:inline-flex !important; align-items:center; justify-content:center; width:20px; height:20px; min-width:20px; border-radius:50%; border:1px solid var(--border); background:var(--surface2); color:var(--accent); font-size:12px !important; font-weight:800; line-height:1; cursor:pointer; vertical-align:middle; }
+  .hint-t{ display:none !important; }
+  .hint-t.show{ display:inline !important; }
+}
 </style>
 </head>
 <body>
@@ -789,6 +843,8 @@ function fmtVal(v){ const d=v.replace(/\D/g,''); if(!d) return ''; return parseI
 function getMes(base){ if(base==='tac') return getTACTotal(); if(base==='consorcio'||base==='collarkin'||base==='captacao'){ try{ return JSON.parse(g(base+'_list')||'[]').filter(x=>x.tipo==='prod').reduce((s,v)=>s+pnRaw(v.valor),0); }catch(e){ return 0; } } return pn(base+'_acc') + pn(base+'_dia') + pn(base+'_adj'); }
 function setC(id,v){ const e=el(id); if(e) e.value=v||''; }
 function showToast(msg){ const t=el('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2400); }
+// ⓘ: no celular o texto de ajuda fica escondido; toca no ⓘ p/ mostrar/esconder. No desktop o texto aparece normal.
+function toggleHint(ic){ const t=ic.parentElement&&ic.parentElement.querySelector('.hint-t'); if(t) t.classList.toggle('show'); }
 
 function toDateStr(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function daysDiff(dateStr,todayStr){ return Math.round((new Date(dateStr+'T00:00:00')-new Date(todayStr+'T00:00:00'))/(1000*60*60*24)); }
@@ -1652,118 +1708,83 @@ function bAtivos(){
 // ── CONTAS ──
 function getContasList(){ try{ return JSON.parse(g('contas_clientes')||'[]'); }catch(e){ return []; } }
 function saveContasList(l){ sv('contas_clientes',JSON.stringify(l)); saveModTS('contas'); }
+// A produção de contas vem SÓ dos registros por nome — a contagem é derivada da lista
+function contasTipo(x){ return (x.tipo==='verde'||x.tipo==='amarela')?x.tipo:'outros'; }
+function getContasCount(){ const c={amarela:0,verde:0,outros:0,total:0}; getContasList().forEach(x=>{ c[contasTipo(x)]++; c.total++; }); return c; }
+function getContasCountDia(){ const td=toDateStr(today); const c={amarela:0,verde:0,outros:0,total:0}; getContasList().filter(x=>x.data===td).forEach(x=>{ c[contasTipo(x)]++; c.total++; }); return c; }
+function getContasTotal(){ return getContasList().length; }
+
+let CONTA_TIPO='amarela';
+function setContaTipo(t){
+  CONTA_TIPO=t; const tg=el('conta_tipo_toggle'); if(!tg) return;
+  tg.querySelectorAll('button').forEach(b=>{ const on=b.dataset.t===t; const cor=t==='amarela'?'var(--orange)':t==='verde'?'var(--green)':'#6b7280';
+    b.style.background=on?cor:'var(--surface)'; b.style.color=on?'#fff':'var(--text2)'; });
+}
 function addContaCliente(){
-  const tipo    = el('conta_novo_tipo')?.value||'amarela';
   const cliente = el('conta_novo_cliente')?.value?.trim();
   const data    = el('conta_nova_data')?.value;
-  if(!cliente){ showToast('⚠️ Informe o nome do cliente'); return; }
-  const l = getContasList();
-  l.push({tipo,cliente,data:data||toDateStr(today)});
-  saveContasList(l); bContas(); showToast('✅ Cliente registrado!');
+  if(!cliente){ showToast('⚠️ Informe o nome/CNPJ'); return; }
+  const l=getContasList(); l.push({tipo:CONTA_TIPO, cliente, data:data||toDateStr(today)});
+  saveContasList(l); bContas(); try{ recompute(); }catch(e){} showToast('✅ Conta registrada!');
 }
-function removeContaCliente(i){ const l=getContasList(); l.splice(i,1); saveContasList(l); bContas(); }
+function removeContaCliente(i){ if(!confirm('Remover esta conta?')) return; const l=getContasList(); l.splice(i,1); saveContasList(l); bContas(); try{ recompute(); }catch(e){} }
 
 function bContas(){
-  const amarela = pn('contas_amarela_dia') + pn('contas_amarela_acc');
-  const verde   = pn('contas_verde_dia') + pn('contas_verde_acc');
-  const outros  = pn('contas_outros_dia') + pn('contas_outros_acc');
-  const total   = amarela + verde + outros;
-
-  const hist = renderDailyHist('contas_total_dia', v => String(v));
-
+  const c=getContasCount(), cd=getContasCountDia();
+  const tipoCard=(lbl,n,nd,cor,bg,bd)=>`<div style="text-align:center;background:${bg};padding:8px;border-radius:8px;border:1px solid ${bd}"><div style="font-size:9px;color:${cor};font-weight:700;margin-bottom:4px">${lbl}</div><div style="font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:800;color:${cor}">${n}</div><div style="font-size:9px;color:var(--text3);margin-top:1px">hoje: ${nd}</div></div>`;
   let h = `<div class="card">
     <div class="card-header"><span class="card-title">ABERTURA DE CONTA</span>${tsTag('contas')}</div>
-    ${metaBlock('contas')}${ritmoBlockQtd('contas', total)}
-    ${lgd()}
-    <div style="padding:12px 14px;border-bottom:1px solid var(--border)">
-      <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.8px">Abertura Hoje por Tipo</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-        <div>
-          <div style="font-size:9px;color:var(--orange);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">🟡 Amarela</div>
-          <input type="text" id="contas_amarela_dia" value="${g('contas_amarela_dia')}" placeholder="0" class="mono n" oninput="oI('contas_amarela_dia',this.value);recompute()" title="Contas amarelas abertas hoje">
-        </div>
-        <div>
-          <div style="font-size:9px;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">🟢 Verde</div>
-          <input type="text" id="contas_verde_dia" value="${g('contas_verde_dia')}" placeholder="0" class="mono n" oninput="oI('contas_verde_dia',this.value);recompute()" title="Contas verdes abertas hoje">
-        </div>
-        <div>
-          <div style="font-size:9px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">⚪ Outros</div>
-          <input type="text" id="contas_outros_dia" value="${g('contas_outros_dia')}" placeholder="0" class="mono n" oninput="oI('contas_outros_dia',this.value);recompute()" title="Outras contas abertas hoje">
-        </div>
-      </div>
-    </div>
+    ${metaBlock('contas')}${ritmoBlockQtd('contas', c.total)}
     <div style="padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface2)">
-      <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Acumulado no Mês</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
-        <div style="text-align:center;background:rgba(196,107,0,0.08);padding:8px;border-radius:8px;border:1px solid rgba(196,107,0,0.2)">
-          <div style="font-size:9px;color:var(--orange);font-weight:700;margin-bottom:4px">🟡 AMARELA</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:800;color:var(--orange)" id="contas_amarela_total">${Math.round(amarela)||'0'}</div>
-        </div>
-        <div style="text-align:center;background:rgba(30,107,62,0.08);padding:8px;border-radius:8px;border:1px solid rgba(30,107,62,0.2)">
-          <div style="font-size:9px;color:var(--green);font-weight:700;margin-bottom:4px">🟢 VERDE</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:800;color:var(--green)" id="contas_verde_total">${Math.round(verde)||'0'}</div>
-        </div>
-        <div style="text-align:center;background:rgba(107,114,128,0.1);padding:8px;border-radius:8px;border:1px solid rgba(107,114,128,0.25)">
-          <div style="font-size:9px;color:#6b7280;font-weight:700;margin-bottom:4px">⚪ OUTROS</div>
-          <div style="font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:800;color:#6b7280" id="contas_outros_total">${Math.round(outros)||'0'}</div>
-        </div>
+        ${tipoCard('🟡 AMARELA',c.amarela,cd.amarela,'var(--orange)','rgba(196,107,0,0.08)','rgba(196,107,0,0.2)')}
+        ${tipoCard('🟢 VERDE',c.verde,cd.verde,'var(--green)','rgba(30,107,62,0.08)','rgba(30,107,62,0.2)')}
+        ${tipoCard('⚪ OUTROS',c.outros,cd.outros,'#6b7280','rgba(107,114,128,0.1)','rgba(107,114,128,0.25)')}
       </div>
-      <div class="contas-total-row">
-        <span class="contas-total-lbl">✅ Total Geral de Contas</span>
-        <span class="contas-total-val" id="contas_total_geral">${Math.round(total)||'0'}</span>
-      </div>
+      <div class="contas-total-row"><span class="contas-total-lbl">✅ Total de Contas no mês</span><span class="contas-total-val">${c.total}</span></div>
     </div>
-    ${hist}${obsBlock('contas')}
+    ${obsBlock('contas')}
   </div>`;
 
-  // Lista de clientes registrados
-  const contasList = getContasList();
-  if(contasList.length){
-    h += `<div class="card">
-      <div class="card-header light"><span class="card-title">📋 Clientes Registrados</span><span class="card-count">${contasList.length}</span></div>`;
-    contasList.forEach((c,i)=>{
-      const tipoLabel = c.tipo==='amarela'?'🟡 Amarela':c.tipo==='verde'?'🟢 Verde':'⚪ Outros';
-      const tipoColor = c.tipo==='amarela'?'var(--orange)':c.tipo==='verde'?'var(--green)':'#6b7280';
-      h += `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border)">
-        <span style="font-size:11px;font-weight:700;color:${tipoColor};min-width:65px">${tipoLabel}</span>
-        <span style="flex:1;font-size:12px;color:var(--text);font-weight:500">${c.cliente}</span>
-        <span style="font-size:10px;color:var(--text3)">${c.data?fmtDate(c.data):''}</span>
-        <button onclick="removeContaCliente(${i})" title="Remover cliente" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px">✕</button>
+  // Form: + Nova Conta (vertical — bom no celular e no computador)
+  h += `<div class="card"><div class="card-header light"><span class="card-title">+ Nova Conta</span></div>
+    <div style="padding:14px">
+      <div class="form-row"><div class="form-label required">Tipo de conta</div>
+        <div class="conta-toggle" id="conta_tipo_toggle">
+          <button type="button" class="conta-btn" data-t="amarela" onclick="setContaTipo('amarela')">🟡 Amarela</button>
+          <button type="button" class="conta-btn" data-t="verde" onclick="setContaTipo('verde')">🟢 Verde</button>
+          <button type="button" class="conta-btn" data-t="outros" onclick="setContaTipo('outros')">⚪ Outros</button>
+        </div></div>
+      <div class="form-row"><div class="form-label required">Nome / CNPJ</div>
+        <input type="text" id="conta_novo_cliente" placeholder="Nome do cliente ou CNPJ"></div>
+      <div class="form-row"><div class="form-label">Data de abertura</div>
+        <input type="date" id="conta_nova_data" value="${toDateStr(today)}"></div>
+      <button onclick="addContaCliente()" style="width:100%;margin-top:4px;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer">+ Adicionar conta</button>
+    </div>
+  </div>`;
+
+  // Lista de contas registradas
+  const list=getContasList();
+  if(list.length){
+    h += `<div class="card"><div class="card-header light"><span class="card-title">📋 Contas Registradas</span><span class="card-count">${list.length}</span></div>`;
+    list.forEach((x,i)=>{
+      const lbl=x.tipo==='amarela'?'🟡 Amarela':x.tipo==='verde'?'🟢 Verde':'⚪ Outros';
+      const cor=x.tipo==='amarela'?'var(--orange)':x.tipo==='verde'?'var(--green)':'#6b7280';
+      h+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">
+        <span style="font-size:11px;font-weight:700;color:${cor};min-width:74px">${lbl}</span>
+        <span style="flex:1;min-width:0;font-size:13px;color:var(--text);font-weight:500;overflow:hidden;text-overflow:ellipsis">${(x.cliente||'—').replace(/</g,'&lt;')}</span>
+        <span style="font-size:10px;color:var(--text3);white-space:nowrap">${x.data?fmtDate(x.data):''}</span>
+        <button onclick="removeContaCliente(${i})" title="Remover" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px">✕</button>
       </div>`;
     });
-    h += `</div>`;
+    h+=`</div>`;
+  } else {
+    h += `<div style="text-align:center;color:var(--text3);font-size:12px;padding:6px 14px 14px">Nenhuma conta registrada ainda este mês.</div>`;
   }
-
-  // Form adicionar cliente
-  h += `<div class="card">
-    <div class="card-header light"><span class="card-title">+ Registrar por Nome</span></div>
-    <div style="padding:12px 14px">
-      <div style="display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:end">
-        <div>
-          <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Tipo</div>
-          <select id="conta_novo_tipo" style="padding:8px 30px 8px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;height:38px;min-width:124px;background:var(--surface);color:var(--text)">
-            <option value="amarela">🟡 Amarela</option>
-            <option value="verde">🟢 Verde</option>
-            <option value="outros">⚪ Outros</option>
-          </select>
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Nome / CNPJ *</div>
-          <input type="text" id="conta_novo_cliente" placeholder="Nome do cliente"
-            style="width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:13px;height:38px">
-        </div>
-        <div>
-          <div style="font-size:10px;color:var(--text3);margin-bottom:4px">Data</div>
-          <input type="date" id="conta_nova_data" value="${toDateStr(today)}"
-            style="padding:8px;border:1px solid var(--border);border-radius:8px;font-size:12px;height:38px">
-        </div>
-      </div>
-      <button onclick="addContaCliente()" style="width:100%;margin-top:8px;padding:9px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">+ Adicionar</button>
-    </div>
-  </div>`;
 
   h+=histBtn('contas','Abertura de conta');
   el('sec-contas').innerHTML = h;
+  try{ setContaTipo(CONTA_TIPO); }catch(e){}
 }
 
 // ── SIMPLES ──
@@ -2717,17 +2738,8 @@ function recompute(){
   const atuTotalEl=el('at_atu_total'); if(atuTotalEl) atuTotalEl.textContent=fmt(mT);
   updateMeta('ativos', AT_PROD.reduce((s,p)=>s+(pnRaw(g(`at_${slug(p)}_atu`))-pnRaw(g(`at_${slug(p)}_ant`))),0));
 
-  // CONTAS
-  const amarela = pn('contas_amarela_dia') + pn('contas_amarela_acc');
-  const verde   = pn('contas_verde_dia')   + pn('contas_verde_acc');
-  const outros  = pn('contas_outros_dia')  + pn('contas_outros_acc');
-  const totalContas = amarela + verde + outros;
-  const ea=el('contas_amarela_total'), ev=el('contas_verde_total'), eo=el('contas_outros_total'), et=el('contas_total_geral');
-  if(ea) ea.textContent=Math.round(amarela)||'0';
-  if(ev) ev.textContent=Math.round(verde)||'0';
-  if(eo) eo.textContent=Math.round(outros)||'0';
-  if(et) et.textContent=Math.round(totalContas)||'0';
-  updateMeta('contas', totalContas);
+  // CONTAS (contagem derivada dos registros por nome)
+  updateMeta('contas', getContasTotal());
 
   // SIMPLES
   SIMPLES_CFG.forEach(({prefix})=>{ setC(prefix+'_mes', fmt(getMes(prefix))); updateMeta(prefix); });
@@ -2799,9 +2811,7 @@ function snapToday(dateStr){
   const snap = { data: dateStr, ts: new Date().toISOString() };
   snap.tac        = String(getTACTotal());
   snap.giro       = g('giro_dia') || '0';
-  snap.contas_amarela = g('contas_amarela_dia') || '0';
-  snap.contas_verde   = g('contas_verde_dia') || '0';
-  snap.contas_outros  = g('contas_outros_dia') || '0';
+  { const _cd=getContasCountDia(); snap.contas_amarela=String(_cd.amarela); snap.contas_verde=String(_cd.verde); snap.contas_outros=String(_cd.outros); }
   SIMPLES_CFG.forEach(({prefix}) => { snap[prefix] = g(prefix+'_dia') || '0'; });
   AT_PROD.forEach(p => { snap[`at_${slug(p)}`] = g(`at_${slug(p)}_atu`) || '0'; });
   return snap;
@@ -3029,8 +3039,8 @@ function buildHistText(data){
   lines.push(`CHEMP: ${ch.length} (${ch.filter(x=>x.tipoChemp==='contratado').length} contrat · ${ch.filter(x=>x.tipoChemp==='aumento').length} aum)`);
   lines.push(`Giro Mês: ${data.giro_acc||'0'}`);
   [['captacao','Captação'],['collarkin','Collar Kin'],['consorcio','Consórcio']].forEach(([k,t])=>{ lines.push(`${t}: R$ ${fmt(sum(pr(parse(k+'_list')),'valor'))}`); });
-  const totalContas=(parseFloat(String(data.contas_amarela_acc||'0').replace(/\./g,'').replace(',','.'))||0)+(parseFloat(String(data.contas_verde_acc||'0').replace(/\./g,'').replace(',','.'))||0)+(parseFloat(String(data.contas_outros_acc||'0').replace(/\./g,'').replace(',','.'))||0);
-  lines.push(`Contas: ${Math.round(totalContas)||'0'}`);
+  let totalContas=0; try{ totalContas=JSON.parse(data.contas_clientes||'[]').length; }catch(e){}
+  lines.push(`Contas: ${totalContas||'0'}`);
   lines.push(`Seguros: ${parse('seguro_list').length} registros`);
   lines.push(`Viabilizados: ${parse('viab_list').length} cliente(s) · ganho R$ ${fmt(viabResumoFrom(parse('viab_list')).total)}`);
   const sp=parse('safrapay_list');
@@ -3050,7 +3060,7 @@ function valHistProduto(prefix, data){
     case 'safrapay': { const sp=parse('safrapay_list'); return `${pr(sp).length} prod · VOP R$ ${fmt(sum(pr(sp),'vop'))}`; }
     case 'seguro': return `${parse('seguro_list').length} registros`;
     case 'giro': return String(data.giro_acc||'0');
-    case 'contas': { const t=['contas_amarela_acc','contas_verde_acc','contas_outros_acc'].reduce((s,k)=>s+(parseFloat(String(data[k]||'0').replace(/\./g,'').replace(',','.'))||0),0); return `${Math.round(t)||'0'} contas`; }
+    case 'contas': { let t=0; try{ t=JSON.parse(data.contas_clientes||'[]').length; }catch(e){} return `${t||'0'} contas`; }
     default: return '—';
   }
 }
@@ -3154,12 +3164,29 @@ function renderProdutoBack(){
   if(EMBED) return;
   let bar=document.getElementById('produtoNavBar');
   if(!bar){ bar=document.createElement('div'); bar.id='produtoNavBar'; document.body.appendChild(bar); }
-  if(!PRODUTO_ABERTO){ bar.style.display='none'; return; }
-  bar.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:74px;z-index:300;display:flex;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:6px;box-shadow:0 6px 18px rgba(0,0,0,0.22)';
+  if(!PRODUTO_ABERTO){ bar.style.display='none'; document.body.classList.remove('produto-aberto'); return; }
+  document.body.classList.add('produto-aberto');
+  bar.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:74px;z-index:300;display:flex;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:6px;box-shadow:0 6px 18px rgba(0,0,0,0.22);transition:transform .25s ease, opacity .2s ease';
   bar.innerHTML=`<button onclick="anteriorProduto()" style="border:1px solid var(--border);background:var(--surface);border-radius:18px;padding:8px 13px;font-size:12px;font-weight:700;color:var(--accent);cursor:pointer">‹ Ant</button>
     <button onclick="voltarProdutoOrigem()" style="border:1px solid var(--border);background:var(--surface2);border-radius:18px;padding:8px 13px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer">← Voltar</button>
     <button onclick="proximoProduto()" style="border:none;background:var(--accent);border-radius:18px;padding:8px 15px;font-size:12px;font-weight:700;color:#fff;cursor:pointer">Próx ›</button>`;
 }
+// Esconde a barra Ant/Voltar/Próx enquanto rola (deixa o toque passar) e reaparece ao parar ou subir
+let _navBarLastY=0, _navBarHideT=null;
+function _navBarSetHidden(hide){
+  const bar=document.getElementById('produtoNavBar');
+  if(!bar || bar.style.display==='none') return;
+  if(hide){ bar.style.opacity='0'; bar.style.pointerEvents='none'; bar.style.transform='translateX(-50%) translateY(26px)'; }
+  else { bar.style.opacity='1'; bar.style.pointerEvents='auto'; bar.style.transform='translateX(-50%) translateY(0)'; }
+}
+window.addEventListener('scroll', ()=>{
+  const y=window.scrollY||window.pageYOffset||0;
+  if(y > _navBarLastY+8) _navBarSetHidden(true);
+  else if(y < _navBarLastY-8) _navBarSetHidden(false);
+  _navBarLastY=y;
+  clearTimeout(_navBarHideT);
+  _navBarHideT=setTimeout(()=>_navBarSetHidden(false), 650);
+}, {passive:true});
 
 // Ajusta a altura do chat da SecretárIA para caber exatamente entre o cabeçalho e o rodapé fixo
 function ajustarAlturaChat(){
@@ -3373,7 +3400,7 @@ function buildConsolidado(compact=false){
   const giroReal = getMes('giro');          const giroMeta = pn('giro_meta');
   const ativReal = pnRaw(g('at_bs_prod')) + pnRaw(g('at_arv_prod'));
   const ativMeta = pn('ativos_meta');
-  const contReal = pn('contas_amarela_acc')+pn('contas_amarela_dia')+pn('contas_verde_acc')+pn('contas_verde_dia')+pn('contas_outros_acc')+pn('contas_outros_dia');
+  const contReal = getContasTotal();
   const contMeta = pn('contas_meta');
   const {final: segReal} = calcSeguro();
   const segMeta  = pn('seguro_meta');
@@ -3452,9 +3479,9 @@ function renderDash(){
   // Rankings por produto em ordem alfabética
   const rankMods = [
     { title:placarTitle('contas','🏦 Placar Abertura de conta'), fn: gid=>{
-        if(gid===GERENTE_ID) return (pn('contas_amarela_acc')+pn('contas_amarela_dia'))+(pn('contas_verde_acc')+pn('contas_verde_dia'))+(pn('contas_outros_acc')+pn('contas_outros_dia'));
+        if(gid===GERENTE_ID) return getContasTotal();
         const d=RANK_DATA[gid]; if(!d) return 0;
-        return (parseFloat(String(d.contas_amarela_acc||'0'))||0)+(parseFloat(String(d.contas_verde_acc||'0'))||0)+(parseFloat(String(d.contas_outros_acc||'0'))||0);
+        try{ return JSON.parse(d.contas_clientes||'[]').length; }catch(e){ return 0; }
       }, fmtFn: v=>`${Math.round(v)||'0'} contas` },
     { title:placarTitle('credito','💼 Placar Crédito'), fn: gid=>{
         if(gid===GERENTE_ID) return getCreditoList().filter(x=>x.tipo==='prod').reduce((s,v)=>s+parseFloat(String(v.valor||'0').replace(/\./g,'').replace(',','.'))||0,0);
@@ -3738,7 +3765,7 @@ function renderHoje(){
   const mods = [
     { lbl:'TAC',         real:getMes('tac'),   meta:pn('tac_meta'),   fmt_:v=>`R$ ${fmt(v)}` },
     { lbl:'Giro',        real:getMes('giro'),  meta:pn('giro_meta'),  fmt_:v=>`${Math.round(v)}` },
-    { lbl:'Abertura de conta', real:pn('contas_amarela_acc')+pn('contas_amarela_dia')+pn('contas_verde_acc')+pn('contas_verde_dia')+pn('contas_outros_acc')+pn('contas_outros_dia'), meta:pn('contas_meta'), fmt_:v=>`${Math.round(v)}` },
+    { lbl:'Abertura de conta', real:getContasTotal(), meta:pn('contas_meta'), fmt_:v=>`${Math.round(v)}` },
     { lbl:'Seguro',      real:calcSeguro().final, meta:pn('seguro_meta'), fmt_:v=>`R$ ${fmt(v)}` },
     { lbl:'Viabilizados',real:getViabQtdMes(), meta:pn('viab_meta'), fmt_:v=>`${v} viab` },
     { lbl:'Safrapay',    real:spListH.filter(x=>x.tipo==='prod').reduce((s,v)=>s+pnRaw(v.vop),0), meta:pn('safrapay_vop_meta'), fmt_:v=>`R$ ${fmt(v)}`,
@@ -3751,7 +3778,7 @@ function renderHoje(){
 
   // Cabeçalho do dia
   h += `<div style="text-align:center;margin-bottom:14px">
-    <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent)">${dataFmt}</div>
+    <div class="tela-titulo" style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent)">${dataFmt}</div>
     <div style="font-size:11px;color:var(--text3);margin-top:2px">${businessDaysUntilToday()} de ${totalBusinessDaysMonth()} dias úteis do mês</div>
   </div>`;
 
@@ -3841,7 +3868,7 @@ function renderHoje(){
       </div>`;
     });
   }
-  h += `<div style="padding:7px 14px;font-size:9px;color:var(--text3);font-style:italic;border-top:1px dashed var(--border);line-height:1.4">ℹ️ Compromissos criados no <b>Outlook</b> ou <b>Teams</b> não aparecem aqui — este calendário mostra apenas o que você agenda no app.</div>`;
+  h += `<div style="padding:7px 14px;font-size:9px;color:var(--text3);font-style:italic;border-top:1px dashed var(--border);line-height:1.4"><span class="hint-i" onclick="toggleHint(this)">ⓘ</span><span class="hint-t">ℹ️ Compromissos criados no <b>Outlook</b> ou <b>Teams</b> não aparecem aqui — este calendário mostra apenas o que você agenda no app.</span></div>`;
   h += `</div>`;
 
   // Lembretes
@@ -3973,7 +4000,7 @@ function renderHoje(){
     { lbl:'Consórcio',    val:pn('consorcio_dia') },
     { lbl:'Collar Kin',    val:pn('collarkin_dia') },
     { lbl:'Captação',     val:pn('captacao_dia') },
-    { lbl:'Contas',       val:pn('contas_amarela_dia')+pn('contas_verde_dia')+pn('contas_outros_dia') },
+    { lbl:'Contas',       val:getContasCountDia().total },
   ].filter(p=>p.val===0 && pn(p.lbl.toLowerCase().replace('ô','o').replace('é','e')+'_meta')>0 || false);
 
   // usa as metas para filtrar produtos relevantes (com meta definida)
@@ -3984,7 +4011,7 @@ function renderHoje(){
     if(m.lbl==='Consórcio')   return getMes('consorcio')===0;
     if(m.lbl==='Collar Kin')  return getMes('collarkin')===0;
     if(m.lbl==='Captação')    return getMes('captacao')===0;
-    if(m.lbl==='Contas')      return pn('contas_amarela_dia')+pn('contas_verde_dia')+pn('contas_outros_dia')===0;
+    if(m.lbl==='Contas'||m.lbl==='Abertura de conta') return getContasCountDia().total===0;
     return false;
   });
 
@@ -4003,7 +4030,7 @@ function renderHoje(){
     </div>`;
   }
 
-  h += `<div style="font-size:11px;color:var(--text3);margin-bottom:10px">IA analisa seu desempenho até agora e sugere um plano de ação para o restante do dia.</div>
+  h += `<div style="font-size:11px;color:var(--text3);margin-bottom:10px"><span class="hint-i" onclick="toggleHint(this)">ⓘ</span><span class="hint-t">IA analisa seu desempenho até agora e sugere um plano de ação para o restante do dia.</span></div>
       <button id="ger_plano_btn" onclick="gerarPlanoGerente()" style="width:100%;padding:10px;background:linear-gradient(135deg,var(--accent),#2d5c42);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">${planoSalvo?'🔄 Atualizar plano':'✨ Gerar plano de ação'}</button>
       <button onclick="debaterComSecretaria()" style="width:100%;margin-top:8px;padding:9px;background:var(--surface2);color:var(--accent);border:1px solid var(--border);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer">💬 Debater com a SecretárIA</button>
       <div id="ger_plano_resultado" style="margin-top:10px">${planoSalvo?`<div style="padding:12px 0;font-size:13px;line-height:1.65;color:var(--text)">${renderMD(planoSalvo.texto)}</div>`:''}</div>
@@ -4173,10 +4200,7 @@ function buildSecContext(){
   lines.push(`TAC: ${tacMes?'R$ '+fmt(tacMes):'não preenchido'}${tacMeta?' (meta: R$ '+fmt(tacMeta)+', '+(tacMes/tacMeta*100||0).toFixed(0)+'%)':''}`);
   const giroMes=getMes('giro'), giroMeta=pn('giro_meta');
   lines.push(`Giro: ${giroMes||'não preenchido'}${giroMeta?' (meta: '+giroMeta+')':''}`);
-  const am=pn('contas_amarela_acc')+pn('contas_amarela_dia');
-  const ve=pn('contas_verde_acc')+pn('contas_verde_dia');
-  const ou=pn('contas_outros_acc')+pn('contas_outros_dia');
-  lines.push(`Contas: ${am+ve+ou||'não preenchido'} (🟡${am} 🟢${ve} 🔵${ou})`);
+  { const cc=getContasCount(); lines.push(`Abertura de conta: ${cc.total} (🟡${cc.amarela} 🟢${cc.verde} ⚪${cc.outros})`); }
   SIMPLES_CFG.forEach(({title,prefix})=>{ const v=getMes(prefix); lines.push(`${title}: ${v?'R$ '+fmt(v):'não preenchido'}`); });
   const segs=getSeguroList();
   lines.push(`Seguros: ${segs.length} registros | Total: R$ ${fmt(segs.reduce((s,v)=>s+pnRaw(v.valor),0))}`);
@@ -4802,7 +4826,7 @@ function renderCalendario(){
   const primeiroDiaSemana = new Date(y, mo, 1).getDay();
   const diasNoMes = new Date(y, mo+1, 0).getDate();
 
-  let h = `<div style="padding:12px 14px 0">`;
+  let h = `<div class="cal-wrap" style="padding:12px 14px 0">`;
 
   h += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
     <button onclick="calMudarMes(-1)" title="Mês anterior" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;width:34px;height:34px;font-size:16px;cursor:pointer;color:var(--text)">‹</button>
@@ -4921,7 +4945,7 @@ function renderCalForm(){
     `<button type="button" onclick="calSetTipo('${k}')" id="cal_tipo_${k}" style="flex:1;border:1px solid ${tipo===k?v.cor:'var(--border)'};background:${tipo===k?v.bg:'var(--surface)'};color:${tipo===k?v.cor:'var(--text3)'};border-radius:8px;padding:7px 3px;font-size:11px;font-weight:700;cursor:pointer">${v.icon} ${v.lbl}</button>`
   ).join('');
   const lbl = `style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px"`;
-  const inp = `style="width:100%;padding:9px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);color:var(--text);box-sizing:border-box"`;
+  const inp = `class="cal-inp" style="width:100%;min-width:0;padding:9px;border:1px solid var(--border);border-radius:8px;font-size:13px;background:var(--surface);color:var(--text);box-sizing:border-box"`;
   const enviarMode = CAL_FORM_MODE==='enviar';
   const convidarBlock = souCriador
     ? `<div style="margin-bottom:12px"><label ${lbl}>${enviarMode?'📤 Para quem enviar?':'👥 Convidar'} <span style="text-transform:none;font-weight:600;color:var(--text3)">— toque para marcar um ou vários</span></label>
@@ -4939,13 +4963,13 @@ function renderCalForm(){
     <div style="display:flex;gap:5px;margin-bottom:10px">${tipoBtns}</div>
     <div style="margin-bottom:8px"><label ${lbl}>Título</label>
       <input id="cal_f_titulo" type="text" value="${escSec(e.titulo||'')}" placeholder="Ex: Visita ao cliente João" ${inp}></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-      <div><label ${lbl}>Data</label><input id="cal_f_data" type="date" value="${data}" ${inp}></div>
-      <div><label ${lbl}>Alerta</label><select id="cal_f_alerta" ${inp}>${CAL_ALERT_OPCOES.map(o=>`<option value="${o.v}" ${o.v===alerta?'selected':''}>${o.l}</option>`).join('')}</select></div>
+    <div class="cal-grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div style="min-width:0"><label ${lbl}>Data</label><input id="cal_f_data" type="date" value="${data}" ${inp}></div>
+      <div style="min-width:0"><label ${lbl}>Alerta</label><select id="cal_f_alerta" ${inp}>${CAL_ALERT_OPCOES.map(o=>`<option value="${o.v}" ${o.v===alerta?'selected':''}>${o.l}</option>`).join('')}</select></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-      <div><label ${lbl}>Hora início</label><input id="cal_f_hora" type="time" value="${e.hora||''}" ${inp}></div>
-      <div><label ${lbl}>Hora fim</label><input id="cal_f_horafim" type="time" value="${e.horaFim||''}" ${inp}></div>
+    <div class="cal-grid2" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div style="min-width:0"><label ${lbl}>Hora início</label><input id="cal_f_hora" type="time" value="${e.hora||''}" ${inp}></div>
+      <div style="min-width:0"><label ${lbl}>Hora fim</label><input id="cal_f_horafim" type="time" value="${e.horaFim||''}" ${inp}></div>
     </div>
     <div style="margin-bottom:8px"><label ${lbl}>Local (opcional)</label>
       <input id="cal_f_local" type="text" value="${escSec(e.local||'')}" placeholder="Ex: Agência / empresa do cliente" ${inp}></div>
@@ -5193,9 +5217,9 @@ function fbSync(){
       _nome:GERENTE_NOME,
       _ultima_atualizacao:now,
       _mes:MONTH_KEY,
-      contas_amarela_total: pn('contas_amarela_acc')+pn('contas_amarela_dia'),
-      contas_verde_total:   pn('contas_verde_acc')  +pn('contas_verde_dia'),
-      contas_outros_total:  pn('contas_outros_acc') +pn('contas_outros_dia'),
+      contas_amarela_total: getContasCount().amarela,
+      contas_verde_total:   getContasCount().verde,
+      contas_outros_total:  getContasCount().outros,
       seguro_total:         segTotal,
       seguro_extra:         g('seguro_extra')||'{}',
       tac_list:             g('tac_list')||'[]',
@@ -5330,8 +5354,7 @@ function producaoHojeResumo(){
   const listVal=(key,campo,soProd)=>{ try{ let l=JSON.parse(g(key)||'[]'); if(soProd!==false) l=l.filter(x=>x.tipo==='prod'); return {dia:l.filter(x=>x.data===td).reduce((s,v)=>s+pnRaw(v[campo]),0), mes:l.reduce((s,v)=>s+pnRaw(v[campo]),0)}; }catch(e){ return {dia:0,mes:0}; } };
   const money=(ic,lbl,d,m)=>{ if(d>0||m>0) out.push(`${ic} ${lbl}: dia R$ ${fmt(d)} · mês R$ ${fmt(m)}`); };
   const qtd=(ic,lbl,d,m)=>{ if(d>0||m>0) out.push(`${ic} ${lbl}: dia ${Math.round(d)||'—'} · mês ${Math.round(m)||'—'}`); };
-  const cd=pn('contas_amarela_dia')+pn('contas_verde_dia')+pn('contas_outros_dia');
-  qtd('🏦','Abertura de conta', cd, cd+pn('contas_amarela_acc')+pn('contas_verde_acc')+pn('contas_outros_acc'));
+  qtd('🏦','Abertura de conta', getContasCountDia().total, getContasCount().total);
   qtd('🔄','Giro', pn('giro_dia'), getMes('giro'));
   const tac=listVal('credito_list','tac'); money('📊','TAC', tac.dia, tac.mes);
   const cr=listVal('credito_list','valor'); money('💼','Crédito', cr.dia, cr.mes);
@@ -5457,14 +5480,14 @@ function renderCheckin(){
   };
 
   let h=`<div style="padding:14px 14px 0">
-    <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent)">🤝 Check-in / Check-out</div>
+    <div class="tela-titulo" style="font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:var(--accent)">🤝 Check-in / Check-out</div>
     <div style="font-size:11px;color:var(--text3);margin:2px 0 12px">${fmtDate(chkToday())} · ☀️ Check-in ${ci.feito?`<b style="color:var(--green)">✓ ${chkHora(ci.hora)}</b>`:'<b style="color:var(--orange)">pendente</b>'} · 🌙 Check-out ${co.feito?`<b style="color:var(--green)">✓ ${chkHora(co.hora)}</b>`:'<b style="color:var(--orange)">pendente</b>'}</div>`;
 
   // ── CHECK-IN ──
   h+=`<div class="card">
     <div class="card-header" style="background:linear-gradient(135deg,#e07120,#b8560f)"><span class="card-title">☀️ Check-in — programar o dia</span></div>
     <div style="padding:12px 14px">
-      <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Fale o que você vai fazer hoje (pipes, prospecção, metas…) e a IA organiza em tarefas. Ou adicione manualmente.</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px"><span class="hint-i" onclick="toggleHint(this)">ⓘ</span><span class="hint-t">Fale o que você vai fazer hoje (pipes, prospecção, metas…) e a IA organiza em tarefas. Ou adicione manualmente.</span></div>
       ${CHK_PREVIEW&&CHK_PREVIEW.area==='in'?previewBox():vozBox('in','Ex: hoje vou ligar pra 5 clientes de crédito, visitar a empresa X pra Safrapay, fechar 2 seguros…')}
       <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin:8px 0 5px">🎯 Foco do dia</div>
       <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px">
@@ -5500,7 +5523,7 @@ function renderCheckin(){
             <span style="${t.feito?'text-decoration:line-through;color:var(--text3)':''}">${(t.texto||'(sem descrição)').replace(/</g,'&lt;')}</span>
           </label>
         </div>`).join(''):`<div style="font-size:11px;color:var(--text3);font-style:italic;margin-bottom:8px">Sem tarefas do check-in.</div>`}
-      <div style="font-size:11px;color:var(--text3);margin:12px 0 8px">Conte como foi o dia (resultados, o que travou…) e a IA organiza.</div>
+      <div style="font-size:11px;color:var(--text3);margin:12px 0 8px"><span class="hint-i" onclick="toggleHint(this)">ⓘ</span><span class="hint-t">Conte como foi o dia (resultados, o que travou…) e a IA organiza.</span></div>
       ${CHK_PREVIEW&&CHK_PREVIEW.area==='out'?previewBox():vozBox('out','Ex: fechei 2 seguros e 1 crédito, a visita da empresa X foi remarcada, travou o sistema de manhã…')}
       <div style="font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">📋 Resultado do dia</div>
       <textarea oninput="chkSetField('checkout','resultado',this.value)" placeholder="O que foi produzido/avançado hoje…" style="width:100%;min-height:50px;border:1px solid var(--border);border-radius:8px;padding:8px;font-size:12px;box-sizing:border-box;resize:vertical;background:var(--surface);color:var(--text);margin-bottom:8px">${(co.resultado||'').replace(/</g,'&lt;')}</textarea>
